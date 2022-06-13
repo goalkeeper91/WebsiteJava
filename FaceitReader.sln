@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32516.85
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceitReader", "FaceitReader\FaceitReader.csproj", "{A6B2DC8D-B123-440A-AA79-A3128086C950}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SkinBaron FaceitReader", "SkinBaron FaceitReader\SkinBaron FaceitReader.vdproj", "{26B412AD-8D4F-46DA-8701-7D9C4542A8FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A6B2DC8D-B123-440A-AA79-A3128086C950}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6B2DC8D-B123-440A-AA79-A3128086C950}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6B2DC8D-B123-440A-AA79-A3128086C950}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6B2DC8D-B123-440A-AA79-A3128086C950}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26B412AD-8D4F-46DA-8701-7D9C4542A8FF}.Debug|Any CPU.ActiveCfg = Debug
+		{26B412AD-8D4F-46DA-8701-7D9C4542A8FF}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43DCB84F-4980-42C0-BE41-47E152C973E9}
+	EndGlobalSection
+EndGlobal
