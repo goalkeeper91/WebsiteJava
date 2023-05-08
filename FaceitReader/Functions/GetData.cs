@@ -1,18 +1,29 @@
 ﻿using FaceitReader.Classes;
-using FaceitReader.Database;
-using MySql.Data.MySqlClient;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4.Data;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Util.Store;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Windows.Forms;
+using NPOI.SS.UserModel;
+using NPOI.SS.Formula.Functions;
 
 namespace FaceitReader.Functions
 {
     internal class GetData
     {
         private static String Api = Globals.Api;
+        static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
+        static readonly string ApplicationName = "Faceit Reader";
 
         public static List<FullPlaceList> getPlacementData(int limit, int match, string id, int cup)
         {
@@ -65,7 +76,7 @@ namespace FaceitReader.Functions
             using (var streamReader = new StreamReader(httpMResponse.GetResponseStream()))
             {
                 var result = streamReader.ReadToEnd();
-                
+
 
                 JObject json = JsonConvert.DeserializeObject<JObject>(result);
 
@@ -98,7 +109,7 @@ namespace FaceitReader.Functions
                         {
                             if (player.PlayerId == captain.CaptainId)
                             {
-                                teams.Add(new Team() { Place = place.Place, TeamName = place.TeamName, CaptainName = player.PlayerName });
+                                teams.Add(new Team() { Place = place.Place, TeamName = place.TeamName, TeamId = place.TeamId, CaptainName = player.PlayerName });
                             }
                         }
                     }
@@ -113,47 +124,47 @@ namespace FaceitReader.Functions
                     {
                         if (team.Place == 1)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "25 Punkte + 5x 25€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "25 Punkte + 5x 25€" });
                             p = team.Place;
                         }
                         else if (team.Place == 2)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "20 Punkte + 5x 15€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "20 Punkte + 5x 15€" });
                             p = team.Place;
                         }
                         else if (team.Place == 3)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "15 Punkte + 5x 10€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "15 Punkte + 5x 10€" });
                             p = team.Place;
                         }
                         else if (team.Place == 4)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "15 Punkte + 5x 10€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "15 Punkte + 5x 10€" });
                             p = team.Place;
                         }
                         else if (team.Place == 5)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place == 6)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place == 7)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place == 8)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "10 Punkte + 5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place > 8)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                     }
@@ -161,47 +172,47 @@ namespace FaceitReader.Functions
                     {
                         if (team.Place == 1)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 25€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 25€" });
                             p = team.Place;
                         }
                         else if (team.Place == 2)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 10€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 10€" });
                             p = team.Place;
                         }
                         else if (team.Place == 3)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place == 4)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 5€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 5€" });
                             p = team.Place;
                         }
                         else if (team.Place == 5)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                         else if (team.Place == 6)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                         else if (team.Place == 7)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                         else if (team.Place == 8)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                         else if (team.Place > 8)
                         {
-                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, CaptainName = team.CaptainName, Prize = "5x 2€" });
+                            list.Add(new FullPlaceList() { Place = team.Place, TeamName = team.TeamName, TeamId = team.TeamId, CaptainName = team.CaptainName, Prize = "5x 2€" });
                             p = team.Place;
                         }
                     }
@@ -209,11 +220,33 @@ namespace FaceitReader.Functions
             }
             return list;
         }
-
-        public static string getCupName(string id)
+        public static string getDate(string id)
         {
-            var name = "";
-            var url = "https://open.faceit.com/data/v4/championships/" + id;
+            DateTime date = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            string datestring;
+            var Purl = "https://open.faceit.com/data/v4/championships/" + id;
+            var httpPRequest = (HttpWebRequest)WebRequest.Create(Purl);
+
+            httpPRequest.ContentType = "application/json; charset=utf-8";
+            httpPRequest.Accept = "application/json";
+            httpPRequest.Headers["Authorization"] = Api;
+            var httpPResponse = (HttpWebResponse)httpPRequest.GetResponse();
+
+            using (var streamReader = new StreamReader(httpPResponse.GetResponseStream()))
+            {
+                var result = streamReader.ReadToEnd();
+
+                JObject json = JsonConvert.DeserializeObject<JObject>(result);
+                long unix = (long)json["championship_start"];
+                date = date.AddMilliseconds(unix).ToLocalTime();
+            }
+            datestring = date.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+            return datestring;
+        }
+        public static List<Tuple<string, string, string>> getTeamDetails(string teamname)
+        {
+            List<Tuple<string, string, string>> list = new List<Tuple<string, string, string>>();
+            var url = "https://open.faceit.com/data/v4/teams/" + teamname;
             var httpRequest = (HttpWebRequest)WebRequest.Create(url);
 
             httpRequest.ContentType = "application/json; charset=utf-8";
@@ -224,10 +257,162 @@ namespace FaceitReader.Functions
             {
                 var result = streamReader.ReadToEnd();
                 JObject json = JsonConvert.DeserializeObject<JObject>(result);
-                name = json["name"].ToString();
-            }
 
-            return name;
+                if (json != null)
+                {
+                    list.Add(new Tuple<string, string, string>(json["team_id"].ToString(), json["name"].ToString(), "https://www.faceit.com/de/teams/" + teamname));
+                }
+                if (list.Count() == 0)
+                {
+                    list.Add(new Tuple<string, string, string>("No Team found", "", ""));
+                }
+            }
+            return list;
+        }
+        public static void CreateEntry(DataGridView dt1, string id, string rang)
+        {
+            var valueRange = new ValueRange();
+            UserCredential credential;
+
+            using (var stream =
+                new FileStream("Resources/credentials.json", FileMode.Open, FileAccess.Read))
+            {
+                string credPath = "token.json";
+                credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromStream(stream).Secrets,
+                    Scopes,
+                    "user",
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true)).Result;
+            }
+            var service = new SheetsService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = ApplicationName,
+            });
+
+            var objectList = new List<object>();
+            try
+            {
+                foreach (DataGridViewRow row in dt1.Rows)
+                {
+                    objectList.Add(row.Cells[2].Value.ToString() + " via Faceit an " + row.Cells[4].Value.ToString());
+                    valueRange.Values = new List<IList<object>> { objectList };
+                }
+
+            }
+            catch
+            {
+
+            }
+            valueRange.MajorDimension = "COLUMNS";
+            var appendRequest = service.Spreadsheets.Values.Update(valueRange, id, rang);
+            appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            appendRequest.Execute();
+        }
+        public static void updateSpreadsheetCells(string spreadsheetId, string sheetName, int columnId, int rowStart, int rowEnd, string? team, string? captain)
+        {
+            UserCredential credential;
+
+            using (var stream =
+                new FileStream("Resources/credentials.json", FileMode.Open, FileAccess.Read))
+            {
+                string credPath = "token.json";
+                credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromStream(stream).Secrets,
+                    Scopes,
+                    "user",
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true)).Result;
+            }
+            var service = new SheetsService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = ApplicationName,
+            });
+
+            //get sheet id by sheet name
+            Spreadsheet spr = service.Spreadsheets.Get(spreadsheetId).Execute();
+            Sheet sh = spr.Sheets.Where(s => s.Properties.Title == sheetName).FirstOrDefault();
+            int sheetId = (int)sh.Properties.SheetId;
+
+            //define cell color
+            var userEnteredFormat = new CellFormat()
+            {
+                BackgroundColor = new Color()
+                {
+                    Blue = 0,
+                    Red = 0,
+                    Green = 1,
+                    Alpha = (float)1.0
+                },
+                Borders = new Borders()
+                {
+                    Bottom = new Border() { Style = "solid"},
+                    Top = new Border() { Style = "solid" },
+                    Right = new Border() { Style = "solid" },
+                    Left = new Border() { Style = "solid" }
+                }
+            };
+
+            var userEnteredValue = new ExtendedValue()
+            {
+                StringValue = team + " via Faceit an " + captain + " am " + DateTime.Now.ToString("dd.MM.yyyy")
+            };
+
+            BatchUpdateSpreadsheetRequest bussr = new BatchUpdateSpreadsheetRequest();
+            var updateCellsRequest = new Request();
+            //create the update request for cells from the first row
+            if (team != null)
+            {
+                updateCellsRequest = new Request()
+                {
+                    RepeatCell = new RepeatCellRequest()
+                    {
+                        Range = new GridRange()
+                        {
+                            SheetId = sheetId,
+                            StartColumnIndex = columnId,
+                            StartRowIndex = rowStart,
+                            EndColumnIndex = columnId + 1,
+                            EndRowIndex = rowEnd + 1
+                        },
+                        Cell = new CellData()
+                        {
+                            UserEnteredFormat = userEnteredFormat,
+                            UserEnteredValue = userEnteredValue
+                        },
+                        Fields = "*"
+                    }
+                };
+            }
+            else
+            {
+                updateCellsRequest = new Request()
+                {
+                    RepeatCell = new RepeatCellRequest()
+                    {
+                        Range = new GridRange()
+                        {
+                            SheetId = sheetId,
+                            StartColumnIndex = columnId,
+                            StartRowIndex = rowStart,
+                            EndColumnIndex = columnId + 1,
+                            EndRowIndex = rowEnd + 1
+                        },
+                        Cell = new CellData()
+                        {
+                            UserEnteredFormat = userEnteredFormat,
+                        },
+                        Fields = "UserEnteredFormat(BackgroundColor)"
+                    }
+                };
+            }
+            
+            bussr.Requests = new List<Request>();
+            bussr.Requests.Add(updateCellsRequest);
+            var bur = service.Spreadsheets.BatchUpdate(bussr, spreadsheetId);
+            bur.Execute();
         }
     }
 }

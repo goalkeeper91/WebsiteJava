@@ -7,11 +7,12 @@ namespace FaceitReader.Classes
         public int Id { get; set; }
         public int Place { get; set; }
         public string TeamName { get; set; }
+        public string TeamId { get; set; }
         public string CaptainName { get; set; }
         public string Prize { get; set; }
         public override string ToString()
         {
-            return "Place: " + Place + "  TeamName: " + TeamName + "   CaptainName: " + CaptainName + "   Prize: " + Prize;
+            return "Place: " + Place + "  TeamName: " + TeamName + " TeamId: " + TeamId + "  CaptainName: " + CaptainName + "   Prize: " + Prize;
         }
         public override bool Equals(object obj)
         {

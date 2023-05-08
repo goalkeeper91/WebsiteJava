@@ -1,5 +1,5 @@
-﻿using FaceitReader.Forms;
-using System;
+﻿using System;
+using System.Runtime.Remoting.Channels;
 using System.Windows.Forms;
 
 namespace FaceitReader
@@ -14,7 +14,7 @@ namespace FaceitReader
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Login());
+            Application.Run(new PlaceOverview());
         }
     }
 }
