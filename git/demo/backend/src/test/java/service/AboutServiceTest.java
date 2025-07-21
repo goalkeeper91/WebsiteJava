@@ -1,8 +1,9 @@
 package service;
 
-import entity.About;
+import streamer_website.demo.entity.About;
 import org.junit.jupiter.api.Test;
-import repository.AboutRepository;
+import streamer_website.demo.repository.AboutRepository;
+import streamer_website.demo.service.AboutService;
 
 import java.util.Optional;
 

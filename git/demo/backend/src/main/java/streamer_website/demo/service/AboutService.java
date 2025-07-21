@@ -1,11 +1,8 @@
-package service;
+package streamer_website.demo.service;
 
-import entity.About;
-import lombok.RequiredArgsConstructor;
+import streamer_website.demo.entity.About;
 import org.springframework.stereotype.Service;
-import repository.AboutRepository;
-
-import java.util.Optional;
+import streamer_website.demo.repository.AboutRepository;
 
 @Service
 public class AboutService {
@@ -19,5 +16,9 @@ public class AboutService {
     public About getAbout(Long id) {
         return aboutRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("About not found with id: " + id));
+    }
+
+    public About saveAbout(About about) {
+        return aboutRepository.save(about);
     }
 }

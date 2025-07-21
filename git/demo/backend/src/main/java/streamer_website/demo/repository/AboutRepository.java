@@ -1,6 +1,6 @@
-package repository;
+package streamer_website.demo.repository;
 
-import entity.About;
+import streamer_website.demo.entity.About;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
