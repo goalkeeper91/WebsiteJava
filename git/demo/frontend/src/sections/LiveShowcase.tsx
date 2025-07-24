@@ -16,7 +16,7 @@ const LiveShowcase = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    Schau dir meinen Stream animate
+                    Schau dir meinen Stream an
                 </motion.h2>
 
                 <motion.div
