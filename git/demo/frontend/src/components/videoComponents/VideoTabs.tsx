@@ -7,7 +7,10 @@ const VideoTabs = () => {
 
     return (
         <section className='relative max-w-6xl mx-auto py-12 px-4 text-white overflow-hidden'>
-            <div className='flex justify-center space-x-4 mb-8'>
+            <div className="absolute inset-0 z-10">
+                <div className="w-full h-full bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl" />
+            </div>
+            <div className='relative z-15 flex justify-center space-x-4 mb-8'>
                 <button
                     onClick={() => setActiveTab("youtube")}
                     className={`px-6 py-2 rounded-full font-semibold transition ${

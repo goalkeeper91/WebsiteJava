@@ -12,13 +12,12 @@ const TiktokGrid = () => {
     }, [tiktokVideos]);
 
     return (
-        <section className='max-w-6xl mx-auto py-2 px-4 text-white'>
+        <section className='relative max-w-6xl mx-auto py-2 px-4 text-white z-20'>
             <h1 className="text-4xl font-bold mb-8 text-center">Video Highlights</h1>
 
             {featuredVideo && (
-                <div className="mb-12">
-                    <div className="absolute inset-0 bg-black/50 z-0" />
-                    <div className='absolute z-0 inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl'></div>
+                <div className="mb-12 mx-auto">
+
                     <h2 className="text-2xl font-semibold mb-4 text-center">Empfohlenes Video</h2>
                     <div className="aspect-video place-self-center">
                         <iframe

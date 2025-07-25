@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 const CHANNEL_DUMMY = 'goalkeeper91';
 
 const useTwitchLiveStatus = () => {
-    const[isLive, setIsLive] = useState<boolean>(false);
+    const [isLive, setIsLive] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchLiveStatus = async () => {
@@ -16,7 +16,7 @@ const useTwitchLiveStatus = () => {
             }
         };
         fetchLiveStatus();
-            const interval = setInterval(fetchLiveStatus, 30000);
+            const interval = setInterval(fetchLiveStatus, 1000);
 
             return () => clearInterval(interval);
     }, []);

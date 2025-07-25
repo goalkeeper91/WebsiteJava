@@ -34,13 +34,6 @@ const YoutubeGrid: React.FC = () => {
 
     return (
         <section className="relative w-full py-20 px-4 text-white overflow-hidden">
-          {/* Hintergrundebene */}
-          <div className="absolute inset-0 -z-10">
-            <div className="w-full h-full bg-black/50" />
-            <div className="w-full h-full bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl" />
-          </div>
-
-          {/* Inhaltsebene */}
           <div className="max-w-6xl mx-auto z-10 relative">
             <h1 className="text-4xl font-bold mb-8 text-center">Video Highlights</h1>
 
