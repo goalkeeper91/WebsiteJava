@@ -1,4 +1,3 @@
 package streamer_website.demo.dto;
 
-public class TwitchUser {
-}
+public record TwitchUser (String id, String login, String email){}

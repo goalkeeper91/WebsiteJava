@@ -35,7 +35,7 @@ build/
 # Environment variables and secrets
 .env
 *.env
-application-*.properties
+**/application.properties
 
 *.log
 logs/

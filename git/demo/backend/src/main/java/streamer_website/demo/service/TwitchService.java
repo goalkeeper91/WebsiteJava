@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import streamer_website.demo.dto.TwitchUser;
 
 import java.util.Objects;
 
@@ -93,4 +94,47 @@ public class TwitchService {
 
         return cachedToken;
     }
+
+    public String exchangeCodeForAccessToken(String code, String redirectUri) {
+        JsonNode response = webClient.post()
+                .uri(authBaseUrl + "/oauth2/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData("client_id", clientId)
+                        .with("client_secret", clientSecret)
+                        .with("code", code)
+                        .with("grant_type", "authorization_code")
+                        .with("redirect_uri", redirectUri))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        if (response == null || response.get("access_token") == null) {
+            throw new RuntimeException("Twitch token exchange failed.");
+        }
+
+        return response.get("access_token").asText();
+    }
+
+    public TwitchUser getUserInfo(String accessToken) {
+        JsonNode userData = webClient.get()
+                .uri("/helix/users")
+                .header("Client-ID", clientId)
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        if (userData == null || userData.get("data").isEmpty()) {
+            throw new RuntimeException("Could not retrieve user data from Twitch.");
+        }
+
+        JsonNode userNode = userData.get("data").get(0);
+
+        return new TwitchUser(
+                userNode.get("id").asText(),
+                userNode.get("login").asText(),
+                userNode.get("email").asText(null)
+        );
+    }
+
 }
