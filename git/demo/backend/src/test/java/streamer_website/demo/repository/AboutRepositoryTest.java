@@ -1,4 +1,4 @@
-package repository;
+package streamer_website.demo.repository;
 
 import streamer_website.demo.entity.About;
 import org.junit.jupiter.api.Test;

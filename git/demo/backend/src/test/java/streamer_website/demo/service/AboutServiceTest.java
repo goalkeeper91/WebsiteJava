@@ -1,4 +1,4 @@
-package service;
+package streamer_website.demo.service;
 
 import streamer_website.demo.entity.About;
 import org.junit.jupiter.api.Test;

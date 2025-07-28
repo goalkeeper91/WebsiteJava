@@ -15,8 +15,6 @@ public class About {
     private String description;
     private String profileImageUrl;
 
-    // Konstruktoren
-
     public About() {
     }
 

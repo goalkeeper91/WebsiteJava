@@ -1,4 +1,4 @@
-package controller;
+package streamer_website.demo.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

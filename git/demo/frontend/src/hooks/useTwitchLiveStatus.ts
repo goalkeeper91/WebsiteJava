@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 
-const CHANNEL_DUMMY = 'goalkeeper91';
-
 const useTwitchLiveStatus = () => {
     const [isLive, setIsLive] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchLiveStatus = async () => {
             try {
-                const response = await fetch(`https://decapi.me/twitch/status/${CHANNEL_DUMMY}`);
-                const text = await response.text();
-                setIsLive(!text.includes('offline'));
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/twitch/status`);
+                if (!response.ok) throw new Error('Network response not ok');
+                const data = await response.json();
+                setIsLive(data.live);
             } catch (error) {
+                console.log(error)
                 console.error('Fehler beim Abrufen des Twitch-Status', error);
             }
         };
