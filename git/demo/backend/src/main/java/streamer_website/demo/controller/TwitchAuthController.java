@@ -1,6 +1,8 @@
 package streamer_website.demo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import streamer_website.demo.dto.TwitchUser;
 import streamer_website.demo.service.TwitchService;
+import streamer_website.demo.service.UserService;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -23,7 +26,14 @@ public class TwitchAuthController {
     @Value("${twitch.redirectUri}")
     private String redirectUri;
 
+    @Value("${authorized-username}")
+    private String authorizedUsername;
+
     private TwitchService twitchAuthService;
+
+    private UserService userService;
+
+    private static final Logger logger = LoggerFactory.getLogger(TwitchAuthController.class);
 
     @GetMapping("/twitch")
     public void redirectToTwitch(HttpServletResponse response) throws IOException {
@@ -38,17 +48,16 @@ public class TwitchAuthController {
 
     @GetMapping("/twitch/callback")
     public String handleTwitchCallback(@RequestParam("code") String code) {
-
         String accessToken = twitchAuthService.exchangeCodeForAccessToken(code);
 
         TwitchUser twitchUser = twitchAuthService.getUserInfo(accessToken);
 
-        if (!twitchUser.getLogin().equalsIgnoreCase(authorizedUsername)) {
-            // TODO: integrate logging
+        if (!twitchUser.login().equalsIgnoreCase(authorizedUsername)) {
+            logger.warn("Unauthorized Twitch login attempt: {}", twitchUser.login());
             return "redirect:/unauthorized";
         }
 
-        userService.createOrUpdateUser(twitchUser);
+        userService.createOrUpdate(twitchUser);
 
         return "redirect:/";
     }

@@ -29,18 +29,22 @@ public class TwitchService {
 
     private final WebClient webClient;
 
+    private final String redirectUri;
+
     public TwitchService(
             WebClient.Builder webClientBuilder,
             @Value("${twitch.clientId}") String clientId,
             @Value("${twitch.clientSecret}") String clientSecret,
             @Value("${twitch.username}") String username,
-            @Value("${twitch.apiBaseUrl}") String apiBaseUrl
+            @Value("${twitch.apiBaseUrl}") String apiBaseUrl,
+            @Value("${twitch.redirectUri}") String redirectUri
                          ) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.username = username;
         this.apiBaseUrl = apiBaseUrl;
         this.webClient = webClientBuilder.baseUrl(apiBaseUrl).build();
+        this.redirectUri = redirectUri;
     }
 
     public boolean isLive() {
@@ -87,15 +91,20 @@ public class TwitchService {
                 .bodyToMono(JsonNode.class)
                 .block();
 
-        assert response != null;
+        if(response == null) {
+            throw new IllegalStateException("No response from Twitch");
+        }
+
         cachedToken = response.get("access_token").asText();
+
         long expiresIn = response.get("expires_in").asLong();
+
         tokenExpiry = System.currentTimeMillis() + (expiresIn * 1000);
 
         return cachedToken;
     }
 
-    public String exchangeCodeForAccessToken(String code, String redirectUri) {
+    public String exchangeCodeForAccessToken(String code) {
         JsonNode response = webClient.post()
                 .uri(authBaseUrl + "/oauth2/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -133,8 +142,14 @@ public class TwitchService {
         return new TwitchUser(
                 userNode.get("id").asText(),
                 userNode.get("login").asText(),
+                userNode.get("display_name").asText(),
                 userNode.get("email").asText(null)
         );
     }
 
+    public TwitchUser fetchUserByCode(String code) {
+        String accessToken = exchangeCodeForAccessToken(code);
+
+        return getUserInfo(accessToken);
+    }
 }
