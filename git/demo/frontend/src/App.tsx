@@ -4,6 +4,8 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
 import AllVideos from './pages/AllVideos';
+import ProtectedRoute from './components/routes/ProtectedRoutes';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 const App = () => {
   return (
@@ -17,6 +19,12 @@ const App = () => {
               <Route path='/' element={<Home />} />
               <Route path='/about' element={<About />} />
               <Route path='/allVideos' element={<AllVideos />} />
+              <Route path='/admin' element={
+                    <ProtectedRoute>
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+              />
             </Routes>
           </div>
         </main>

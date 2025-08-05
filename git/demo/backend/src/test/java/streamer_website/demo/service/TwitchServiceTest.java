@@ -7,8 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,6 +25,9 @@ public class TwitchServiceTest {
 
     private TwitchService twitchService;
 
+    @Value("${twitch.redirectUri}")
+    private String redirectUri;
+
     @BeforeEach
     void setup() throws IOException {
         mockWebServer = new MockWebServer();
@@ -39,7 +41,8 @@ public class TwitchServiceTest {
                 "dummy-client-id",
                 "dummy-secret",
                 "dummy-user",
-                mockWebServer.url("/").toString()
+                mockWebServer.url("/").toString(),
+                redirectUri
         );
     }
 

@@ -1,9 +1,11 @@
 package streamer_website.demo.service;
 
+import org.springframework.stereotype.Service;
 import streamer_website.demo.dto.TwitchUser;
 import streamer_website.demo.entity.User;
 import streamer_website.demo.repository.UserRepository;
 
+@Service
 public class UserService {
 
     private final UserRepository userRepository;

@@ -1,6 +1,7 @@
 package streamer_website.demo.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,14 +27,22 @@ public class TwitchAuthController {
     @Value("${twitch.redirectUri}")
     private String redirectUri;
 
-    @Value("${authorized-username}")
+    @Value("${app.authorized-username}")
     private String authorizedUsername;
 
-    private TwitchService twitchAuthService;
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
-    private UserService userService;
+    private final TwitchService twitchAuthService;
+
+    private final UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchAuthController.class);
+
+    public TwitchAuthController(TwitchService twitchAuthService, UserService userService) {
+        this.twitchAuthService = twitchAuthService;
+        this.userService = userService;
+    }
 
     @GetMapping("/twitch")
     public void redirectToTwitch(HttpServletResponse response) throws IOException {
@@ -47,18 +56,29 @@ public class TwitchAuthController {
     }
 
     @GetMapping("/twitch/callback")
-    public String handleTwitchCallback(@RequestParam("code") String code) {
+    public void handleTwitchCallback(@RequestParam("code") String code,
+                                     HttpServletResponse response,
+                                     HttpSession session) throws IOException {
         String accessToken = twitchAuthService.exchangeCodeForAccessToken(code);
 
         TwitchUser twitchUser = twitchAuthService.getUserInfo(accessToken);
 
-        if (!twitchUser.login().equalsIgnoreCase(authorizedUsername)) {
-            logger.warn("Unauthorized Twitch login attempt: {}", twitchUser.login());
-            return "redirect:/unauthorized";
+        if (!twitchUser.username().equalsIgnoreCase(authorizedUsername)) {
+            logger.warn("Unauthorized Twitch login attempt: {}", twitchUser.username());
+
+            response.sendRedirect(frontendUrl + "/unauthorized");
+
+            return;
         }
 
-        userService.createOrUpdate(twitchUser);
+        try {
+            userService.createOrUpdate(twitchUser);
 
-        return "redirect:/";
+            session.setAttribute("user", twitchUser);
+
+            response.sendRedirect(frontendUrl + "/");
+        } catch (Exception e) {
+            logger.error("Error while updating or create user", e);
+        }
     }
 }

@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import useTwitchLiveStatus from '../hooks/useTwitchLiveStatus';
+import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
     const [liveChecked, setLiveChecked] = useState(false);
     const isLive = useTwitchLiveStatus();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { isAuthenticated, username, logout, login } = useAuth();
 
     useEffect(() => {
       if (isLive !== null) {
         setLiveChecked(true);
       }
     }, [isLive]);
+
+    const handleLogout = async () => {
+        await logout();
+    };
 
     return (
         <header className="fixed z-50 w-full bg-slate-700/60 text-white">
@@ -44,6 +50,16 @@ const Header: React.FC = () => {
                         <Link to="/" className="hover:text-blue-300">Home</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
+                        {isAuthenticated && (
+                          <Link to="/admin" className="hover:text-green-400 font-bold">
+                            Admin
+                          </Link>
+                        )}
+                        {username ? (
+                          <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
+                        ) : (
+                          <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                        )}
                         </>
                     ) : (
                         <>
@@ -61,6 +77,16 @@ const Header: React.FC = () => {
                         <Link to="/" className="hover:text-blue-300">Home</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
+                        {isAuthenticated && (
+                          <Link to="/admin" className="hover:text-green-400 font-bold">
+                            Admin
+                          </Link>
+                        )}
+                        {username ? (
+                          <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
+                        ) : (
+                          <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                        )}
                         </>
                     )}
                 </nav>
@@ -88,6 +114,16 @@ const Header: React.FC = () => {
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
+                      {isAuthenticated && (
+                        <Link to="/admin" className="hover:text-green-400 font-bold">
+                          Admin
+                        </Link>
+                      )}
+                      {username ? (
+                        <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
+                      ) : (
+                        <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                      )}
                     </>
                   ) : (
                     <>
@@ -102,6 +138,16 @@ const Header: React.FC = () => {
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
+                      {isAuthenticated && (
+                        <Link to="/admin" className="hover:text-green-400 font-bold">
+                          Admin
+                        </Link>
+                      )}
+                      {username ? (
+                        <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
+                      ) : (
+                        <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                      )}
                     </>
                   )}
               </div>
