@@ -54,4 +54,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    if (import.meta.env.VITE_DEV_AUTH === 'true') {
+        return {
+          isAuthenticated: true,
+          username: import.meta.env.VITE_DEV_USERNAME || 'devuser',
+          logout: async () => console.log('Mock Logout'),
+          login: async () => console.log('Mock Login'),
+        };
+    }
+    useContext(AuthContext);
+    }
