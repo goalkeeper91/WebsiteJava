@@ -14,7 +14,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="title" type="VARCHAR(255)" />
-            <column name="embed_url" type="VARCHAR(1024)" />
+            <column name="video_id" type="VARCHAR(1024)" />
             <column name="api_key" type="VARCHAR(255)" />
             <column name="channel_id" type="VARCHAR(255)" />
         </createTable>

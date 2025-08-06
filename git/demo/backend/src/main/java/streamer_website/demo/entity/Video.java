@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import streamer_website.demo.security.EncryptedStringConverter;
 
 @Entity
 @Table(name="videos")
@@ -18,9 +19,15 @@ public class Video {
 
     private String platform;
 
+    @Column(nullable = true)
     private String title;
-    private String urlId;
+    @Column(nullable = true)
+    private String videoId;
 
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(nullable = true)
     private String apiKey;
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(nullable = true)
     private String channelId;
 }

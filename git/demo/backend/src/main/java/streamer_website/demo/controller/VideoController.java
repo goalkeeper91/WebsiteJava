@@ -8,6 +8,7 @@ import streamer_website.demo.service.VideoService;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/videos")
 @RequiredArgsConstructor

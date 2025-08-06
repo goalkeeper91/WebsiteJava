@@ -30,7 +30,7 @@ public class VideoService {
                 .map(existing -> {
                     existing.setPlatform(updatedVideo.getPlatform());
                     existing.setTitle(updatedVideo.getTitle());
-                    existing.setUrlId(updatedVideo.getUrlId());
+                    existing.setVideoId(updatedVideo.getVideoId());
                     existing.setApiKey(updatedVideo.getApiKey());
                     existing.setChannelId(updatedVideo.getChannelId());
                     return videoRepository.save(existing);

@@ -3,7 +3,7 @@ import React from 'react';
 const pages = [
   { id: 'home', name: 'Startseite' },
   { id: 'about', name: 'Über uns' },
-  { id: 'contact', name: 'Kontakt' },
+  { id: 'all videos', name: 'Alle Videos' },
 ];
 
 const PageSidebar = ({ selectedPageId, onSelectPage }: {
