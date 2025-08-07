@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Pattern für das Log-Layout -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Appender für die Haupt-Logdatei -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- täglich neue Datei + 30 Tage aufbewahren -->
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender nur für TwitchService-Logs -->
+    <appender name="TWITCH_SERVICE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/twitch-service.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/twitch-service.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root-Logger schreibt in FILE -->
+    <root level="DEBUG">
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <appender name="TWITCH_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="streamer_website.demo.service.TwitchService" level="DEBUG" additivity="false">
+        <appender-ref ref="TWITCH_SERVICE_FILE"/>
+        <appender-ref ref="TWITCH_CONSOLE"/>
+    </logger>
+
+</configuration>

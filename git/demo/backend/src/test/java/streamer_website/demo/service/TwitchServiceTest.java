@@ -1,5 +1,6 @@
 package streamer_website.demo.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TwitchServiceTest {
 
     private MockWebServer mockWebServer;
-
+    private ObjectMapper objectMapper;
     private TwitchService twitchService;
 
     @Value("${twitch.redirectUri}")
@@ -33,7 +34,9 @@ public class TwitchServiceTest {
         mockWebServer = new MockWebServer();
         mockWebServer.start();
 
-        WebClient.Builder builder = WebClient.builder().baseUrl(mockWebServer.url("/").toString());
+        String baseUrl = mockWebServer.url("/").toString();
+
+        WebClient.Builder builder = WebClient.builder();
 
         // TwitchService manuell mit Spring-Values und WebClient bauen
         twitchService = new TwitchService(
@@ -41,8 +44,10 @@ public class TwitchServiceTest {
                 "dummy-client-id",
                 "dummy-secret",
                 "dummy-user",
-                mockWebServer.url("/").toString(),
-                redirectUri
+                baseUrl,
+                baseUrl,
+                redirectUri,
+                objectMapper
         );
     }
 

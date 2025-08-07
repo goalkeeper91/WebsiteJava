@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface Props {
-  activeTab: 'pages' | 'bots';
-  onTabChange: (tab: 'pages' | 'bots') => void;
+  activeTab: 'pages' | 'bots' | 'stats';
+  onTabChange: (tab: 'pages' | 'bots' | 'stats') => void;
 }
 
 const AdminTabs: React.FC<Props> = ({ activeTab, onTabChange }) => {
@@ -23,6 +23,14 @@ const AdminTabs: React.FC<Props> = ({ activeTab, onTabChange }) => {
         }`}
       >
         Bots
+      </button>
+      <button
+        onClick={() => onTabChange('stats')}
+        className={`px-4 py-2 rounded ${
+        activeTab === 'stats' ? 'bg-goalyBlue text-white' : 'bg-gray-600 text-gray-300'
+        }`}
+      >
+        Stats
       </button>
     </div>
   );

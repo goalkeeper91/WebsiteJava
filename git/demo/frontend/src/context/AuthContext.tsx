@@ -19,30 +19,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async () => {
     try {
-        const res = await fetch("http://localhost:8080/api/auth/me", {
-            credentials: "include",
-            });
-            if (!res.ok) throw new Error("Not logged in");
-            const data = await  res.json();
-            setUsername(data.username);
+      const res = await fetch("http://localhost:8080/api/auth/me", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Not logged in");
+      const data = await res.json();
+      setUsername(data.username);
     } catch (error) {
-        setUsername(null);
+      setUsername(null);
     }
   };
 
   const logout = async () => {
     try {
-        await fetch("http://localhost:8080/api/auth/logout", {
-            method: "POST",
-            credentials: "include",
-            });
+      await fetch("http://localhost:8080/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } finally {
-        setUsername(null);
+      setUsername(null);
     }
   };
 
   useEffect(() => {
-      login();
+    login();
   }, []);
 
   const isAuthenticated = !!username;
@@ -55,13 +55,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useAuth = () => {
-    if (import.meta.env.VITE_DEV_AUTH === 'true') {
-        return {
-          isAuthenticated: true,
-          username: import.meta.env.VITE_DEV_USERNAME || 'devuser',
-          logout: async () => console.log('Mock Logout'),
-          login: async () => console.log('Mock Login'),
-        };
-    }
-    useContext(AuthContext);
-    }
+  // Dev-Modus: Gib einfach das AuthContext zurück, kein automatisches Login
+  if (import.meta.env.VITE_DEV_AUTH === 'false') {
+    return useContext(AuthContext);
+  }
+  // Prod-Modus: auch normal den AuthContext zurückgeben
+  return useContext(AuthContext);
+};

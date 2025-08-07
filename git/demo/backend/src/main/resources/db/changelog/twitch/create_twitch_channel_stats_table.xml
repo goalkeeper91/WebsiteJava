@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+    <changeSet id="create_twitch_channel_stats_table" author="Marcel">
+        <createTable tableName="twitch_channel_stats">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="twitch_user_id" type="VARCHAR(255)"/>
+            <column name="display_name" type="VARCHAR(255)"/>
+            <column name="description" type="TEXT"/>
+            <column name="profile_image_url" type="VARCHAR(512)"/>
+            <column name="followers" type="INT"/>
+            <column name="fetched_at" type="TIMESTAMP"/>
+            <column name="offline_image_url" type="VARCHAR(512)"/>
+            <column name="broadcaster_type" type="VARCHAR(255)"/>
+            <column name="view_count" type="INT"/>
+            <column name="account_created_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

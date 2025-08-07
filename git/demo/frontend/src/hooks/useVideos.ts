@@ -29,6 +29,11 @@ export const useVideos = () => {
     fetchVideos();
   }, []);
 
+  if (!Array.isArray(videos)) {
+    console.error("useVideos: videos ist kein Array:", videos);
+    return { youtubeVideos: [], loading: false };
+  }
+
   const youtubeVideos = videos.filter(v => v.platform === 'youtube');
   const tiktokVideos = videos.filter(v => v.platform === 'tiktok');
 

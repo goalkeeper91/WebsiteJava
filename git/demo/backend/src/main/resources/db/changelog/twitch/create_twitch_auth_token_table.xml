@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="create_twitch_auth_token_table" author="Marcel">
+        <createTable tableName="twitch_auth_tokens">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="access_token" type="VARCHAR(512)"/>
+            <column name="refresh_token" type="VARCHAR(512)"/>
+            <column name="token_type" type="VARCHAR(64)"/>
+            <column name="expires_in" type="BIGINT"/>
+            <column name="scope" type="TEXT"/>
+            <column name="twitch_user_id" type="VARCHAR(128)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

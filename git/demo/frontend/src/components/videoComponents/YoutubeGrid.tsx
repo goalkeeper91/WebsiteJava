@@ -25,6 +25,9 @@ const YoutubeGrid: React.FC = () => {
     fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}`)
       .then((res) => res.json())
       .then((data) => {
+        if (!Array.isArray(data.items)) {
+            return { fetchedVideos: [], loading: false };
+        }
         const fetchedVideos = data.items
           .filter((item: any) => item.id.kind === "youtube#video")
           .map((item: any) => ({
