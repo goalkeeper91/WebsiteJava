@@ -28,6 +28,7 @@ public class TwitchAuthToken {
     private String tokenType;
     private Long expiresIn;
     private String scope;
+    private String userName;
     private String twitchUserId;
     private Instant createdAt;
     private Instant updatedAt;

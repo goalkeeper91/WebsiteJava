@@ -3,7 +3,6 @@ package streamer_website.demo.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -31,23 +30,20 @@ import java.util.Optional;
 @Service
 public class TwitchService {
 
+    public enum TokenType { BOT, USER }
+
     private final String clientId;
-
     private final String clientSecret;
-
     private final String username;
-
     private final String apiBaseUrl;
-
     private final String authBaseUrl;
+    private final String redirectUri;
 
-    private String cachedToken;
-    private long tokenExpiry;
+    private String botToken;
+    private long botTokenExpiry;
 
     private final WebClient twitchApiClient;
     private final WebClient twitchAuthClient;
-
-    private final String redirectUri;
 
     @Autowired
     private TwitchAuthTokenRepository twitchAuthTokenRepository;
@@ -82,7 +78,7 @@ public class TwitchService {
 
     public boolean isLive() {
         try {
-            String token = getAccessToken();
+            String token = getAccessToken(TokenType.USER);
 
             String userId = Objects.requireNonNull(twitchApiClient.get()
                             .uri("/helix/users?login=" + username)
@@ -110,7 +106,15 @@ public class TwitchService {
         }
     }
 
-    private String getAccessToken() {
+    public String getAccessToken(TokenType type) {
+        if (type == TokenType.BOT) {
+            return getBotToken().getAccessToken();
+        } else {
+            return getUserAccessToken();
+        }
+    }
+
+    private String getUserAccessToken() {
         Optional<TwitchAuthToken> tokenOpt = twitchAuthTokenRepository.findTopByOrderByCreatedAtDesc();
 
         if (tokenOpt.isEmpty()) {
@@ -132,6 +136,37 @@ public class TwitchService {
         }
 
         return token.getAccessToken();
+    }
+
+    private TwitchTokenResponse getBotToken() {
+        if (botToken != null && Instant.now().getEpochSecond() < botTokenExpiry - 60) {
+            return new TwitchTokenResponse(botToken, null, botTokenExpiry, List.of(), "bearer");
+        }
+
+        JsonNode response = twitchAuthClient.post()
+                .uri("/oauth2/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData("client_id", clientId)
+                        .with("client_secret", clientSecret)
+                        .with("grant_type", "client_credentials"))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        if (response == null || response.get("access_token") == null) {
+            throw new RuntimeException("Failed to fetch bot token");
+        }
+
+        botToken = response.get("access_token").asText();
+        botTokenExpiry = Instant.now().getEpochSecond() + response.get("expires_in").asLong();
+
+        return new TwitchTokenResponse(
+                botToken,
+                null,
+                response.get("expires_in").asLong(),
+                objectMapper.convertValue(response.get("scope"), new TypeReference<List<String>>() {}),
+                response.get("token_type").asText()
+        );
     }
 
     public TwitchTokenResponse exchangeCodeForAccessToken(String code) throws JsonProcessingException {
@@ -167,11 +202,12 @@ public class TwitchService {
 
         TwitchAuthToken twitchAuthToken = TwitchAuthToken.builder()
                 .accessToken(token.getAccessToken())
-                .refreshToken(token.getRefreshtoken())
+                .refreshToken(token.getRefreshToken())
                 .expiresIn(token.getExpiresIn())
                 .tokenType(token.getTokenType())
                 .scope(objectMapper.writeValueAsString(scopes))
                 .twitchUserId(twitchUser.id())
+                .userName(twitchUser.username())
                 .build();
 
         twitchAuthTokenRepository.save(twitchAuthToken);
@@ -212,7 +248,7 @@ public class TwitchService {
                 .orElseThrow(() -> new IllegalStateException("No token in DB to refresh"));
 
         twitchAuthToken.setAccessToken(token.getAccessToken());
-        twitchAuthToken.setRefreshToken(token.getRefreshtoken());
+        twitchAuthToken.setRefreshToken(token.getRefreshToken());
         twitchAuthToken.setExpiresIn(token.getExpiresIn());
         twitchAuthToken.setScope(objectMapper.writeValueAsString(scopes));
         twitchAuthToken.setTokenType(token.getTokenType());

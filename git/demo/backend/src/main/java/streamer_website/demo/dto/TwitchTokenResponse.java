@@ -18,7 +18,7 @@ public class TwitchTokenResponse {
     private String accessToken;
 
     @JsonProperty("refresh_token")
-    private String refreshtoken;
+    private String refreshToken;
 
     @JsonProperty("expires_in")
     private Long expiresIn;

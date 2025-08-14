@@ -1,7 +1,6 @@
 package streamer_website.demo.controller;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,7 +11,6 @@ import streamer_website.demo.dto.TwitchUser;
 import streamer_website.demo.service.TwitchService;
 import streamer_website.demo.service.UserService;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,7 +47,7 @@ public class TwitchAuthControllerTest {
         TwitchUser dummyUser = new TwitchUser("1", "goalkeeper91", "goalkeeper91", "marcel-tu@hotmail.de");
         TwitchTokenResponse mockTokenResponse = TwitchTokenResponse.builder()
                 .accessToken("some-access-token")
-                .refreshtoken("some-refresh-token")
+                .refreshToken("some-refresh-token")
                 .expiresIn(3600L)
                 .scope(List.of("user:read:email"))
                 .tokenType("bearer")

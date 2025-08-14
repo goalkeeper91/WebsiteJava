@@ -13,3 +13,9 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/twitch/create_twitch_channel_stats_table.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_commands_table.xml
+
+  - include:
+      file: db/changelog/twitch/alter_twitch_auth_token_table.xml
