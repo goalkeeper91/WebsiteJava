@@ -29,6 +29,17 @@
         </encoder>
     </appender>
 
+    <appender name="TWITCH_COMMAND_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/twitch-commands.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/twitch-commands.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Root-Logger schreibt in FILE -->
     <root level="DEBUG">
         <appender-ref ref="FILE"/>
@@ -40,9 +51,12 @@
         </encoder>
     </appender>
 
-    <logger name="streamer_website.demo.service.TwitchService" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.service" level="DEBUG" additivity="false">
         <appender-ref ref="TWITCH_SERVICE_FILE"/>
-        <appender-ref ref="TWITCH_CONSOLE"/>
+    </logger>
+
+    <logger name="streamer_website.demo.client" level="DEBUG" additivity="false">
+        <appender-ref ref="TWITCH_COMMAND_FILE"/>
     </logger>
 
 </configuration>

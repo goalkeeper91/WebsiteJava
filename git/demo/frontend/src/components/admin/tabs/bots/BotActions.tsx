@@ -88,7 +88,7 @@ const TwitchBotControls = () => {
             )}
           </p>
         </div>
-        <div className="space-x-2">
+        <div className="flex p-1 space-x-2">
           {!status?.running ? (
             <button
               onClick={startBot}

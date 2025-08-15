@@ -8,6 +8,7 @@ import com.github.twitch4j.common.enums.CommandPermission;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamer_website.demo.commands.TwitchBotModCommand;
 import streamer_website.demo.service.BotOAuthService;
 import streamer_website.demo.service.TwitchCommandService;
 
@@ -47,6 +48,7 @@ public class TwitchBot {
         OAuth2Credential credential = botOAuthService.getBotCredential(botUserIdFromDB);
 
         client = TwitchClientBuilder.builder()
+                .withEnableHelix(true)
                 .withEnableChat(true)
                 .withChatAccount(credential)
                 .build();
@@ -71,13 +73,9 @@ public class TwitchBot {
     }
 
     private void onMessage(ChannelMessageEvent event) {
-        String user = event.getUser().getName();
         boolean isMod = event.getPermissions().contains(CommandPermission.MODERATOR)
                 || event.getPermissions().contains(CommandPermission.BROADCASTER);
         String message = event.getMessage();
-        String channel = event.getChannel().getName();
-
-        System.out.println("[" + channel + "] " + user + ": " + message);
 
         if (!message.startsWith("!")) return;
 
@@ -85,45 +83,33 @@ public class TwitchBot {
         String trigger = parts[0].substring(1).toLowerCase();
 
         try {
-            switch (trigger) {
-                case "add":
-                    if (isMod && parts.length == 3) {
-                        String newTrigger = parts[1].toLowerCase();
-                        String response = parts[2];
-                        commandService.addCommand(newTrigger, response, false);
-                        client.getChat().sendMessage(channel, "Command !" + newTrigger + " hinzugefügt!");
-                    } else if (!isMod) {
-                        client.getChat().sendMessage(channel, "Lass den Mist sonst stille Treppe!!!111!11");
-                    }
-                    break;
+            if (isMod) {
+                TwitchBotModCommand cmd = TwitchBotModCommand.fromTrigger(trigger);
+                if (cmd == null) {
+                    return;
+                }
+                try {
+                    String[] args = parts;
 
-                case "edit":
-                    if (isMod && parts.length == 3) {
-                        String editTrigger = parts[1].toLowerCase();
-                        String newResponse = parts[2];
-                        commandService.editCommand(editTrigger, newResponse);
-                        client.getChat().sendMessage(channel, "Command !" + editTrigger + " aktualisiert!");
-                    } else if (!isMod) {
-                        client.getChat().sendMessage(channel, "Dein Ernst?");
+                    if (trigger.equals("title") || trigger.equals("category")) {
+                        String fullArgument = message.substring(message.indexOf(" ") + 1);
+                        args = new String[] { trigger, fullArgument };
                     }
-                    break;
 
-                case "delete":
-                    if (isMod && parts.length >= 2) {
-                        String deleteTrigger = parts[1].toLowerCase();
-                        commandService.deleteCommand(deleteTrigger);
-                        client.getChat().sendMessage(channel, "Command !" + deleteTrigger + " gelöscht!");
-                    } else if (!isMod) {
-                        client.getChat().sendMessage(channel, "Es reicht, ab auf die Stille Treppe");
-                    }
-                    break;
-
-                default:
-                    commandService.getCommand(trigger).ifPresent(cmd ->
-                            client.getChat().sendMessage(channel, cmd.getResponse()));
+                    cmd.execute(args, event, client, commandService);
+                } catch (Exception e) {
+                    logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}",
+                            trigger, message, e);
+                    client.getChat().sendMessage(event.getChannel().getName(),
+                            "Fehler beim Ausführen des Commands: " + trigger);
+                }
             }
+
+            commandService.getCommand(trigger).ifPresent(cmd ->
+                    client.getChat().sendMessage(event.getChannel().getName(), cmd.getResponse()));
+
         } catch (Exception e) {
-            client.getChat().sendMessage(channel, "Fehler beim Verarbeiten des Command: " + event.getMessage());
+            client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Command: " + event.getMessage());
             logger.warn("Fehler beim Command", e);
         }
     }
