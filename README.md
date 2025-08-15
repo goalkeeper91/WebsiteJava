@@ -14,6 +14,7 @@ demo/
 ├── backend/        # Java Backend
 ├── frontend/       # React Frontend mit Tailwind
 └── docker-compose.yml  # Startet Backend und Frontend zusammen
+```
 
 ---
 
@@ -42,18 +43,19 @@ Im Projektverzeichnis `demo/`:
 
 ```bash
 docker-compose up --build
+```
 
 Backend läuft auf http://localhost:8080
 
-Frontend läuft auf http://localhost:3000 (oder wie in docker-compose.yml konfiguriert)
+Frontend läuft auf http://localhost:5173
 
-📝 Nutzung
+## 📝 Nutzung
 
 Nach dem Start sind Backend-API und Frontend direkt verfügbar.
 
 Das Frontend konsumiert die Backend-API automatisch.
 
-📂 Wichtige Dateien
+## 📂 Wichtige Dateien
 
 backend/pom.xml – Maven-Konfiguration
 
@@ -61,7 +63,7 @@ frontend/package.json – Frontend-Abhängigkeiten & Scripts
 
 docker-compose.yml – Container-Setup
 
-📄 Lizenz
+## 📄 Lizenz
 
 Copyright (c) 2025 goalkeeper91.  
 All rights reserved.  
