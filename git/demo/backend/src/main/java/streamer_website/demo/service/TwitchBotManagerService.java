@@ -1,10 +1,18 @@
 package streamer_website.demo.service;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import streamer_website.demo.client.TwitchBot;
 import streamer_website.demo.config.TwitchBotConfig;
 import streamer_website.demo.dto.BotStatusDto;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,34 +23,61 @@ public class TwitchBotManagerService {
     private final BotOAuthService botOAuthService;
     private final TwitchCommandService twitchCommandService;
     private final TwitchBotConfig twitchBotConfig;
+    private static final Logger logger = LoggerFactory.getLogger(TwitchBotManagerService.class);
 
+    @Async
     public void startBot() {
-        if (twitchBot == null) {
-            String channelName = "goalkeeper91_bot";
-            String userId = twitchBotConfig.getBotUserId();
-
-            twitchBot = new TwitchBot(channelName, twitchCommandService, botOAuthService);
-            twitchBot.start(userId);
+        if (twitchBot != null && twitchBot.isRunning()) {
+            return;
         }
+
+        String channelName = "goalkeeper91";
+        String userId = twitchBotConfig.getBotUserId();
+
+        twitchBot = new TwitchBot(channelName, twitchCommandService, botOAuthService);
+        twitchBot.start(userId);
     }
 
     public void stopBot() {
         if (twitchBot != null) {
-            twitchBot.stop();
-            twitchBot = null;
+            twitchBot.stop(); // stoppt die IRC-Verbindung
         }
     }
 
     public BotStatusDto getBotStatus() {
-        var token = botOAuthService.findBotToken(); // Methode muss in BotOAuthService existieren
+        var token = botOAuthService.findBotToken();
         boolean tokenPresent = token != null;
-        long expiry = tokenPresent ? token.getExpiresIn() : 0;
+
+        Instant expiresAt = null;
+        if (tokenPresent) {
+            expiresAt = token.getCreatedAt().plusSeconds(token.getExpiresIn());
+        }
+
+        boolean running = twitchBot != null && twitchBot.isRunning();
+        String primaryChannel = twitchBot != null ? twitchBot.getChannelName() : null;
+
+        List<String> activeChannels = running && twitchBot.getClient() != null
+                ? twitchBot.getClient().getChat().getChannels()
+                .stream()
+                .sorted()
+                .toList()
+                : Collections.emptyList();
+
+        Long uptimeSeconds = null;
+
+        if (running && twitchBot.getStartTime() != null) {
+            uptimeSeconds = Duration.between(twitchBot.getStartTime(), Instant.now()).getSeconds();
+        }
 
         return new BotStatusDto(
-                twitchBot.isRunning(),
+                running,
                 tokenPresent,
-                expiry,
-                twitchBot.getChannelName()
+                expiresAt,
+                primaryChannel,
+                activeChannels,
+                uptimeSeconds,
+                "1.0.0" // Version
         );
     }
+
 }

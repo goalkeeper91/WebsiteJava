@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface TwitchAuthTokenRepository extends JpaRepository<TwitchAuthToken, Long> {
     Optional<TwitchAuthToken> findByTwitchUserId(String twitchUserId);
-    Optional<TwitchAuthToken> findByUserName(String userName);
+    Optional<TwitchAuthToken> findTopByUserNameOrderByCreatedAtDesc(String userName);
     Optional<TwitchAuthToken> findTopByOrderByCreatedAtDesc();
 }

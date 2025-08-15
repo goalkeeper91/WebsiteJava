@@ -1,6 +1,8 @@
 package streamer_website.demo.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import streamer_website.demo.entity.TwitchAuthToken;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class BotOAuthService {
@@ -27,15 +30,20 @@ public class BotOAuthService {
     private final String clientSecret;
     private final String redirectUri;
 
+    private final ObjectMapper objectMapper;
+
     public BotOAuthService(TwitchAuthTokenRepository tokenRepository,
-                           @Value("${twitch.client-id}") String clientId,
-                           @Value("${twitch.client-secret}") String clientSecret,
-                           @Value("${twitch.redirect-uri}") String redirectUri)
+                           @Value("${twitch.bot.client-id}") String clientId,
+                           @Value("${twitch.bot.clientSecret}") String clientSecret,
+                           @Value("${twitch.bot.redirectUri}") String redirectUri,
+                           ObjectMapper objectMapper
+    )
     {
         this.tokenRepository = tokenRepository;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.redirectUri = redirectUri;
+        this.objectMapper = objectMapper;
     }
 
     public OAuth2Credential getBotCredential(String twitchUserId) {
@@ -74,8 +82,9 @@ public class BotOAuthService {
         logger.info("Token für {} erfolgreich refreshed", token.getTwitchUserId());
     }
 
-    public void saveBotTokenFromCode(String code) {
-        var response = webClient.post()
+    public void saveBotTokenFromCode(String code) throws JsonProcessingException {
+        // Token von Twitch holen
+        TwitchTokenResponse response = webClient.post()
                 .uri("https://id.twitch.tv/oauth2/token" +
                         "?client_id=" + clientId +
                         "&client_secret=" + clientSecret +
@@ -91,15 +100,46 @@ public class BotOAuthService {
             throw new IllegalStateException("Bot-Token konnte nicht geholt werden");
         }
 
-        TwitchAuthToken token = new TwitchAuthToken();
+        List<String> scopes = response.getScope();
+
+        // Bot-Userdaten abfragen
+        String twitchUserId = fetchBotUserId(response.getAccessToken());
+        String botUsername = fetchBotUsername(response.getAccessToken());
+
+        // Token in DB speichern oder aktualisieren
+        TwitchAuthToken token = tokenRepository.findByTwitchUserId(twitchUserId)
+                .orElse(TwitchAuthToken.builder().build());
+
+        token.setTwitchUserId(twitchUserId);
+        token.setUserName(botUsername);
         token.setAccessToken(response.getAccessToken());
         token.setRefreshToken(response.getRefreshToken());
         token.setExpiresIn(Instant.now().getEpochSecond() + response.getExpiresIn());
-        token.setTwitchUserId(fetchBotUserId(response.getAccessToken()));
+        token.setScope(objectMapper.writeValueAsString(scopes));
+        token.setTokenType(response.getTokenType());
+        token.setCreatedAt(Instant.now());
 
         tokenRepository.save(token);
-        logger.info("Bot-Token erfolgreich gespeichert für User {}", token.getTwitchUserId());
+        logger.info("Bot-Token erfolgreich gespeichert für User {}", twitchUserId);
     }
+
+
+    private String fetchBotUsername(String accessToken) {
+        var userResponse = webClient.get()
+                .uri("https://api.twitch.tv/helix/users")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Client-Id", clientId)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        if (userResponse == null || !userResponse.has("data") || userResponse.get("data").isEmpty()) {
+            throw new IllegalStateException("Konnte Bot-Username nicht abrufen");
+        }
+
+        return userResponse.get("data").get(0).get("login").asText();
+    }
+
 
     private String fetchBotUserId(String accessToken) {
         var resp = webClient.get()
@@ -137,12 +177,13 @@ public class BotOAuthService {
     }
 
     public String buildOAuthUrl() {
-        String scope = "chat:read chat:edit"; // ggf. erweitern
+        String scope = "chat:read chat:edit channel:manage:broadcast";
         return "https://id.twitch.tv/oauth2/authorize" +
                 "?client_id=" + clientId +
                 "&redirect_uri=" + redirectUri +
                 "&response_type=code" +
-                "&scope=" + scope;
+                "&scope=" + scope +
+                "&force_verify=true";
     }
 
     public TwitchAuthToken findBotToken() {
@@ -151,7 +192,9 @@ public class BotOAuthService {
     }
 
     private String getBotUserId() {
-        return "dein-bot-user-id";
+        return tokenRepository.findTopByUserNameOrderByCreatedAtDesc("goalkeeper91_bot")
+                .map(TwitchAuthToken::getTwitchUserId)
+                .orElse("Not found");
     }
 
     @Getter

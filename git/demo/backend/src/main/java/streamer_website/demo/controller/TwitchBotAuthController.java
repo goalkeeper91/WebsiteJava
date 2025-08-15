@@ -1,9 +1,11 @@
 package streamer_website.demo.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 import streamer_website.demo.service.BotOAuthService;
 
 @RestController
@@ -17,8 +19,8 @@ public class TwitchBotAuthController {
     }
 
     @GetMapping("/callback")
-    public String botCallback(@RequestParam String code) {
+    public RedirectView botCallback(@RequestParam String code) throws JsonProcessingException {
         botOAuthService.saveBotTokenFromCode(code);
-        return "Bot token gespeichert - Du kannst den Bot jetzt starten!";
+        return new RedirectView("http://localhost:5173/admin?tokenSaved=true");
     }
 }

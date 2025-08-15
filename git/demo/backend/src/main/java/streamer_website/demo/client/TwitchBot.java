@@ -8,11 +8,10 @@ import com.github.twitch4j.common.enums.CommandPermission;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import streamer_website.demo.service.BotOAuthService;
 import streamer_website.demo.service.TwitchCommandService;
+
+import java.time.Instant;
 
 public class TwitchBot {
 
@@ -22,7 +21,8 @@ public class TwitchBot {
     @Getter
     private final String channelName;
 
-    private String botUserId;
+    @Getter
+    private Instant startTime;
 
     private final TwitchCommandService commandService;
     private final BotOAuthService botOAuthService;
@@ -44,8 +44,7 @@ public class TwitchBot {
             return;
         }
 
-        this.botUserId = botUserIdFromDB;
-        OAuth2Credential credential = botOAuthService.getBotCredential(botUserId);
+        OAuth2Credential credential = botOAuthService.getBotCredential(botUserIdFromDB);
 
         client = TwitchClientBuilder.builder()
                 .withEnableChat(true)
@@ -55,6 +54,7 @@ public class TwitchBot {
         client.getChat().joinChannel(channelName);
         client.getEventManager().onEvent(ChannelMessageEvent.class, this::onMessage);
 
+        startTime = Instant.now();
         running = true;
         logger.info("TwitchBot gestartet und Kanal {} beigetreten", channelName);
     }
@@ -64,7 +64,9 @@ public class TwitchBot {
             client.close();
             client = null;
         }
+
         running = false;
+        startTime = null;
         logger.info("TwitchBot gestoppt");
     }
 
