@@ -1,4 +1,37 @@
-# React + TypeScript + Vite
+# Demo Frontend
+
+Dies ist das Frontend für die Demo-Anwendung. Das Projekt basiert auf React und verwendet Docker zur vereinfachten Entwicklung und Bereitstellung.
+
+## Projektstruktur
+
+- `src/` – Hauptquellcode des Frontends
+    - `assets/` – Statische Assets wie Bilder und Icons
+    - `components/` – React-Komponenten
+        - `admin/` – Admin-spezifische Komponenten
+            - `forms/` – Formulare für Admin-Interfaces
+            - `tabs/` – Tab-Interfaces
+                - `bots/` – Bot-spezifische Tabs
+                    - `discord/` – Discord-Bot Komponenten
+                - `pages/` – Seiten-Tab-Komponenten
+                - `stats/` – Statistik-Tab-Komponenten
+        - `community/` – Community-Komponenten
+        - `hero/` – Hero-Section Komponenten
+        - `live/` – Live-Streaming Komponenten
+        - `routes/` – Routing-Komponenten
+        - `socials/` – Social-Media-Komponenten
+        - `videoComponents/` – Komponenten für Videos
+
+## Setup mit Docker
+
+Das Projekt nutzt Docker, daher ist keine lokale Installation von Node.js oder npm nötig.
+
+### Docker Build & Run
+
+```bash
+docker compose up --build -d
+```
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
