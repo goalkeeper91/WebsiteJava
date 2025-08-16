@@ -1,4 +1,4 @@
-package streamer_website.demo.controller;
+package streamer_website.demo.controller.twitch;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import streamer_website.demo.dto.TwitchTokenResponse;
 import streamer_website.demo.dto.TwitchUser;
-import streamer_website.demo.service.TwitchService;
+import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package streamer_website.demo.commands;
+package streamer_website.demo.commands.twitch;
 
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
@@ -7,9 +7,7 @@ import com.github.twitch4j.helix.domain.ChannelInformation;
 import com.github.twitch4j.helix.domain.ChannelInformationList;
 import com.netflix.hystrix.HystrixCommand;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import streamer_website.demo.service.TwitchCommandService;
+import streamer_website.demo.service.twitch.TwitchCommandService;
 
 import java.util.List;
 

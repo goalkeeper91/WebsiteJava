@@ -6,9 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import streamer_website.demo.controller.twitch.TwitchAuthController;
 import streamer_website.demo.dto.TwitchTokenResponse;
 import streamer_website.demo.dto.TwitchUser;
-import streamer_website.demo.service.TwitchService;
+import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
 
 import java.util.List;

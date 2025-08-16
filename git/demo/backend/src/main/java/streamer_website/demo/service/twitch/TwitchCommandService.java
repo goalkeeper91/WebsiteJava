@@ -1,4 +1,4 @@
-package streamer_website.demo.service;
+package streamer_website.demo.service.twitch;
 
 import org.springframework.stereotype.Service;
 import streamer_website.demo.entity.TwitchAuthToken;

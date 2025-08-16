@@ -1,4 +1,4 @@
-package streamer_website.demo.service;
+package streamer_website.demo.service.twitch;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

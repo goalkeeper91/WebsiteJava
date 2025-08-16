@@ -8,9 +8,9 @@ import com.github.twitch4j.common.enums.CommandPermission;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamer_website.demo.commands.TwitchBotModCommand;
-import streamer_website.demo.service.BotOAuthService;
-import streamer_website.demo.service.TwitchCommandService;
+import streamer_website.demo.commands.twitch.TwitchBotModCommand;
+import streamer_website.demo.service.twitch.BotOAuthService;
+import streamer_website.demo.service.twitch.TwitchCommandService;
 
 import java.time.Instant;
 

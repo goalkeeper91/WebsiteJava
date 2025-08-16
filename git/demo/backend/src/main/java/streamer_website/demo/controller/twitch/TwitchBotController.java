@@ -1,4 +1,4 @@
-package streamer_website.demo.controller;
+package streamer_website.demo.controller.twitch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import streamer_website.demo.dto.BotStatusDto;
 import streamer_website.demo.dto.TokenInfoDto;
-import streamer_website.demo.service.BotOAuthService;
-import streamer_website.demo.service.TwitchBotManagerService;
+import streamer_website.demo.service.twitch.BotOAuthService;
+import streamer_website.demo.service.twitch.TwitchBotManagerService;
 
 @RestController
 @RequestMapping("/api/bot")

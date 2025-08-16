@@ -55,8 +55,12 @@
         <appender-ref ref="TWITCH_SERVICE_FILE"/>
     </logger>
 
-    <logger name="streamer_website.demo.client" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.client.TwitchBot" level="DEBUG" additivity="false">
         <appender-ref ref="TWITCH_COMMAND_FILE"/>
+    </logger>
+
+    <logger name="streamer_website.demo.client.DiscordBot" level="DEBUG" additivity="false">
+        <appender-ref ref="DISCORD_COMMAND_FILE"/>
     </logger>
 
 </configuration>

@@ -1,4 +1,4 @@
-package streamer_website.demo.service;
+package streamer_website.demo.service.twitch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -1,4 +1,4 @@
-package streamer_website.demo.controller;
+package streamer_website.demo.controller.twitch;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
