@@ -5,6 +5,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import streamer_website.demo.service.discord.CommandService;
 import streamer_website.demo.service.discord.StatusService;
@@ -18,22 +19,19 @@ public class DiscordBot {
     private final CommandService commandService;
     private final StatusService statusService;
 
-    private GatewayDiscordClient gateway;
-
     public DiscordBot(CommandService commandService, StatusService statusService) {
         this.commandService = commandService;
         this.statusService = statusService;
     }
 
-    @PostConstruct
-    public void startBot() {
-
+    @Bean
+    public GatewayDiscordClient gatewayDiscordClient() {
         if (token == null || token.isEmpty()) {
             throw new IllegalStateException("Discord token is not set!");
         }
 
         DiscordClient client = DiscordClient.create(token);
-        gateway = client.login().block();
+        GatewayDiscordClient gateway = client.login().block();
 
         if (gateway == null) {
             throw new IllegalStateException("Failed to login to Discord. Check your token.");
@@ -49,5 +47,7 @@ public class DiscordBot {
         gateway.onDisconnect()
                 .doOnTerminate(() -> statusService.setRunning(false))
                 .subscribe();
+
+        return gateway;
     }
 }
