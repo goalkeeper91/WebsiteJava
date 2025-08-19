@@ -2,49 +2,54 @@ package streamer_website.demo.client;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.event.domain.guild.GuildCreateEvent;
-import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.rest.util.Image;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import streamer_website.demo.controller.discord.GuildController;
-import streamer_website.demo.entity.discord.DiscordGuild;
-import streamer_website.demo.repository.DiscordGuildRepository;
-import streamer_website.demo.service.discord.CommandService;
+import streamer_website.demo.handler.discord.CommandEventHandler;
+import streamer_website.demo.handler.discord.GuildEventHandler;
+import streamer_website.demo.service.discord.GuildService;
 import streamer_website.demo.service.discord.StatusService;
+import streamer_website.demo.entity.discord.DiscordGuild;
+import discord4j.rest.util.Image;
 
 import java.time.Instant;
 
 @Component
 public class DiscordBot {
 
+    private static final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
+
     @Value("${discord.bot.token}")
     private String token;
 
-    private final CommandService commandService;
+    private final GuildEventHandler guildEventHandler;
+    private final CommandEventHandler commandHandler;
     private final StatusService statusService;
-    private final DiscordGuildRepository discordGuildRepository;
+    private final GuildService guildService;
 
-    private static final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
-
+    @Getter
     private GatewayDiscordClient gateway;
 
-    public DiscordBot(CommandService commandService,
+    public DiscordBot(GuildEventHandler guildEventHandler,
+                      CommandEventHandler commandHandler,
                       StatusService statusService,
-                      DiscordGuildRepository discordGuildRepository) {
-        this.commandService = commandService;
+                      GuildService guildService) {
+        this.guildEventHandler = guildEventHandler;
+        this.commandHandler = commandHandler;
         this.statusService = statusService;
-        this.discordGuildRepository = discordGuildRepository;
+        this.guildService = guildService;
     }
 
     @Bean
-    public GatewayDiscordClient gatewayDiscordClient() {
+    public GatewayDiscordClient start() {
         if (token == null || token.isEmpty()) {
             throw new IllegalStateException("Discord token is not set!");
         }
+
+        logger.info("Starte Discord Bot …");
 
         DiscordClient client = DiscordClient.create(token);
         gateway = client.login().block();
@@ -55,46 +60,32 @@ public class DiscordBot {
 
         statusService.setRunning(true);
 
-        setupListeners();
+        // Events registrieren
+        guildEventHandler.register(gateway);
+        commandHandler.register(gateway);
 
-        return gateway;
-    }
-
-    private void setupListeners() {
-        gateway.on(MessageCreateEvent.class, event -> {
-            commandService.handle(event);
-            return null;
-        }).subscribe();
-
-        gateway.on(GuildCreateEvent.class, event -> {
-            saveGuild(event.getGuild());
-            return null;
-        }).subscribe();
+        // Sync der Guilds beim Start
+        syncGuilds();
 
         gateway.onDisconnect()
                 .doOnTerminate(() -> statusService.setRunning(false))
                 .subscribe();
+
+        return gateway;
     }
 
-    private void saveGuild(discord4j.core.object.entity.Guild guildData) {
-        DiscordGuild guild = new DiscordGuild();
-        guild.setId(Long.parseLong(guildData.getId().asString()));
-        guild.setName(guildData.getName());
-        guild.setIconUrl(guildData.getIconUrl(Image.Format.PNG).map(Object::toString).orElse(null));
-        guild.setCreatedAt(Instant.now());
-        guild.setUpdatedAt(Instant.now());
-
-        discordGuildRepository.save(guild);
-        System.out.println("Guild gespeichert: " + guild.getName());
-    }
-
-    public void syncGuilds() {
-        if (gateway == null) {
-            throw new IllegalStateException("GatewayDiscordClient ist nicht initialisiert!");
-        }
-
+    private void syncGuilds() {
         gateway.getGuilds()
                 .collectList()
-                .subscribe(guilds -> guilds.forEach(this::saveGuild));
+                .blockOptional()
+                .ifPresent(guilds -> guilds.forEach(guild -> {
+                    DiscordGuild discordGuild = new DiscordGuild();
+                    discordGuild.setId(guild.getId().asLong());
+                    discordGuild.setName(guild.getName());
+                    discordGuild.setIconUrl(guild.getIconUrl(Image.Format.PNG).map(Object::toString).orElse(null));
+                    discordGuild.setUpdatedAt(Instant.now());
+
+                    guildService.saveOrUpdateGuild(discordGuild);
+                }));
     }
 }

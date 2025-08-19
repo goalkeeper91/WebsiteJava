@@ -26,7 +26,7 @@ public class DiscordStatusController {
         Map<String, Object> status = new HashMap<>();
         status.put("running", statusService.isRunning());
         status.put("since", statusService.getStartTime());
-        status.put("guilds", guildService.getGuilds());
+        status.put("guilds", guildService.getAllGuilds());
         return status;
     }
 }
