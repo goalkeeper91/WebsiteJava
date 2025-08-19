@@ -1,7 +1,7 @@
 package streamer_website.demo.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import streamer_website.demo.entity.TwitchAuthToken;
+import streamer_website.demo.entity.twitch.TwitchAuthToken;
 
 import java.util.Optional;
 

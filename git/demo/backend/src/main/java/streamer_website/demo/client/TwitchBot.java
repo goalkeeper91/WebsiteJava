@@ -85,23 +85,22 @@ public class TwitchBot {
         try {
             if (isMod) {
                 TwitchBotModCommand cmd = TwitchBotModCommand.fromTrigger(trigger);
-                if (cmd == null) {
-                    return;
-                }
-                try {
-                    String[] args = parts;
+                if (cmd != null) {
+                    try {
+                        String[] args = parts;
 
-                    if (trigger.equals("title") || trigger.equals("category")) {
-                        String fullArgument = message.substring(message.indexOf(" ") + 1);
-                        args = new String[] { trigger, fullArgument };
+                        if (trigger.equals("title") || trigger.equals("category")) {
+                            String fullArgument = message.substring(message.indexOf(" ") + 1);
+                            args = new String[] { trigger, fullArgument };
+                        }
+
+                        cmd.execute(args, event, client, commandService);
+                    } catch (Exception e) {
+                        logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}",
+                                trigger, message, e);
+                        client.getChat().sendMessage(event.getChannel().getName(),
+                                "Fehler beim Ausführen des Commands: " + trigger);
                     }
-
-                    cmd.execute(args, event, client, commandService);
-                } catch (Exception e) {
-                    logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}",
-                            trigger, message, e);
-                    client.getChat().sendMessage(event.getChannel().getName(),
-                            "Fehler beim Ausführen des Commands: " + trigger);
                 }
             }
 

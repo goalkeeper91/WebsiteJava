@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import streamer_website.demo.entity.TwitchChannelStats;
+import streamer_website.demo.entity.twitch.TwitchChannelStats;
 import streamer_website.demo.service.twitch.TwitchService;
 
 import java.util.Map;

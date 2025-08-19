@@ -1,4 +1,4 @@
-package streamer_website.demo.entity;
+package streamer_website.demo.entity.twitch;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

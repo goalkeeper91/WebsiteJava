@@ -19,3 +19,18 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/twitch/alter_twitch_auth_token_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_guilds_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_users_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_voice_channels_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_guild_roles_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_role_members_table.xml

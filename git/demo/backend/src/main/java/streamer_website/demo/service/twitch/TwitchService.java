@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.dto.TwitchTokenResponse;
 import streamer_website.demo.dto.TwitchUser;
-import streamer_website.demo.entity.TwitchAuthToken;
-import streamer_website.demo.entity.TwitchChannelStats;
+import streamer_website.demo.entity.twitch.TwitchAuthToken;
+import streamer_website.demo.entity.twitch.TwitchChannelStats;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 import streamer_website.demo.repository.TwitchChannelStatsRepository;
 

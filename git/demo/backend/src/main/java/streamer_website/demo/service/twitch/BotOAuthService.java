@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import streamer_website.demo.dto.TokenInfoDto;
 import streamer_website.demo.dto.TwitchTokenResponse;
-import streamer_website.demo.entity.TwitchAuthToken;
+import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 
 import java.time.Instant;

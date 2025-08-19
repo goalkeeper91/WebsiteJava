@@ -73,7 +73,7 @@ const TwitchBotControls = () => {
       <div className="p-4 rounded-xl shadow flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold">Bot Status</h2>
-          <p className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500">
             {status?.running ? (
               <span className="flex items-center text-green-600">
                 <CheckCircle className="w-5 h-5 mr-1" /> Läuft
@@ -86,7 +86,7 @@ const TwitchBotControls = () => {
             {status?.running && status.uptimeSeconds !== undefined && (
               <UptimeDisplay uptimeSeconds={status.uptimeSeconds} />
             )}
-          </p>
+          </div>
         </div>
         <div className="flex p-1 space-x-2">
           {!status?.running ? (

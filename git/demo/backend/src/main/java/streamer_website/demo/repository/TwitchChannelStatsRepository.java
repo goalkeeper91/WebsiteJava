@@ -1,7 +1,7 @@
 package streamer_website.demo.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import streamer_website.demo.entity.TwitchChannelStats;
+import streamer_website.demo.entity.twitch.TwitchChannelStats;
 
 import java.util.Optional;
 

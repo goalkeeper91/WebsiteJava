@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="create_discord_guild_roles_table" author="Marcel">
+        <createTable tableName="discord_guild_roles">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="guild_id" type="BIGINT"/>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="hoist" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="permissions" type="BIGINT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_guild_roles_guild"
+                baseTableName="discord_guild_roles"
+                baseColumnNames="guild_id"
+                referencedTableName="discord_guilds"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

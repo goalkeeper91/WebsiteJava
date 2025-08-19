@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+    <changeSet id="create_discord_role_members_table" author="Marcel">
+        <createTable tableName="discord_role_members">
+            <column name="role_id" type="BIGINT"/>
+            <column name="user_id" type="BIGINT"/>
+        </createTable>
+
+        <addPrimaryKey tableName="discord_role_members" columnNames="role_id, user_id"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_role_members_role"
+                baseTableName="discord_role_members"
+                baseColumnNames="role_id"
+                referencedTableName="discord_guild_roles"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_role_members_user"
+                baseTableName="discord_role_members"
+                baseColumnNames="user_id"
+                referencedTableName="discord_users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

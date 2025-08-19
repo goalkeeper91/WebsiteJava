@@ -29,6 +29,28 @@
         </encoder>
     </appender>
 
+    <appender name="DISCORD_COMMAND_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/discord-commands.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/discord-commands.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="DISCORD_CONTROLLER_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/discord-controller.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/discord-controller.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <appender name="TWITCH_COMMAND_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/twitch-commands.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -61,6 +83,10 @@
 
     <logger name="streamer_website.demo.client.DiscordBot" level="DEBUG" additivity="false">
         <appender-ref ref="DISCORD_COMMAND_FILE"/>
+    </logger>
+
+    <logger name="streamer_website.demo.controller.discord" level="DEBUG" additivity="false">
+        <appender-ref ref="DISCORD_CONTROLLER_FILE"/>
     </logger>
 
 </configuration>
