@@ -6,21 +6,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
-import streamer_website.demo.service.twitch.BotOAuthService;
+import streamer_website.demo.service.twitch.TwitchService;
 
 @RestController
 @RequestMapping("/twitch/bot")
 public class TwitchBotAuthController {
 
-    private final BotOAuthService botOAuthService;
+    private final TwitchService botOAuthService;
 
-    public TwitchBotAuthController(BotOAuthService botOAuthService) {
+    public TwitchBotAuthController(TwitchService botOAuthService) {
         this.botOAuthService = botOAuthService;
     }
 
     @GetMapping("/callback")
     public RedirectView botCallback(@RequestParam String code) throws JsonProcessingException {
-        botOAuthService.saveBotTokenFromCode(code);
+        botOAuthService.exchangeCodeForAccessToken(code, true);
         return new RedirectView("http://localhost:5173/admin?tokenSaved=true");
     }
 }

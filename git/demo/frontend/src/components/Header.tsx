@@ -8,7 +8,7 @@ const Header: React.FC = () => {
     const [liveChecked, setLiveChecked] = useState(false);
     const isLive = useTwitchLiveStatus();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { isAuthenticated, username, logout, login } = useAuth();
+    const { isAuthenticated, username, logout } = useAuth();
 
     useEffect(() => {
       if (isLive !== null) {

@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import streamer_website.demo.dto.TwitchTokenResponse;
 import streamer_website.demo.dto.TwitchUser;
+import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
+import streamer_website.demo.service.twitch.TwitchTokenService;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -36,13 +38,16 @@ public class TwitchAuthController {
 
     private final TwitchService twitchAuthService;
 
+    private final TwitchTokenService tokenService;
+
     private final UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchAuthController.class);
 
-    public TwitchAuthController(TwitchService twitchAuthService, UserService userService) {
+    public TwitchAuthController(TwitchService twitchAuthService, UserService userService, TwitchTokenService tokenService) {
         this.twitchAuthService = twitchAuthService;
         this.userService = userService;
+        this.tokenService = tokenService;
     }
 
     @GetMapping("/twitch")
@@ -65,15 +70,14 @@ public class TwitchAuthController {
     public void handleTwitchCallback(@RequestParam("code") String code,
                                      HttpServletResponse response,
                                      HttpSession session) throws IOException {
-        TwitchTokenResponse responseToken = twitchAuthService.exchangeCodeForAccessToken(code);
-        String accessToken = responseToken.getAccessToken();
-        TwitchUser twitchUser = twitchAuthService.getUserInfo(accessToken);
+
+        TwitchAuthToken token = tokenService.exchangeCodeForToken(code, false);
+
+        TwitchUser twitchUser = twitchAuthService.getUserInfo(token.getUserName());
 
         if (!twitchUser.username().equalsIgnoreCase(authorizedUsername)) {
             logger.warn("Unauthorized Twitch login attempt: {}", twitchUser.username());
-
             response.sendRedirect(frontendUrl + "/unauthorized");
-
             return;
         }
 
@@ -84,7 +88,8 @@ public class TwitchAuthController {
 
             response.sendRedirect(frontendUrl + "/");
         } catch (Exception e) {
-            logger.error("Error while updating or create user", e);
+            logger.error("Error while updating or creating user", e);
+            response.sendRedirect(frontendUrl + "/error");
         }
     }
 }

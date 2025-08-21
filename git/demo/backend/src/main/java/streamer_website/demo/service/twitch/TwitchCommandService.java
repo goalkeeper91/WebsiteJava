@@ -15,12 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TwitchCommandService {
 
     private final TwitchCommandRepository repository;
-    private final TwitchAuthTokenRepository tokenRepository;
+    private final TwitchTokenService tokenService;
     private final Map<String, TwitchCommand> commandCache = new ConcurrentHashMap<>();
 
-    public TwitchCommandService(TwitchCommandRepository repository, TwitchAuthTokenRepository tokenRepository) {
+    public TwitchCommandService(TwitchCommandRepository repository, TwitchTokenService tokenService) {
         this.repository = repository;
-        this.tokenRepository = tokenRepository;
+        this.tokenService = tokenService;
         loadCommandsFromDB();
     }
 
@@ -66,14 +66,10 @@ public class TwitchCommandService {
     }
 
     public String getBotToken() {
-        return tokenRepository.findTopByUserNameOrderByCreatedAtDesc("goalkeeper91_bot")
-                .map(TwitchAuthToken::getAccessToken)
-                .orElseThrow(() -> new IllegalStateException("Kein aktiver Bot-Token gefunden"));
+        return tokenService.getBotAccessToken();
     }
 
-    public String getUserToken() {
-        return tokenRepository.findTopByUserNameOrderByCreatedAtDesc("goalkeeper91")
-                .map(TwitchAuthToken::getAccessToken)
-                .orElseThrow(() -> new IllegalStateException("Kein aktiver User-Token gefunden"));
+    public String getUserToken(String username) {
+        return tokenService.getUserAccessToken(username);
     }
 }

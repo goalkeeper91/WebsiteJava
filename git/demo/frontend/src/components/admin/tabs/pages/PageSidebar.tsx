@@ -1,5 +1,3 @@
-import React from 'react';
-
 const pages = [
   { id: 'home', name: 'Startseite' },
   { id: 'about', name: 'Über uns' },

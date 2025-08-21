@@ -1,5 +1,3 @@
-import React from 'react';
-
 const bots = [
   { id: 'twitchBot', name: 'Twitch Bot' },
   { id: 'discordBot', name: 'Discord Bot' },

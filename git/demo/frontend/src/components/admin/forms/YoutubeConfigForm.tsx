@@ -11,11 +11,9 @@ const YoutubeConfigForm: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const baseUrl = 'http://localhost:8080';
 
-  // Hole bestehende Konfiguration (YouTube Video ohne videoId)
   useEffect(() => {
-    fetch(`${baseUrl}/api/videos/platform/youtube`)
+    fetch(`/api/videos/platform/youtube`)
       .then(res => res.json())
       .then((data) => {
         const configEntry = data.find((v: any) => !v.videoId); // Kein echtes Video = Konfiguration
@@ -48,7 +46,7 @@ const YoutubeConfigForm: React.FC = () => {
       videoId: null, // Wichtig, damit das Backend zufrieden ist
     };
 
-    const url = config.id ? `${baseUrl}/api/videos/${config.id}` : `${baseUrl}/api/videos`;
+    const url = config.id ? `/api/videos/${config.id}` : `/api/videos`;
     const method = config.id ? 'PUT' : 'POST';
 
     try {
@@ -58,7 +56,7 @@ const YoutubeConfigForm: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      const result = await res.text(); // Lies die Response immer zuerst
+      const result = await res.text();
         console.log(result);
       if (res.ok) {
         setMessage('Erfolgreich gespeichert');

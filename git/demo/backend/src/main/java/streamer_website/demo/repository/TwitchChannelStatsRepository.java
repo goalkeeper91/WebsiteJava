@@ -9,4 +9,6 @@ public interface TwitchChannelStatsRepository extends JpaRepository<TwitchChanne
     Optional<TwitchChannelStats> findTopByOrderByFetchedAtDesc();
 
     Optional<TwitchChannelStats> findByTwitchUserId(String twitchUserId);
+
+    Optional<String> findIdByDisplayName(String displayName);
 }

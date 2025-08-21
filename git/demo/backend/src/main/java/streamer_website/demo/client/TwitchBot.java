@@ -9,8 +9,8 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamer_website.demo.commands.twitch.TwitchBotModCommand;
-import streamer_website.demo.service.twitch.BotOAuthService;
 import streamer_website.demo.service.twitch.TwitchCommandService;
+import streamer_website.demo.service.twitch.TwitchTokenService;
 
 import java.time.Instant;
 
@@ -26,17 +26,17 @@ public class TwitchBot {
     private Instant startTime;
 
     private final TwitchCommandService commandService;
-    private final BotOAuthService botOAuthService;
+    private final TwitchTokenService twitchTokenService;
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchBot.class);
 
     @Getter
     private boolean running = false;
 
-    public TwitchBot(String channelName, TwitchCommandService commandService, BotOAuthService botOAuthService) {
+    public TwitchBot(String channelName, TwitchCommandService commandService, TwitchTokenService twitchTokenService) {
         this.channelName = channelName;
         this.commandService = commandService;
-        this.botOAuthService = botOAuthService;
+        this.twitchTokenService = twitchTokenService;
     }
 
     public void start(String botUserIdFromDB) {
@@ -45,7 +45,9 @@ public class TwitchBot {
             return;
         }
 
-        OAuth2Credential credential = botOAuthService.getBotCredential(botUserIdFromDB);
+        String accessToken = twitchTokenService.getBotAccessToken();
+
+        OAuth2Credential credential = new OAuth2Credential("twitch", accessToken);
 
         client = TwitchClientBuilder.builder()
                 .withEnableHelix(true)

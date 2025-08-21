@@ -24,9 +24,10 @@ public class TwitchControllerTest {
 
     @Test
     void shouldReturnLiveStatusTrue() throws Exception {
-        Mockito.when(twitchService.isLive()).thenReturn(true);
+        Mockito.when(twitchService.isLive("dummy_user")).thenReturn(true);
 
-        mockMvc.perform(get("/twitch/status"))
+        mockMvc.perform(get("/twitch/status")
+                        .param("username", "dummy-user"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.live").value(true));
 

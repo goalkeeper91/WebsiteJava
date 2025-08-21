@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle, RefreshCcw, LogOut } from "lucide-react";
 import UptimeDisplay from "../../stats/UptimeDisplay";
 
 interface DiscordStatus {
-  running: boolean;
+  running?: boolean;
   since: string | null;
   uptimeSeconds?: number;
   guilds?: Guild[];
@@ -21,7 +21,7 @@ const DiscordBotStatus: React.FC = () => {
 
   const fetchInviteLink = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/discord/guild/invite-link");
+      const res = await fetch("/api/discord/guild/invite-link");
       if (!res.ok) throw new Error("Fehler beim Abrufen des Invite-Links");
       const data = await res.json();
       setInviteLink(data.inviteLink);
@@ -33,7 +33,7 @@ const DiscordBotStatus: React.FC = () => {
   const fetchStatus = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:8080/api/discord/status");
+      const res = await fetch("/api/discord/status");
       if (!res.ok) throw new Error("Fehler beim Abrufen des Discord-Status");
       const data: DiscordStatus = await res.json();
       setStatus(data);
@@ -47,16 +47,17 @@ const DiscordBotStatus: React.FC = () => {
   const syncGuilds = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:8080/api/discord/guild/sync", {
+      const res = await fetch("/api/discord/guild/sync", {
         method: "POST",
       });
       if (!res.ok) throw new Error("Fehler beim Synchronisieren der Guilds");
 
       const data: Guild[] = await res.json(); // aktualisierte Guilds aus Backend
-      setStatus((prev) => ({
-        ...prev,
-        guilds: data,
-      }));
+      setStatus((prev) =>
+        prev
+          ? { ...prev, guilds: data }
+          : { running: false, since: null, guilds: data } // Fallback falls prev null
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -66,7 +67,7 @@ const DiscordBotStatus: React.FC = () => {
 
   const disconnectGuild = async (guildId: string) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/discord/guilds/${guildId}/disconnect`, {
+      const res = await fetch(`/api/discord/guilds/${guildId}/disconnect`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Fehler beim Trennen des Servers");

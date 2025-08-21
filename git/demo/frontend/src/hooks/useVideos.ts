@@ -16,7 +16,7 @@ export const useVideos = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/videos');
+        const response = await fetch('/api/videos');
         const data = await response.json();
         setVideos(data);
       } catch (error) {

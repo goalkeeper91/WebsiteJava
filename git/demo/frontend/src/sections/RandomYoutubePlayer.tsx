@@ -1,44 +1,51 @@
 import { useEffect, useState, useRef } from 'react';
 
-const videoIds = [
-    'JDSXB-n1QLQ',
-    'uPzpZbB4mr8&pp=0gcJCccJAYcqIYzv',
-    'AA_m8rLcIx0',
-    'MWrnLqYwfjE&pp=0gcJCccJAYcqIYzv',
-    'PzggVsIcSuY&pp=0gcJCccJAYcqIYzv',
-    'sokBPz93o5g',
-    'hNwE7r25Amv8',
-    'iN0P_5q8Iso',
-    '6jvlln4p3o0',
-    'gaZXybW9_Ew'
-];
+const fetchVideoIds = async (): Promise<string[]> => {
+    const res = await fetch('/api/videos');
+    const data: { videoId: string }[] = await res.json();
+    return data.map(v => v.videoId);
+};
 
-const getRandomVideoId = (excludeId?: string): string => {
+
+const getRandomVideoId = (videoIds: string[], excludeId?: string): string => {
     const filtered = excludeId ? videoIds.filter(id => id !== excludeId) : videoIds;
     return filtered[Math.floor(Math.random() * filtered.length)];
 };
 
 const RandomYoutubePlayer = () => {
-    const [currentVideoId, setCurrentVideoId] = useState(getRandomVideoId());
+    const [videoIds, setVideoIds] = useState<string[]>([]);
+    const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
     const playerRef = useRef<any>(null);
 
+    useEffect(() => {
+        fetchVideoIds().then(ids => {
+            setVideoIds(ids);
+            if (ids.length > 0) {
+                setCurrentVideoId(getRandomVideoId(ids));
+            }
+        });
+    }, []);
+
     const handleVideoEnd = () => {
-        const next = getRandomVideoId(currentVideoId);
+        if (!videoIds.length) return;
+        const next = getRandomVideoId(videoIds, currentVideoId || undefined);
         setCurrentVideoId(next);
     };
 
     useEffect(() => {
+        if (!videoIds.length || !currentVideoId) return;
+
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
         document.body.appendChild(tag);
 
-        (window as any).onYoutubeIframeAPIReady = () => {
+        (window as any).onYouTubeIframeAPIReady = () => {
             playerRef.current = new (window as any).YT.Player('youtube-player', {
-                heigh: '390',
+                height: '390',
                 width: '640',
                 videoId: currentVideoId,
                 events: {
-                    onStateChange: (event.any) => {
+                    onStateChange: (event: any) => {
                         if (event.data === 0) handleVideoEnd();
                     },
                 },
@@ -48,17 +55,17 @@ const RandomYoutubePlayer = () => {
         return () => {
             if (playerRef.current?.destroy) playerRef.current.destroy();
         };
-    }, ());
+    }, [videoIds, currentVideoId]);
 
     useEffect(() => {
-        if (playerRef.current?.loadVideoById) {
+        if (playerRef.current?.loadVideoById && currentVideoId) {
             playerRef.current.loadVideoById(currentVideoId);
         }
     }, [currentVideoId]);
 
     return (
-        <section className='py-12 px-6 bg-black text-white text-center'>
-            <h2 className='text-3xl font-bold mb-6'> 📺 Zufälliges Video</h2>
+        <section className="py-12 px-6 bg-black text-white text-center">
+            <h2 className="text-3xl font-bold mb-6">📺 Zufälliges Video</h2>
             <div className="flex justify-center">
                 <div id="youtube-player" className="rounded-lg overflow-hidden shadow-lg" />
             </div>

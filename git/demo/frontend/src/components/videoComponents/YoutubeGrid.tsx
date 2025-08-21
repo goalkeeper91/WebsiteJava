@@ -8,10 +8,9 @@ const YoutubeGrid: React.FC = () => {
   const { youtubeVideos, loading } = useVideos();
 
   useEffect(() => {
-    // warte auf Daten und prüfe ob youtubeVideos vorhanden sind
     if (loading || youtubeVideos.length === 0) return;
 
-    const videoConfig = youtubeVideos[0]; // wir nehmen den ersten als Konfiguration
+    const videoConfig = youtubeVideos[0];
 
     if (!videoConfig?.apiKey || !videoConfig?.channelId) {
       console.error("Fehlende YouTube-Konfiguration");

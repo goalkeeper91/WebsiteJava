@@ -8,33 +8,33 @@ services:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/dev_db
-      SPRING_DATASOURCE_USERNAME: dev_user
-      SPRING_DATASOURCE_PASSWORD: dev_pass
+      - ./backend/.env:/app/.env:ro
+    env_file:
+      - ./backend/.env
     networks:
       - app-network
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile # definiere einen dev Dockerfile, der npm run dev macht
+      context: .
+      dockerfile: frontend/Dockerfile # definiere einen dev Dockerfile, der npm run dev macht
     ports:
-      - "5173:5173"  # Vite default dev port
+      - "80:80"  # Vite default dev port
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - ./frontend/.env:/app/.env:ro
+    env_file:
+      - ./frontend/.env
     networks:
       - app-network
 
   postgres:
     image: postgres:15
-    environment:
-      POSTGRES_DB: dev_db
-      POSTGRES_USER: dev_user
-      POSTGRES_PASSWORD: dev_pass
+    env_file:
+      - ./postgres/.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      test: ["CMD-SHELL", "pg_isready -h postgres -p 5432"]
       interval: 5s
       timeout: 5s
       retries: 5

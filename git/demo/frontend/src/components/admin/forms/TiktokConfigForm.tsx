@@ -12,11 +12,9 @@ const TiktokVideoForm: React.FC = () => {
   const [newVideo, setNewVideo] = useState<TiktokVideo>({ title: '', videoId: '', platform: 'tiktok' });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  const baseUrl = 'http://localhost:8080';
 
-  // Bestehende TikTok-Videos laden
   useEffect(() => {
-    fetch(`${baseUrl}/api/videos/platform/tiktok`)
+    fetch(`/api/videos/platform/tiktok`)
       .then(res => res.json())
       .then(data => setVideos(data))
       .catch(() => setMessage('Fehler beim Laden der TikTok-Videos'))
@@ -33,7 +31,7 @@ const TiktokVideoForm: React.FC = () => {
     setMessage('');
 
     try {
-      const res = await fetch(`${baseUrl}/api/videos`, {
+      const res = await fetch(`/api/videos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newVideo),
@@ -54,7 +52,7 @@ const TiktokVideoForm: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`${baseUrl}/api/videos/${id}`, { method: 'DELETE' });
+      await fetch(`/api/videos/${id}`, { method: 'DELETE' });
       setVideos(prev => prev.filter(video => video.id !== id));
     } catch {
       setMessage('Fehler beim Löschen');

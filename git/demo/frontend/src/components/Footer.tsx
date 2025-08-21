@@ -33,6 +33,15 @@ const Footer: React.FC = () => {
               &copy; {new Date().getFullYear()} Goalkeeper91. Alle Rechte vorbehalten.
             </div>
 
+            <div className="text-sm text-gray-400 text-center sm:text-right">
+              <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
+                <a href="/legal/impressum" className="hover:text-white transition">Impressum</a>
+                <a href="/legal/datenschutz" className="hover:text-white transition">Datenschutz</a>
+                <a href="/legal/agb" className="hover:text-white transition">AGB</a>
+              </div>
+            </div>
+
+
           </div>
         </footer>
   );

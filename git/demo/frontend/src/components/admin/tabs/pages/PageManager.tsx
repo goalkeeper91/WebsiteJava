@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PageSidebar from './PageSidebar';
 import PageEditor from './PageEditor';
 

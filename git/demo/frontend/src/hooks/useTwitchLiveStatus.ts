@@ -6,7 +6,11 @@ const useTwitchLiveStatus = () => {
     useEffect(() => {
         const fetchLiveStatus = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/twitch/status`);
+                const username = "goalkeeper91";
+                      const response = await fetch(`/api/twitch/status?username=${username}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                      });
                 if (!response.ok) throw new Error('Network response not ok');
                 const data = await response.json();
                 setIsLive(data.live);

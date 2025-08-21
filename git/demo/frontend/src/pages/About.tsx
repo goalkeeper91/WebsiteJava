@@ -1,4 +1,3 @@
-import React from 'react';
 import FollowMe from '../components/socials/FollowMe';
 
 const About = () => {

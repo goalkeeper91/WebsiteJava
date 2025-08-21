@@ -1,54 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type TwitchStats = {
-    twitchUserId: string;
-    displayName: string;
-    description: string;
-    profileImageUrl: string;
-    offlineImageUrl: string;
-    broadcasterType: string;
-    viewCount: number;
-    followers: number;
-    accountCreatedAt: string;
-    fetchedAt: string;
-    };
+  twitchUserId: string;
+  displayName: string;
+  description: string;
+  profileImageUrl: string;
+  offlineImageUrl: string;
+  broadcasterType: string;
+  viewCount: number;
+  followers: number;
+  accountCreatedAt: string;
+  fetchedAt: string;
+};
 
 const TwitchStatsCard: React.FC = () => {
-    const [stats, setStats] = useState<TwitchStats | null>(null);
-    const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<TwitchStats | null>(null);
+  const [loading, setLoading] = useState(false);
 
-    const fetchStats = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('http://localhost:8080/twitch/stats');
-            if (!res.ok) throw new Error('Fehler beim Laden');
-            const data = await res.json();
-            setStats(data);
-        } catch (err) {
-            console.error('Ladefehler:', err);
-            setStats(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const refreshStats = async () => {
+    setLoading(true);
+    try {
+      const username = "goalkeeper91"; // <- vorerst hardcoded
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/twitch/stats/refresh?username=${username}`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Fehler beim Aktualisieren');
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error('Aktualisierungsfehler:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const refreshStats = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('http://localhost:8080/twitch/stats/refresh', {
-               method: 'POST',
-            });
-            if (!res.ok) throw new Error('Fehler beim Aktualisieren');
-            const data = await res.json();
-            setStats(data);
-        } catch (err) {
-            console.error('Aktualisierungsfehler:', err)
-        } finally {
-            setLoading(false);
-        }
-    };
 
-useEffect(() => {
+  useEffect(() => {
     refreshStats();
   }, []);
 
@@ -72,6 +59,14 @@ useEffect(() => {
         <li><strong>Erstellt:</strong> {new Date(stats.accountCreatedAt).toLocaleDateString()}</li>
         <li><strong>Zuletzt aktualisiert:</strong> {new Date(stats.fetchedAt).toLocaleString()}</li>
       </ul>
+
+      {/* Optional Reload Button */}
+      <button
+        onClick={refreshStats}
+        className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+      >
+        🔄 Aktualisieren
+      </button>
     </div>
   );
 };

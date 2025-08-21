@@ -12,8 +12,10 @@ import streamer_website.demo.dto.TwitchUser;
 import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
 
+import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,7 +47,18 @@ public class TwitchAuthControllerTest {
 
     @Test
     void shouldHandleTwitchCallbackAndAuthorizeUser() throws Exception {
-        TwitchUser dummyUser = new TwitchUser("1", "goalkeeper91", "goalkeeper91", "marcel-tu@hotmail.de");
+        TwitchUser dummyUser = new TwitchUser(
+                "1",                     // id
+                "goalkeeper91",          // login
+                "goalkeeper91",          // username
+                "marcel-tu@hotmail.de",  // email
+                "dummy description",     // description
+                "http://example.com/profile.jpg", // profileImageUrl
+                "http://example.com/offline.jpg", // offlineImageUrl
+                "affiliate",             // broadcasterType
+                1234,                    // viewCount
+                Instant.now()            // createdAt
+        );
         TwitchTokenResponse mockTokenResponse = TwitchTokenResponse.builder()
                 .accessToken("some-access-token")
                 .refreshToken("some-refresh-token")
@@ -54,10 +67,10 @@ public class TwitchAuthControllerTest {
                 .tokenType("bearer")
                 .build();
 
-        when(twitchAuthService.exchangeCodeForAccessToken(anyString()))
+        when(twitchAuthService.exchangeCodeForAccessToken(anyString(), anyBoolean()))
                 .thenReturn(mockTokenResponse);
 
-        when(twitchAuthService.exchangeCodeForAccessToken("dummy_code")).thenReturn(mockTokenResponse);
+        when(twitchAuthService.exchangeCodeForAccessToken("dummy_code", true)).thenReturn(mockTokenResponse);
         when(twitchAuthService.getUserInfo(mockTokenResponse.getAccessToken())).thenReturn(dummyUser);
 
         mockMvc.perform(get("/auth/twitch/callback")

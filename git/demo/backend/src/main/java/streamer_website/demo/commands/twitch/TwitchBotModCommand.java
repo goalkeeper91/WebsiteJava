@@ -44,7 +44,8 @@ public enum TwitchBotModCommand {
     SET_CATEGORY("category" , (parts, event, client, service) -> {
         if (parts.length >= 2) {
             String newCategory = parts[1];
-            String botToken = service.getUserToken();
+            String channelName = event.getChannel().getName();
+            String botToken = service.getUserToken(channelName);
 
             try {
                 CategorySearchList result = client.getHelix().searchCategories(
@@ -87,7 +88,8 @@ public enum TwitchBotModCommand {
             String dynamicPart = parts[1];
             String fixedSuffix = " | kw-com.de | !emp !dornfinger";
             String newTitle = dynamicPart + fixedSuffix;
-            String botToken = service.getUserToken();
+            String channelName = event.getChannel().getName();
+            String botToken = service.getUserToken(channelName);
 
             try {
                 HystrixCommand<ChannelInformationList> infoList = client.getHelix().getChannelInformation(botToken, List.of(event.getChannel().getId()));

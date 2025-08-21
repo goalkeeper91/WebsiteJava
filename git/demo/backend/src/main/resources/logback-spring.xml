@@ -67,12 +67,6 @@
         <appender-ref ref="FILE"/>
     </root>
 
-    <appender name="TWITCH_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <logger name="streamer_website.demo.service" level="DEBUG" additivity="false">
         <appender-ref ref="TWITCH_SERVICE_FILE"/>
     </logger>

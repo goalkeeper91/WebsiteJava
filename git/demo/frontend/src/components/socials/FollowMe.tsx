@@ -1,4 +1,3 @@
-import React from 'react';
 import { FaTwitch, FaYoutube, FaTiktok, FaInstagram, FaDiscord } from 'react-icons/fa';
 
 const FollowMe = () => {

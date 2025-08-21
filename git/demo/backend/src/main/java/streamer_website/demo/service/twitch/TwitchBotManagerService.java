@@ -20,7 +20,7 @@ public class TwitchBotManagerService {
 
     private TwitchBot twitchBot;
 
-    private final BotOAuthService botOAuthService;
+    private final TwitchTokenService twitchTokenService;
     private final TwitchCommandService twitchCommandService;
     private final TwitchBotConfig twitchBotConfig;
     private static final Logger logger = LoggerFactory.getLogger(TwitchBotManagerService.class);
@@ -34,7 +34,7 @@ public class TwitchBotManagerService {
         String channelName = "goalkeeper91";
         String userId = twitchBotConfig.getBotUserId();
 
-        twitchBot = new TwitchBot(channelName, twitchCommandService, botOAuthService);
+        twitchBot = new TwitchBot(channelName, twitchCommandService, twitchTokenService);
         twitchBot.start(userId);
     }
 
@@ -45,7 +45,7 @@ public class TwitchBotManagerService {
     }
 
     public BotStatusDto getBotStatus() {
-        var token = botOAuthService.findBotToken();
+        var token = twitchTokenService.findBotToken();
         boolean tokenPresent = token != null;
 
         Instant expiresAt = null;

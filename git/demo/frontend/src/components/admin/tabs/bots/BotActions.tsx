@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Play, Square, AlertTriangle, CheckCircle, RefreshCcw } from "lucide-react";
 import UptimeDisplay from "../stats/UptimeDisplay";
 
@@ -17,7 +17,7 @@ const TwitchBotControls = () => {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/bot/status");
+      const res = await fetch("/api/bot/status");
       if (!res.ok) throw new Error("Fehler beim Abrufen des Status");
       const data: BotStatus = await res.json();
       setStatus(data);
@@ -28,14 +28,14 @@ const TwitchBotControls = () => {
 
   const startBot = async () => {
     setLoading(true);
-    await fetch("http://localhost:8080/api/bot/start", { method: "POST" });
+    await fetch("/api/bot/start", { method: "POST" });
     await fetchStatus();
     setLoading(false);
   };
 
   const stopBot = async () => {
     setLoading(true);
-    await fetch("http://localhost:8080/api/bot/stop", { method: "POST" });
+    await fetch("/api/bot/stop", { method: "POST" });
     await fetchStatus();
     setLoading(false);
   };
