@@ -25,6 +25,14 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
       
+      - name: 🔍 Debug SSH Connection
+        run: |
+          echo "Inhalt der known_hosts Datei:"
+          cat ~/.ssh/known_hosts
+          echo ""
+          echo "Starte SSH-Verbindung mit ausführlichem Debug-Log..."
+          ssh -vvv -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
+          
       # 🚀 Start Deployment
       - name: 🖥️ Copy Project to Server
         run: |
