@@ -25,26 +25,29 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
       
-      - name: 🔍 Debug SSH Connection
-        run: |
-          echo "Inhalt der known_hosts Datei:"
-          cat ~/.ssh/known_hosts
-          echo ""
-          echo "Starte SSH-Verbindung mit ausführlichem Debug-Log..."
-          ssh -vvv -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
-          
       # 🚀 Start Deployment
       - name: 🖥️ Copy Project to Server
         run: |
+          # Use rsync to copy files from the correct project subdirectory to the server
+          # The source path is now the project's folder inside the repository
           rsync -av --exclude 'node_modules' --exclude 'logs' \
           -e "ssh -o StrictHostKeyChecking=yes" \
-          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
       - name: 🐳 Deploy with Docker Compose
         run: |
+          # Execute commands on the remote server via SSH
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # Change to the application directory
             cd /home/${{ secrets.SERVER_USER }}/app
-            /usr/libexec/docker/cli-plugins/docker-compose -f docker-compose.prod.yml pull
-            /usr/libexec/docker/cli-plugins/docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
-            /usr/libexec/docker/cli-plugins/docker-compose image prune -f
+            
+            # Use the new 'docker compose' syntax (with a space)
+            # Pull the latest images
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Bring up the services and build if necessary
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            
+            # Prune old Docker images to free up space
+            docker image prune -f
           EOF
