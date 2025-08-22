@@ -28,6 +28,10 @@ jobs:
           ssh-keygen -R ${{ secrets.SERVER_HOST }} || true
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Debug SSH Connection
+        run: |
+          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=no -v ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
+
       # 4️⃣ Dateien auf Server kopieren
       - name: Copy Project to Server
         run: |
