@@ -3,7 +3,7 @@ name: Deploy on Tag
 on:
   push:
     tags:
-      - 'v*'  # Nur Tags, z.B. v1.0.0
+      - 'v*'  # Triggers on tags like v1.0.0, v1.0.1 etc.
 
 jobs:
   deploy:
@@ -11,28 +11,40 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
-      # 1️⃣ Repository auschecken
-      - name: Checkout Repository
+      - name: 📦 Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ SSH-Agent einrichten
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: 🔑 Set up SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      # 3️⃣ Dateien auf Server kopieren, ohne node_modules und logs
-      - name: Copy Project to Server
+      - name: 🌐 Add Server to Known Hosts
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/${{ secrets.SERVER_USER }}/app/"
-          rsync -av --exclude 'node_modules' --exclude 'logs' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      
+      - name: 🔍 Debug SSH Connection
+        run: |
+          echo "Inhalt der known_hosts Datei:"
+          cat ~/.ssh/known_hosts
+          echo ""
+          echo "Starte SSH-Verbindung mit ausführlichem Debug-Log..."
+          ssh -vvv -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
+          
+      # 🚀 Start Deployment
+      - name: 🖥️ Copy Project to Server
+        run: |
+          rsync -av --exclude 'node_modules' --exclude 'logs' \
+          -e "ssh -o StrictHostKeyChecking=yes" \
+          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
-      # 4️⃣ Deployment mit Docker Compose
-      - name: Deploy with Docker Compose
+      - name: 🐳 Deploy with Docker Compose
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
             docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d --build
+            docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
             docker image prune -f
           EOF
