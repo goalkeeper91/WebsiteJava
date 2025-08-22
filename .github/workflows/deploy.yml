@@ -3,7 +3,7 @@ name: Deploy on Tag
 on:
   push:
     tags:
-      - 'v*'  # Nur Tags, z.B. v1.0.0
+      - 'v*'  # Tags wie v1.0.0, v1.0.1, etc.
 
 jobs:
   deploy:
@@ -15,33 +15,29 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ SSH-Agent einrichten
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
-      # 3️⃣ Server-Hostkey sicher hinzufügen
+      # 2️⃣ Server Hostkey bekannt machen
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keygen -R ${{ secrets.SERVER_HOST }} || true
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      - name: Debug SSH Connection
+      # 3️⃣ Debug SSH Verbindung (optional)
+      - name: Test SSH Connection
         run: |
-          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=no -v ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
+          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo ✅ SSH Verbindung erfolgreich"
 
-      # 4️⃣ Dateien auf Server kopieren
+      # 4️⃣ Dateien auf den Server kopieren
       - name: Copy Project to Server
         run: |
-          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/${{ secrets.SERVER_USER }}/app/"
-          SSH_AUTH_SOCK=$SSH_AUTH_SOCK rsync -av --exclude 'node_modules' --exclude 'logs' -e "ssh -o StrictHostKeyChecking=yes" ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          rsync -av --exclude 'node_modules' --exclude 'logs' \
+            -e "ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=yes" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
       # 5️⃣ Deployment mit Docker Compose
       - name: Deploy with Docker Compose
         run: |
-          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -i ${{ secrets.DEPLOY_KEY }} -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
             docker-compose -f docker-compose.prod.yml pull
             docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
