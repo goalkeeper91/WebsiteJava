@@ -22,9 +22,8 @@ jobs:
       - name: 🌐 Add Server to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-          # Set a less restrictive permission, as recommended for known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
       
       # 🚀 Start Deployment
       - name: 🖥️ Copy Project to Server
