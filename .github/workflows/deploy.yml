@@ -21,22 +21,23 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      # 3️⃣ Server-Hostkey bekannt machen (sicher)
+      # 3️⃣ Server-Hostkey sicher hinzufügen
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
+          ssh-keygen -R ${{ secrets.SERVER_HOST }} || true
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # 4️⃣ Dateien auf Server kopieren, ohne node_modules und logs
+      # 4️⃣ Dateien auf Server kopieren
       - name: Copy Project to Server
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/${{ secrets.SERVER_USER }}/app/"
-          rsync -av --exclude 'node_modules' --exclude 'logs' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /home/${{ secrets.SERVER_USER }}/app/"
+          SSH_AUTH_SOCK=$SSH_AUTH_SOCK rsync -av --exclude 'node_modules' --exclude 'logs' -e "ssh -o StrictHostKeyChecking=yes" ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
       # 5️⃣ Deployment mit Docker Compose
       - name: Deploy with Docker Compose
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          SSH_AUTH_SOCK=$SSH_AUTH_SOCK ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
             docker-compose -f docker-compose.prod.yml pull
             docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
