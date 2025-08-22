@@ -44,7 +44,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
-            docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
-            docker image prune -f
+            /usr/libexec/docker/cli-plugins/docker-compose -f docker-compose.prod.yml pull
+            /usr/libexec/docker/cli-plugins/docker-compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            /usr/libexec/docker/cli-plugins/docker-compose image prune -f
           EOF
