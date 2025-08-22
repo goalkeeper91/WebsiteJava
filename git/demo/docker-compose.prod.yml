@@ -3,8 +3,8 @@ version: "3.9"
 services:
   backend:
     build:
-      context: .
-      dockerfile: .backend/Dockerfile  # Production-Dockerfile für Backend
+      context: ./backend
+      dockerfile: Dockerfile  # Production-Dockerfile für Backend
     depends_on:
       postgres:
         condition: service_healthy
