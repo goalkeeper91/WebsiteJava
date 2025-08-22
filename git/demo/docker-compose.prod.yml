@@ -5,14 +5,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile  # Production-Dockerfile für Backend
-    ports:
-      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./logs:/app/logs           # Persistente Logs
-      - ./backend/.env:/app/.env:ro
     env_file:
       - ./backend/.env
     networks:
@@ -21,11 +16,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.prod  # Production-Dockerfile für Frontend
-    ports:
-      - "80:80"                    # Public Port für Browser
-    volumes:
-      - ./frontend/.env:/app/.env:ro
+      dockerfile: Dockerfile
     env_file:
       - ./frontend/.env
     networks:
@@ -41,10 +32,24 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  proxy:
+    image: nginx:stable-alpine
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - frontend
+      - backend
     networks:
       - app-network
 
