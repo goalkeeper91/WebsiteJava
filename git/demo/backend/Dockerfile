@@ -20,7 +20,8 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Kopieren Sie das wait-for-it.sh Skript in das Image und machen Sie es ausführbar
-COPY ./backend/wait-for-it.sh /usr/local/bin/wait-for-it.sh
+# Korrigierter Pfad, da der Build-Kontext der Backend-Ordner ist.
+COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
 RUN chmod +x /usr/local/bin/wait-for-it.sh
 
 EXPOSE 8080
