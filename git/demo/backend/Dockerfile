@@ -19,12 +19,12 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Kopieren Sie das wait-for-it.sh Skript in das Image und machen Sie es ausführbar
-# Korrigierter Pfad, da der Build-Kontext der Backend-Ordner ist.
+# Korrigierter Pfad: Da der Build-Kontext der Backend-Ordner ist, muss
+# der Pfad nur der Dateiname sein.
 COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
 RUN chmod +x /usr/local/bin/wait-for-it.sh
 
 EXPOSE 8080
 
-# Das Herzstück: ENTRYPOINT verwendet jetzt das robuste Skript
+# ENTRYPOINT verwendet jetzt das robuste Skript
 ENTRYPOINT ["wait-for-it.sh", "postgres", "java", "-jar", "app.jar"]
