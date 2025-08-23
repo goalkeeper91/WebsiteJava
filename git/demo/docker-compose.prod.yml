@@ -10,6 +10,10 @@ services:
         condition: service_healthy
     env_file:
       - ./backend/.env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # Aktiviert den DEBUG-Loglevel, um mehr Informationen über den Stillstand zu erhalten
+      - logging.level.root=DEBUG
     healthcheck:
       test: ["CMD", "curl", "-f", "http://backend:8080/actuator/health"]
       interval: 10s
