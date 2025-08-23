@@ -7,12 +7,19 @@ COPY . .
 
 RUN mvn clean package -DskipTests
 
+# === JRE-with-tools Stage ===
+FROM eclipse-temurin:24-jdk AS tools
+
 # === Runtime Stage ===
 FROM eclipse-temurin:24-jre
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
+
+COPY --from=tools /usr/bin/jstack /usr/bin/jstack
+COPY --from=tools /lib/jvm/temurin-24-jdk/bin/jstack /usr/local/bin/jstack
+RUN chmod +x /usr/local/bin/jstack
 
 EXPOSE 8080
 
