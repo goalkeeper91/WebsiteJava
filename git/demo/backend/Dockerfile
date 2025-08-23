@@ -12,14 +12,8 @@ RUN mvn clean package -DskipTests
 # Verwenden Sie ein schlankes JRE-Image für die Laufzeit
 FROM eclipse-temurin:24-jre
 
-# Fügen Sie Hosts-Einträge für die Ubuntu-Repositorys hinzu, um Verbindungsprobleme zu vermeiden
-# Wir verwenden eine temporäre Datei innerhalb des RUN-Befehls.
-RUN cat <<EOF > /tmp/hosts_additions && \
-    cat /etc/hosts >> /tmp/hosts_additions && \
-    mv /tmp/hosts_additions /etc/hosts
-91.189.91.83 archive.ubuntu.com
-91.189.91.81 security.ubuntu.com
-EOF
+# Fügt die Hosts-Datei aus dem Build-Kontext hinzu, um DNS-Probleme zu umgehen.
+COPY hosts.docker /etc/hosts
 
 # Installieren Sie den PostgreSQL-Client, da das Skript psql benötigt
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
