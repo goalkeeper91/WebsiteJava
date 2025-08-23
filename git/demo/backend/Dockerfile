@@ -12,6 +12,10 @@ RUN mvn clean package -DskipTests
 # Verwenden Sie ein schlankes JRE-Image für die Laufzeit
 FROM eclipse-temurin:24-jre
 
+# Fügen Sie Hosts-Einträge für die Ubuntu-Repositorys hinzu, um Verbindungsprobleme zu vermeiden
+RUN echo "91.189.91.83 archive.ubuntu.com" >> /etc/hosts && \
+    echo "91.189.91.81 security.ubuntu.com" >> /etc/hosts
+
 # Installieren Sie den PostgreSQL-Client, da das Skript psql benötigt
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
