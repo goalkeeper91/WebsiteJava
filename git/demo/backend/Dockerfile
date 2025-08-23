@@ -8,7 +8,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # === Runtime Stage ===
-FROM eclipse-temurin:24-jre-slim
+FROM eclipse-temurin:24-jre
 
 WORKDIR /app
 
