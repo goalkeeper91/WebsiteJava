@@ -11,13 +11,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Lade die Umgebungsvariablen aus der .env-Datei im Backend-Ordner
     env_file:
       - ./backend/.env
+    # Fügen Sie hier Ihre Anwendungsumgebungsvariablen ein, falls Sie welche benötigen
     environment:
-      # Die Log-Level sind weiterhin wichtig, um detailliertere Informationen zu erhalten
       - SPRING_PROFILES_ACTIVE=prod
+      # Aktiviert den TRACE-Loglevel für die maximale Anzahl an Details
       - logging.level.root=TRACE
-    # HINWEIS: Der Health Check wurde entfernt, um den Absturz sichtbar zu machen
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://backend:8080/actuator/health"]
+      interval: 10s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
     networks:
       - app-network
 
@@ -25,7 +32,6 @@ services:
     build:
       # Ändere den Kontext, um auf das übergeordnete Projektverzeichnis zu zeigen.
       context: .
-      # Gib dann den Pfad zum Dockerfile relativ zu diesem Kontext an.
       dockerfile: ./frontend/Dockerfile
     env_file:
       - ./frontend/.env
@@ -61,7 +67,7 @@ services:
       frontend:
         condition: service_started
       backend:
-        condition: service_started
+        condition: service_healthy
     networks:
       - app-network
 
