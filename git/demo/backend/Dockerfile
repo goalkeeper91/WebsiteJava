@@ -8,16 +8,12 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # === Runtime Stage ===
-FROM eclipse-temurin:24-jdk
+FROM eclipse-temurin:24-jre-slim
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Fügen Sie das wait-for-it-Skript hinzu und machen Sie es ausführbar
-COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
-RUN chmod +x /usr/local/bin/wait-for-it.sh
-
 EXPOSE 8080
 
-ENTRYPOINT ["wait-for-it.sh", "postgres:5432", "--", "java", "-jar", "app.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "until printf '' > /dev/tcp/postgres/5432 2>/dev/null; do echo 'Warte auf die PostgreSQL-Datenbank...'; sleep 1; done; exec java -jar app.jar"]
