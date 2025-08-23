@@ -5,29 +5,23 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # Stellt sicher, dass das Backend erst startet, wenn die Datenbank bereit ist
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - ./backend/.env
     environment:
+      # Die Log-Level sind weiterhin wichtig, um detailliertere Informationen zu erhalten
       - SPRING_PROFILES_ACTIVE=prod
-      # Aktiviert den DEBUG-Loglevel, um mehr Informationen über den Stillstand zu erhalten
-      - logging.level.root=DEBUG
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://backend:8080/actuator/health"]
-      interval: 10s
-      timeout: 15s
-      retries: 10
-      start_period: 120s
+      - logging.level.root=TRACE
+    # HINWEIS: Der Health Check wurde entfernt, um den Absturz sichtbar zu machen
     networks:
       - app-network
 
   frontend:
     build:
-      # Ändere den Kontext, um auf das übergeordnete Projektverzeichnis zu zeigen.
       context: .
-      # Gib dann den Pfad zum Dockerfile relativ zu diesem Kontext an.
       dockerfile: ./frontend/Dockerfile
     env_file:
       - ./frontend/.env
@@ -63,7 +57,8 @@ services:
       frontend:
         condition: service_started
       backend:
-        condition: service_healthy
+        # Ändern Sie hier, um den Service auch ohne Health-Check zu starten
+        condition: service_started
     networks:
       - app-network
 
