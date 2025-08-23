@@ -5,9 +5,6 @@ WORKDIR /app
 
 COPY . .
 
-# Fügen Sie eine Zeile hinzu, um einen öffentlichen DNS-Server zu verwenden
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf
-
 # Führen Sie den Maven-Build durch, um die ausführbare JAR-Datei zu erstellen
 RUN mvn clean package -DskipTests
 
