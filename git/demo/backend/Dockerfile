@@ -7,19 +7,12 @@ COPY . .
 
 RUN mvn clean package -DskipTests
 
-# === JRE-with-tools Stage ===
-# Wir verwenden das vollständige JDK-Image, um jstack zu erhalten
-FROM eclipse-temurin:24-jdk AS tools
-
 # === Runtime Stage ===
-FROM eclipse-temurin:24-jre
+FROM eclipse-temurin:24-jdk
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
-
-COPY --from=tools /opt/java/openjdk/bin/jstack /usr/local/bin/jstack
-RUN chmod +x /usr/local/bin/jstack
 
 EXPOSE 8080
 
