@@ -3,7 +3,9 @@ version: "3.9"
 services:
   backend:
     build:
+      # Gib den Kontext explizit an, um den Fehler zu vermeiden
       context: ./backend
+      # Gib dann den Pfad zum Dockerfile relativ zu diesem Kontext an.
       dockerfile: Dockerfile
     # Stellt sicher, dass das Backend erst startet, wenn die Datenbank bereit ist
     depends_on:
@@ -21,7 +23,9 @@ services:
 
   frontend:
     build:
+      # Ändere den Kontext, um auf das übergeordnete Projektverzeichnis zu zeigen.
       context: .
+      # Gib dann den Pfad zum Dockerfile relativ zu diesem Kontext an.
       dockerfile: ./frontend/Dockerfile
     env_file:
       - ./frontend/.env
@@ -57,7 +61,6 @@ services:
       frontend:
         condition: service_started
       backend:
-        # Ändern Sie hier, um den Service auch ohne Health-Check zu starten
         condition: service_started
     networks:
       - app-network
