@@ -12,16 +12,14 @@ RUN mvn clean package -DskipTests
 # Verwenden Sie ein schlankes JRE-Image für die Laufzeit
 FROM eclipse-temurin:24-jre
 
-# Erstellen Sie eine temporäre Hosts-Datei, die die benötigten Einträge enthält
-# Diese Datei wird dann in den Container kopiert
-RUN echo "91.189.91.83 archive.ubuntu.com" > /tmp/hosts_additions && \
-    echo "91.189.91.81 security.ubuntu.com" >> /tmp/hosts_additions
-
-# Fügen Sie die Hosts-Einträge zur Hosts-Datei des Containers hinzu
-# Wir verwenden den 'cat'-Befehl, um den Inhalt der temporären Datei
-# in die '/etc/hosts'-Datei zu leiten, da der 'ADD'-Befehl möglicherweise
-# nicht das gewünschte Verhalten zeigt.
-RUN cat /tmp/hosts_additions >> /etc/hosts
+# Fügen Sie Hosts-Einträge für die Ubuntu-Repositorys hinzu, um Verbindungsprobleme zu vermeiden
+# Wir verwenden eine temporäre Datei innerhalb des RUN-Befehls.
+RUN cat <<EOF > /tmp/hosts_additions && \
+    cat /etc/hosts >> /tmp/hosts_additions && \
+    mv /tmp/hosts_additions /etc/hosts
+91.189.91.83 archive.ubuntu.com
+91.189.91.81 security.ubuntu.com
+EOF
 
 # Installieren Sie den PostgreSQL-Client, da das Skript psql benötigt
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
