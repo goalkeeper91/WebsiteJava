@@ -18,11 +18,8 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-RUN apt-get update && apt-get install -y find && \
-    JSTACK_PATH=$(find / -name "jstack" -print -quit) && \
-    cp "$JSTACK_PATH" /usr/local/bin/jstack && \
-    chmod +x /usr/local/bin/jstack && \
-    rm -rf /var/lib/apt/lists/*
+COPY --from=tools /opt/java/openjdk/bin/jstack /usr/local/bin/jstack
+RUN chmod +x /usr/local/bin/jstack
 
 EXPOSE 8080
 
