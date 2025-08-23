@@ -14,6 +14,10 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# Fügen Sie das wait-for-it-Skript hinzu und machen Sie es ausführbar
+COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
+RUN chmod +x /usr/local/bin/wait-for-it.sh
+
 EXPOSE 8080
 
 CMD ["java", "-jar", "app.jar"]
