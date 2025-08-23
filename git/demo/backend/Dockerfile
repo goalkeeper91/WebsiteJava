@@ -8,6 +8,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # === JRE-with-tools Stage ===
+# Wir verwenden das vollständige JDK-Image, um jstack zu erhalten
 FROM eclipse-temurin:24-jdk AS tools
 
 # === Runtime Stage ===
@@ -17,7 +18,11 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-COPY --from=tools /usr/bin/jstack /usr/bin/jstack
+RUN apt-get update && apt-get install -y find && \
+    JSTACK_PATH=$(find / -name "jstack" -print -quit) && \
+    cp "$JSTACK_PATH" /usr/local/bin/jstack && \
+    chmod +x /usr/local/bin/jstack && \
+    rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8080
 
