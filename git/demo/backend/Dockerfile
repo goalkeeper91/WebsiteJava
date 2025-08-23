@@ -5,15 +5,25 @@ WORKDIR /app
 
 COPY . .
 
+# Führen Sie den Maven-Build durch, um die ausführbare JAR-Datei zu erstellen
 RUN mvn clean package -DskipTests
 
 # === Runtime Stage ===
-FROM eclipse-temurin:24-jdk
+# Verwenden Sie ein schlankes JRE-Image für die Laufzeit
+FROM eclipse-temurin:24-jre
+
+# Installieren Sie den PostgreSQL-Client, da das Skript psql benötigt
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# Kopieren Sie das wait-for-it.sh Skript in das Image und machen Sie es ausführbar
+COPY ./backend/wait-for-it.sh /usr/local/bin/wait-for-it.sh
+RUN chmod +x /usr/local/bin/wait-for-it.sh
+
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/bash", "-c", "until printf '' > /dev/tcp/postgres/5432 2>/dev/null; do echo 'Warte auf die PostgreSQL-Datenbank...'; sleep 1; done; exec java -jar app.jar"]
+# Das Herzstück: ENTRYPOINT verwendet jetzt das robuste Skript
+ENTRYPOINT ["wait-for-it.sh", "postgres", "java", "-jar", "app.jar"]

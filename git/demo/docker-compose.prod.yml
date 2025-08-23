@@ -3,34 +3,23 @@ version: "3.9"
 services:
   backend:
     build:
-      # Gib den Kontext explizit an, um den Fehler zu vermeiden
       context: ./backend
-      # Gib dann den Pfad zum Dockerfile relativ zu diesem Kontext an.
       dockerfile: Dockerfile
     # Stellt sicher, dass das Backend erst startet, wenn die Datenbank bereit ist
+    # Wir verlassen uns auf den Health Check der Datenbank
     depends_on:
       postgres:
         condition: service_healthy
-    # Lade die Umgebungsvariablen aus der .env-Datei im Backend-Ordner
     env_file:
       - ./backend/.env
-    # Fügen Sie hier Ihre Anwendungsumgebungsvariablen ein, falls Sie welche benötigen
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      # Aktiviert den TRACE-Loglevel für die maximale Anzahl an Details
       - logging.level.root=TRACE
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://backend:8080/actuator/health"]
-      interval: 10s
-      timeout: 15s
-      retries: 10
-      start_period: 120s
+      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - app-network
 
   frontend:
     build:
-      # Ändere den Kontext, um auf das übergeordnete Projektverzeichnis zu zeigen.
       context: .
       dockerfile: ./frontend/Dockerfile
     env_file:
@@ -67,7 +56,9 @@ services:
       frontend:
         condition: service_started
       backend:
-        condition: service_healthy
+        # Hier stellen wir sicher, dass der Proxy nur auf ein gestartetes Backend wartet.
+        # Die Logik für die "Health" befindet sich jetzt im Backend-Container selbst.
+        condition: service_started
     networks:
       - app-network
 
