@@ -13,11 +13,5 @@ until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$host" -U "$POSTGRES_USER" -d "$POS
   sleep 1
 done
 
-# Wenn der Datenbank-Server bereit ist, warte auf die Liquibase-Migration
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$host" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1 FROM twitch_commands LIMIT 1;" > /dev/null 2>&1; do
-  >&2 echo "Warte auf die Liquibase-Migration und die Tabelle 'twitch_commands'..."
-  sleep 1
-done
-
 >&2 echo "Datenbank und Schema sind bereit. Anwendung starten."
 exec $cmd
