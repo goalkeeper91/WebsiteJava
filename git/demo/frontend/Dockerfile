@@ -20,8 +20,6 @@ FROM nginx:stable-alpine
 # Production Build von React in Nginx Webroot kopieren
 COPY --from=build /app/dist /usr/share/nginx/html
 
-COPY nginx/proxy.conf /etc/nginx/conf.d/default.conf
-
 # Standardport für Nginx
 EXPOSE 80
 
