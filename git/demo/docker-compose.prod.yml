@@ -57,13 +57,23 @@ services:
     networks:
       - app-network
 
+  db-admin:
+    image: adminer:4.8.1-standalone
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
   certbot-renew:
     image: certbot/certbot
     container_name: certbot_renewer
     volumes:
       - ./certs:/etc/letsencrypt
       - ./certbot-www:/var/www/certbot
-    # Befehl, um Certbot täglich zur gleichen Zeit auszuführen
     entrypoint: sh -c "trap exit TERM; while :; do certbot renew --quiet --webroot -w /var/www/certbot; sleep 86400; done"
     networks:
       - app-network
