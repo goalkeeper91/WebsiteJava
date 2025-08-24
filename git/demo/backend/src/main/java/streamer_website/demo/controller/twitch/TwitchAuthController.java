@@ -21,7 +21,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Controller
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class TwitchAuthController {
 
     @Value("${twitch.clientId}")

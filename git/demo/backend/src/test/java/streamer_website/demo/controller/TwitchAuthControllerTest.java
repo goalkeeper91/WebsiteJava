@@ -40,7 +40,7 @@ public class TwitchAuthControllerTest {
 
     @Test
     void shouldRedirectToTwitchAuth() throws Exception {
-        mockMvc.perform(get("/auth/twitch"))
+        mockMvc.perform(get("/api/auth/twitch"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("https://id.twitch.tv/oauth2/authorize*"));
     }
@@ -73,7 +73,7 @@ public class TwitchAuthControllerTest {
         when(twitchAuthService.exchangeCodeForAccessToken("dummy_code", true)).thenReturn(mockTokenResponse);
         when(twitchAuthService.getUserInfo(mockTokenResponse.getAccessToken())).thenReturn(dummyUser);
 
-        mockMvc.perform(get("/auth/twitch/callback")
+        mockMvc.perform(get("/api/auth/twitch/callback")
                         .param("code", "dummy_code"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
