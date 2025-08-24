@@ -1,27 +1,6 @@
 version: "3.9"
 
 services:
-  proxy:
-    image: nginx:stable-alpine
-    container_name: nginx_proxy
-    restart: always
-    # Nur Port 80 ist für die Validierung nötig
-    ports:
-      - "80:80"
-    volumes:
-      # Mountet die temporäre Konfiguration
-      - ./nginx/certbot-only.conf:/etc/nginx/conf.d/default.conf:ro
-      # Volumes für Certbot-Daten
-      - ./certs:/etc/nginx/certs
-      - ./certbot-www:/var/www/certbot
-    depends_on:
-      frontend:
-        condition: service_started
-      backend:
-        condition: service_started
-    networks:
-      - app-network
-
   backend:
     build:
       context: ./backend
@@ -61,10 +40,39 @@ services:
     networks:
       - app-network
 
+  proxy:
+    image: nginx:stable-alpine
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs
+      - ./certbot-www:/var/www/certbot
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+    networks:
+      - app-network
+
+  certbot-renew:
+    image: certbot/certbot
+    container_name: certbot_renewer
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    # Befehl, um Certbot täglich zur gleichen Zeit auszuführen
+    entrypoint: sh -c "trap exit TERM; while :; do certbot renew --quiet --webroot -w /var/www/certbot; sleep 86400; done"
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
 
 networks:
   app-network:
     driver: bridge
-    
