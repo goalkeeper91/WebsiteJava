@@ -58,7 +58,7 @@ const Header: React.FC = () => {
                         {username ? (
                           <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
                         ) : (
-                          <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                          <a href="/auth/twitch" className="hover:text-green-300">Login</a>
                         )}
                         </>
                     ) : (
@@ -85,7 +85,7 @@ const Header: React.FC = () => {
                         {username ? (
                           <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
                         ) : (
-                          <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                          <a href="/auth/twitch" className="hover:text-green-300">Login</a>
                         )}
                         </>
                     )}
@@ -122,7 +122,7 @@ const Header: React.FC = () => {
                       {username ? (
                         <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
                       ) : (
-                        <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                        <a href="/auth/twitch" className="hover:text-green-300">Login</a>
                       )}
                     </>
                   ) : (
@@ -146,7 +146,7 @@ const Header: React.FC = () => {
                       {username ? (
                         <button onClick={handleLogout} className="hover:text-red-300">Logout ({username})</button>
                       ) : (
-                        <a href="http://localhost:8080/auth/twitch" className="hover:text-green-300">Login</a>
+                        <a href="/auth/twitch" className="hover:text-green-300">Login</a>
                       )}
                     </>
                   )}
