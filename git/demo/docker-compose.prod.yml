@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   backend:
     build:
@@ -7,26 +9,27 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - ./.env
+      - ./backend/.env
     environment:
-      - logging.level.root=TRACE
+      # Die Log-Ebene wird jetzt direkt im "command" gesetzt, sodass diese hier nicht mehr nötig ist.
       - SPRING_PROFILES_ACTIVE=prod
     networks:
       - app-network
+    command: ["/bin/bash", "-c", "until printf '' > /dev/tcp/postgres/5432 2>/dev/null; do echo 'Warte auf die PostgreSQL-Datenbank...'; sleep 1; done; echo 'Datenbank bereit, starte die Anwendung.'; exec java -Dlogging.level.root=TRACE -jar app.jar"]
 
   frontend:
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
     env_file:
-      - ./.env
+      - ./frontend/.env
     networks:
       - app-network
 
   postgres:
     image: postgres:15
     env_file:
-      - ./.env
+      - ./postgres/.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -q"]
       interval: 5s
@@ -54,17 +57,6 @@ services:
         condition: service_started
       backend:
         condition: service_started
-    networks:
-      - app-network
-
-  db-admin:
-    image: adminer:4.8.1-standalone
-    restart: always
-    ports:
-      - "8081:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - app-network
 
