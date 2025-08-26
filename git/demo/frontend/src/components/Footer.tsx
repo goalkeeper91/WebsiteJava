@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaTwitch, FaYoutube, FaTiktok, FaInstagram, FaDiscord } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -35,13 +36,11 @@ const Footer: React.FC = () => {
 
             <div className="text-sm text-gray-400 text-center sm:text-right">
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
-                <a href="/legal/impressum" className="hover:text-white transition">Impressum</a>
-                <a href="/legal/datenschutz" className="hover:text-white transition">Datenschutz</a>
-                <a href="/legal/agb" className="hover:text-white transition">AGB</a>
+                <Link to="/legal/impressum" className="hover:text-white transition">Impressum</Link>
+                <Link to="/legal/datenschutz" className="hover:text-white transition">Datenschutz</Link>
+                <Link to="/legal/agb" className="hover:text-white transition">AGB</Link>
               </div>
             </div>
-
-
           </div>
         </footer>
   );
