@@ -21,7 +21,7 @@ const TwitchStatsCard: React.FC = () => {
     setLoading(true);
     try {
       const username = "goalkeeper91"; // <- vorerst hardcoded
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/twitch/stats/refresh?username=${username}`, {
+      const res = await fetch(`/api/twitch/stats/refresh?username=${username}`, {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Fehler beim Aktualisieren');

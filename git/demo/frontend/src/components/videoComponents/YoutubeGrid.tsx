@@ -8,10 +8,14 @@ const YoutubeGrid: React.FC = () => {
   const { youtubeVideos, loading } = useVideos();
 
   useEffect(() => {
+    // Überprüfe, ob Daten bereits vorhanden sind
+    if (videos.length > 0) {
+      return;
+    }
+
     if (loading || youtubeVideos.length === 0) return;
 
     const videoConfig = youtubeVideos[0];
-
     if (!videoConfig?.apiKey || !videoConfig?.channelId) {
       console.error("Fehlende YouTube-Konfiguration");
       return;
@@ -21,12 +25,17 @@ const YoutubeGrid: React.FC = () => {
     const CHANNEL_ID = videoConfig.channelId;
     const MAX_RESULTS = 10;
 
-    fetch(`https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}`
+        );
+        const data = await response.json();
+
         if (!Array.isArray(data.items)) {
-            return { fetchedVideos: [], loading: false };
+          return;
         }
+
         const fetchedVideos = data.items
           .filter((item: any) => item.id.kind === "youtube#video")
           .map((item: any) => ({
@@ -36,18 +45,23 @@ const YoutubeGrid: React.FC = () => {
           }));
 
         setVideos(fetchedVideos);
-      })
-      .catch(console.error);
-  }, [loading, youtubeVideos]);
+      } catch (error) {
+        console.error("Fehler beim Abrufen der YouTube-Videos:", error);
+      }
+    };
+
+    fetchVideos();
+  }, [loading, youtubeVideos, videos.length]);
 
   useEffect(() => {
     if (videos.length > 0 && !featuredVideo) {
       const random = videos[Math.floor(Math.random() * videos.length)];
       setFeaturedVideo(random);
     }
-  }, [videos]);
+  }, [videos, featuredVideo]);
 
   if (loading) return <p>Lade YouTube-Konfiguration...</p>;
+  if (videos.length === 0) return <p>Keine Videos gefunden.</p>;
 
   return (
     <section className="relative w-full py-20 px-4 text-white overflow-hidden">
