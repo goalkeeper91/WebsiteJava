@@ -5,24 +5,29 @@ import HighlightVideo from '../components/live/RandomYoutubePlayer';
 
 const LiveShowcase = () => {
     const [isLive, setIsLive] = useState(false);
+    const [marketingConsent, setMarketingConsent] = useState(false);
 
     useEffect(() => {
-      fetch(`/api/twitch/status`)
-        .then(res => {
-          if (!res.ok) {
-            setIsLive(false);
-            return null;
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data) setIsLive(data.isLive);
-        })
-        .catch(() => {
-          setIsLive(false);
-        });
-    }, []);
+        // Twitch Live-Status
+        fetch(`/api/twitch/status`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) setIsLive(data.isLive);
+            })
+            .catch(() => setIsLive(false));
 
+        // Marketing Consent prüfen
+        const checkConsent = () => {
+            if (window.Cookiebot?.consent?.marketing) {
+                setMarketingConsent(true);
+            }
+        };
+
+        window.addEventListener("CookieConsentDeclaration", checkConsent);
+        checkConsent();
+
+        return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
+    }, []);
 
     return (
         <section className='relative w-full h-full py-16 px-6'>
@@ -45,8 +50,12 @@ const LiveShowcase = () => {
                 >
                     {isLive ? (
                         <TwitchEmbed channel='goalkeeper91' />
-                    ) : (
+                    ) : marketingConsent ? (
                         <HighlightVideo />
+                    ) : (
+                        <p className="text-gray-400">
+                            Videos werden nach Zustimmung zu Marketing-Cookies angezeigt.
+                        </p>
                     )}
                 </motion.div>
             </div>

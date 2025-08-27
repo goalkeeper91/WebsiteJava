@@ -23,20 +23,31 @@ const RandomYoutubePlayer = () => {
   const playerRef = useRef<any>(null);
   const [consentGiven, setConsentGiven] = useState(false);
 
+  // Cookiebot Consent prüfen
   useEffect(() => {
-      const checkConsent = () => {
-        if (window.Cookiebot?.consent?.marketing) {
-          setConsentGiven(true);
-        }
-      };
+    const checkConsent = () => {
+      if (window.Cookiebot && window.Cookiebot.consent) {
+        setConsentGiven(!!window.Cookiebot.consent.marketing);
+      }
+    };
 
-      window.addEventListener("CookieConsentDeclaration", checkConsent);
+    window.addEventListener("CookieConsentDeclaration", checkConsent);
 
-      checkConsent();
+    // Polling für initialen Consent, falls Cookiebot noch nicht geladen ist
+    const interval = setInterval(() => {
+      if (window.Cookiebot && window.Cookiebot.consent) {
+        checkConsent();
+        clearInterval(interval);
+      }
+    }, 100);
 
-      return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
-    }, []);
+    return () => {
+      window.removeEventListener("CookieConsentDeclaration", checkConsent);
+      clearInterval(interval);
+    };
+  }, []);
 
+  // YouTube-Player nur laden, wenn Consent gegeben
   useEffect(() => {
     if (!consentGiven) return;
 
@@ -64,17 +75,28 @@ const RandomYoutubePlayer = () => {
     };
   }, [consentGiven]);
 
+  // Video wechseln, wenn currentVideoId sich ändert
   useEffect(() => {
     if (playerRef.current?.loadVideoById) {
       playerRef.current.loadVideoById(currentVideoId);
     }
   }, [currentVideoId]);
 
+  if (!consentGiven) {
     return (
-        <div className="w-full flex justify-center items-center py-6">
-              <div id="youtube-player" className="rounded-lg shadow-lg" />
-        </div>
+      <div className="w-full flex justify-center items-center py-6">
+        <p className="text-center text-gray-400">
+          YouTube-Videos werden nach Zustimmung zu Marketing-Cookies angezeigt.
+        </p>
+      </div>
     );
+  }
+
+  return (
+    <div className="w-full flex justify-center items-center py-6">
+      <div id="youtube-player" className="rounded-lg shadow-lg" />
+    </div>
+  );
 };
 
 export default RandomYoutubePlayer;

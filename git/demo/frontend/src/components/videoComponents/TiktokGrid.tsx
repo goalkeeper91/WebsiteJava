@@ -7,18 +7,32 @@ const TiktokGrid = () => {
   const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
 
+  // Cookiebot Consent prüfen
   useEffect(() => {
-      const checkConsent = () => {
-        if (window.Cookiebot?.consent?.marketing) {
-          setConsentGiven(true);
-        }
-      };
-      window.addEventListener("CookieConsentDeclaration", checkConsent);
-      checkConsent();
+    const checkConsent = () => {
+      if (window.Cookiebot && window.Cookiebot.consent) {
+        setConsentGiven(!!window.Cookiebot.consent.marketing);
+      }
+    };
 
-      return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
+    // Event listener für Änderungen durch Nutzer
+    window.addEventListener("CookieConsentDeclaration", checkConsent);
+
+    // Polling für initialen Wert, falls Cookiebot noch nicht geladen
+    const interval = setInterval(() => {
+      if (window.Cookiebot && window.Cookiebot.consent) {
+        checkConsent();
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => {
+      window.removeEventListener("CookieConsentDeclaration", checkConsent);
+      clearInterval(interval);
+    };
   }, []);
 
+  // Zufälliges Featured-Video setzen
   useEffect(() => {
     if (tiktokVideos && tiktokVideos.length > 0) {
       const random = tiktokVideos[Math.floor(Math.random() * tiktokVideos.length)];
