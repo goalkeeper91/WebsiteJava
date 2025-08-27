@@ -17,6 +17,22 @@ const RandomYoutubePlayer = () => {
     const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
     const playerRef = useRef<any>(null);
 
+    const [consentGiven, setConsentGiven] = useState(false);
+
+      useEffect(() => {
+          const checkConsent = () => {
+            if (window.Cookiebot?.consent?.marketing) {
+              setConsentGiven(true);
+            }
+          };
+
+          window.addEventListener("CookieConsentDeclaration", checkConsent);
+
+          checkConsent();
+
+          return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
+        }, []);
+
     useEffect(() => {
         fetchVideoIds().then(ids => {
             setVideoIds(ids);

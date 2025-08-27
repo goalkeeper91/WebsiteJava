@@ -5,6 +5,19 @@ import type { Video } from '../../hooks/useVideos';
 const TiktokGrid = () => {
   const { tiktokVideos, loading } = useVideos();
   const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
+
+  useEffect(() => {
+      const checkConsent = () => {
+        if (window.Cookiebot?.consent?.marketing) {
+          setConsentGiven(true);
+        }
+      };
+      window.addEventListener("CookieConsentDeclaration", checkConsent);
+      checkConsent();
+
+      return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
+  }, []);
 
   useEffect(() => {
     if (tiktokVideos && tiktokVideos.length > 0) {
@@ -16,6 +29,16 @@ const TiktokGrid = () => {
   if (loading) return <p>Lade TikTok-Videos...</p>;
 
   const generateEmbedUrl = (videoId: string) => `https://www.tiktok.com/embed/${videoId}`;
+
+  if (!consentGiven) {
+    return (
+      <section className='relative max-w-6xl mx-auto py-2 px-4 text-white z-20'>
+        <p className="text-center text-gray-400">
+          TikTok-Videos werden nach Zustimmung zu Marketing-Cookies angezeigt.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className='relative max-w-6xl mx-auto py-2 px-4 text-white z-20'>

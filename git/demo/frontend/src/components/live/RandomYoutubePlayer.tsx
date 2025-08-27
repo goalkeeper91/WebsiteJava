@@ -21,8 +21,25 @@ const getRandomVideoId = (excludeId?: string) => {
 const RandomYoutubePlayer = () => {
   const [currentVideoId, setCurrentVideoId] = useState(getRandomVideoId());
   const playerRef = useRef<any>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   useEffect(() => {
+      const checkConsent = () => {
+        if (window.Cookiebot?.consent?.marketing) {
+          setConsentGiven(true);
+        }
+      };
+
+      window.addEventListener("CookieConsentDeclaration", checkConsent);
+
+      checkConsent();
+
+      return () => window.removeEventListener("CookieConsentDeclaration", checkConsent);
+    }, []);
+
+  useEffect(() => {
+    if (!consentGiven) return;
+
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     document.body.appendChild(tag);
@@ -45,7 +62,7 @@ const RandomYoutubePlayer = () => {
     return () => {
       if (playerRef.current?.destroy) playerRef.current.destroy();
     };
-  }, []);
+  }, [consentGiven]);
 
   useEffect(() => {
     if (playerRef.current?.loadVideoById) {
