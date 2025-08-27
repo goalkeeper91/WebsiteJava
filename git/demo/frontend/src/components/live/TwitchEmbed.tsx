@@ -8,7 +8,6 @@ const TwitchEmbed: React.FC<TwitchEmbedProp> = ({ channel }) => {
     return (
         <div className="aspect-video w-full rounded-xl overflow-hidden shadow-lg">
             <iframe
-                type="text/plain"
                 data-cookieconsent="marketing"
                 src={`https://player.twitch.tv/?channel=${channel}&parent=localhost&muted=true`}
                 allowFullScreen
