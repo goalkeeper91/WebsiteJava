@@ -9,17 +9,19 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
+import ContactPage from "./pages/ContactPage"
 
 const App = () => {
   return (
     <Router>
-      <div className='flex flex-col w-screen h-screen bg-black-100 text-white'>
+      <div className='flex flex-col w-screen min-h-screen bg-black-100 text-white'>
         <Header />
 
-        <main className='flex-grow pt-19 w-full px-4 py-6 sm:px-6 lg:px-8'>
+        <main className='flex-grow w-full pt-17'>
           <div className='w-full'>
             <Routes>
               <Route path='/' element={<Home />} />
+              <Route path="/contact" element={<ContactPage />} />
               <Route path='/about' element={<About />} />
               <Route path='/allVideos' element={<AllVideos />} />
               <Route path='/admin' element={

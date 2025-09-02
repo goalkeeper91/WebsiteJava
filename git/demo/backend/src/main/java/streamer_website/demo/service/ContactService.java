@@ -1,10 +1,13 @@
 package streamer_website.demo.service;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import streamer_website.demo.dto.ContactRequestDTO;
 import streamer_website.demo.entity.ContactRequest;
 import streamer_website.demo.repository.ContactRequestRepository;
 import streamer_website.demo.service.discord.DiscordNotificationService;
+
+import java.time.LocalDateTime;
 
 @Service
 public class ContactService {
@@ -18,6 +21,11 @@ public class ContactService {
     }
 
     public ContactRequest saveRequest(ContactRequestDTO dto) {
+
+        if (!dto.isConsentGiven()) {
+            throw new IllegalArgumentException("Consent required");
+        }
+
         ContactRequest request = new ContactRequest();
         request.setName(dto.getName());
         request.setEmail(dto.getEmail());
@@ -30,5 +38,11 @@ public class ContactService {
         discordService.notifyNewContactRequest(saved).subscribe();
 
         return saved;
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?") // täglich um Mitternacht
+    public void deleteOldContactRequests() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMonths(6);
+        repository.deleteByCreatedAtBefore(cutoff);
     }
 }

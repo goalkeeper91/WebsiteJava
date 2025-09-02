@@ -6,7 +6,7 @@ const VideoTabs = () => {
     const [activeTab, setActiveTab] = useState<'youtube' | 'tiktok'>('youtube');
 
     return (
-        <section className='relative max-w-6xl mx-auto py-12 px-4 text-white overflow-hidden'>
+        <section className='relative w-full mx-auto py-12 text-white overflow-hidden'>
             <div className="absolute inset-0 z-10">
                 <div className="w-full h-full bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl" />
             </div>

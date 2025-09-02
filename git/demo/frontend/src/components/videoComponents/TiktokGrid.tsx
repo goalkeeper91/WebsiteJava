@@ -46,7 +46,7 @@ const TiktokGrid = () => {
 
   if (!consentGiven) {
     return (
-      <section className='relative max-w-6xl mx-auto py-2 px-4 text-white z-20'>
+      <section className='relative w-full py-2 px-4 text-white z-20'>
         <p className="text-center text-gray-400">
           TikTok-Videos werden nach Zustimmung zu Marketing-Cookies angezeigt.
         </p>
@@ -55,7 +55,7 @@ const TiktokGrid = () => {
   }
 
   return (
-    <section className='relative max-w-6xl mx-auto py-2 px-4 text-white z-20'>
+    <section className='relative w-full py-2 px-4 text-white z-20'>
       <h1 className="text-4xl font-bold mb-8 text-center">Video Highlights</h1>
 
       {featuredVideo && (

@@ -29,7 +29,7 @@ const Header: React.FC = () => {
                         alt="Profile"
                         className="w-12 h-12 rounded-full"
                     />
-                    <h1 className="text-xl font-semibold text-goalyBlue">Goalkeeper91</h1>
+                    <h1 className="text-xl md:text-l font-semibold text-goalyBlue">Goalkeeper91</h1>
                 </div>
 
                 <nav className="hidden md:flex space-x-6 items-center">
@@ -48,6 +48,7 @@ const Header: React.FC = () => {
                             Live
                         </a>
                         <Link to="/" className="hover:text-blue-300">Home</Link>
+                        <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
                         {isAuthenticated && (
@@ -75,6 +76,7 @@ const Header: React.FC = () => {
                             Offline
                         </a>
                         <Link to="/" className="hover:text-blue-300">Home</Link>
+                        <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
                         {isAuthenticated && (
@@ -112,6 +114,7 @@ const Header: React.FC = () => {
                         🔴 Live
                       </a>
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
+                      <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
                       {isAuthenticated && (
@@ -136,6 +139,7 @@ const Header: React.FC = () => {
                         ⚪ Offline
                       </a>
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
+                      <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
                       {isAuthenticated && (

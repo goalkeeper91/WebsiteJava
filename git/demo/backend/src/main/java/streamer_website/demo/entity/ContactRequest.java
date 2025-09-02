@@ -27,4 +27,7 @@ public class ContactRequest{
 
     private String status = "NEW";
 
+    @Column(nullable = false)
+    private boolean consentGiven;
+
 }

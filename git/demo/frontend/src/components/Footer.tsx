@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-slate-900 text-white py-6 px-4">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="bg-slate-900 text-white py-6 w-full box-border">
+          <div className="mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
 
             <div className="flex space-x-4">
               <a href="https://www.twitch.tv/goalkeeper91" target="_blank" rel="noopener noreferrer"

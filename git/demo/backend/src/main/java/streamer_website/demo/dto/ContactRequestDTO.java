@@ -24,4 +24,5 @@ public class ContactRequestDTO {
     @NotBlank(message = "Message is required")
     private String message;
 
+    private boolean consentGiven;
 }

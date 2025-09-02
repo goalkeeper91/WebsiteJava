@@ -61,7 +61,8 @@ const YoutubeGrid: React.FC = () => {
   }, [videos, featuredVideo]);
 
   if (loading) return <p>Lade YouTube-Konfiguration...</p>;
-  if (videos.length === 0) return <p>Keine Videos gefunden.</p>;
+  if (videos.length === 0) return <section className='relative w-full py-2 px-4 text-white z-20'>
+                                          <p className="text-center text-gray-400">Keine Videos gefunden.</p></section>;
 
   return (
     <section className="relative w-full py-20 px-4 text-white overflow-hidden">

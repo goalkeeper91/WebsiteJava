@@ -2,7 +2,7 @@ import FollowMe from '../components/socials/FollowMe';
 
 const About = () => {
   return (
-    <section className="relative w-full min-h-screen bg-black text-white py-16 px-6">
+    <section className="relative w-full min-h-screen bg-black text-white py-16">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-pink-500 to-yellow-400 opacity-20 blur-3xl z-0" />
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-16">
