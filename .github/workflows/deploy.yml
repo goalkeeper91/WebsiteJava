@@ -24,30 +24,42 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-      
-      # 🚀 Start Deployment
-      - name: 🖥️ Copy Project to Server
+
+      # 🏗️ Build Frontend
+      - name: 🏗️ Build Frontend
         run: |
-          # Use rsync to copy files from the correct project subdirectory to the server
-          # The source path is now the project's folder inside the repository
+          cd git/demo/frontend
+          npm ci
+          npm run build
+
+      # 🚀 Copy Backend + Config to Server
+      - name: 🖥️ Copy Backend & Config to Server
+        run: |
           rsync -av --exclude 'node_modules' --exclude 'logs' \
           -e "ssh -o StrictHostKeyChecking=yes" \
           ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
+      # 🚀 Copy Frontend Build to Server
+      - name: 📂 Deploy Frontend Build
+        run: |
+          rsync -av \
+          -e "ssh -o StrictHostKeyChecking=yes" \
+          ./git/demo/frontend/dist/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend_dist/
+
+      # 🐳 Deploy Backend & Restart Proxy
       - name: 🐳 Deploy with Docker Compose
         run: |
-          # Execute commands on the remote server via SSH
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Change to the application directory
             cd /home/${{ secrets.SERVER_USER }}/app
             
-            # Use the new 'docker compose' syntax (with a space)
-            # Pull the latest images
+            # Backend und Services neu starten
             docker compose -f docker-compose.prod.yml pull
-            
-            # Bring up the services and build if necessary
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
-            
-            # Prune old Docker images to free up space
+
+            # Nur nginx Proxy reloaden (falls Config angepasst)
+            docker compose -f docker-compose.prod.yml restart proxy
+
+            # Aufräumen
             docker image prune -f
           EOF
