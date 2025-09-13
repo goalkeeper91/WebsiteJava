@@ -4,6 +4,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.rest.util.Image;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import streamer_website.demo.entity.discord.DiscordGuild;
 import streamer_website.demo.entity.discord.DiscordGuildRole;
 import streamer_website.demo.repository.DiscordGuildRepository;
@@ -24,6 +25,7 @@ public class GuildService {
         this.discordGuildRoleRepository = discordGuildRoleRepository;
     }
 
+    @Transactional
     public void saveOrUpdateGuild(DiscordGuild guild) {
         discordGuildRepository.save(guild);
     }
