@@ -2,23 +2,32 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { FaCode, FaCogs, FaStream, FaGithub } from "react-icons/fa";
 
+// Typ für Service-Einträge
+type Service = {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  image?: { src: string; alt: string } | null;
+  images?: { src: string; alt: string }[];
+};
+
 const ServicesPage = () => {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const services = [
+  const services: Service[] = [
     {
       title: "Individuelle Softwarelösungen",
       description:
         "Von Prototyp bis fertiges Produkt – maßgeschneiderte Anwendungen für deine Anforderungen. Egal ob Web, Mobile oder Desktop.",
       icon: <FaCode size={40} className="text-indigo-400 mb-4" />,
-      image: null,//{ src: "/images/placeholder-software.png", alt: "Projekt Screenshot" },
+      image: null,
     },
     {
       title: "Automatisierung & Workflows",
       description:
         "Ich entwickle Bots, Integrationen und Tools, die Prozesse automatisieren – für Twitch, Discord oder deine internen Abläufe.",
       icon: <FaCogs size={40} className="text-green-400 mb-4" />,
-      image: null,//{ src: "/images/placeholder-automation.png", alt: "Automation Workflow" },
+      image: null,
     },
     {
       title: "Streaming & Community Tech",
@@ -35,7 +44,7 @@ const ServicesPage = () => {
   return (
     <div className="relative w-full min-h-screen bg-slate-950 text-white">
       {/* Hero Section */}
-      <section className="relative text-center py-20 px-6">
+      <section className="relative text-center py-20 px-6 bg-gradient-to-br from-indigo-700 via-slate-800 to-slate-900">
         <motion.h1
           className="text-5xl font-extrabold mb-4"
           initial={{ opacity: 0, y: -20 }}
@@ -50,13 +59,14 @@ const ServicesPage = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          Ich bin kein „Alleskönner“ – und das ist gut so. Statt alles ein bisschen zu machen, konzentriere ich mich darauf, Probleme zu verstehen und die passende Lösung zu entwickeln.
+          Ich bin kein „Alleskönner“ – und das ist gut so. Statt alles ein bisschen zu machen,
+          konzentriere ich mich darauf, Probleme zu verstehen und die passende Lösung zu entwickeln.
         </motion.p>
       </section>
 
       {/* Services Grid */}
       <section className="py-16 px-6 max-w-6xl mx-auto grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
+        {services.map((service: Service) => (
           <motion.div
             key={service.title}
             className="bg-slate-900 rounded-2xl shadow-lg p-6 flex flex-col items-center text-center"
@@ -66,13 +76,14 @@ const ServicesPage = () => {
             <h3 className="text-2xl font-bold mb-2">{service.title}</h3>
             <p className="text-gray-300 mb-4">{service.description}</p>
 
-            {/* Platzhalterbild, falls kein echtes Bild */}
+            {/* Platzhalter, wenn kein Bild */}
             {service.image === null && (
-                <div className="w-full max-w-xl mx-auto rounded-lg border border-gray-700 h-40 flex items-center justify-center mb-3">
-                    <span className="text-gray-500">[ Screenshot / Projektbild ]</span>
-                </div>
+              <div className="w-full max-w-xl mx-auto rounded-lg border border-gray-700 h-40 flex items-center justify-center mb-3">
+                <span className="text-gray-500">[ Screenshot / Projektbild ]</span>
+              </div>
             )}
-            {/* Ein Bild oder mehrere Bilder */}
+
+            {/* Falls ein einzelnes Bild */}
             {service.image && (
               <img
                 src={service.image.src}
@@ -81,6 +92,8 @@ const ServicesPage = () => {
                 onClick={() => setLightboxImage(service.image!.src)}
               />
             )}
+
+            {/* Falls mehrere Bilder */}
             {service.images &&
               service.images.map((img) => (
                 <img
@@ -119,13 +132,14 @@ const ServicesPage = () => {
           Open Source & Referenzen
         </motion.h2>
         <p className="text-gray-400 mb-8">
-          Einen Teil meiner Projekte findest du direkt auf GitHub – darunter Flutter-Apps, React-Frontends, Spring Boot Backends & mehr.
+          Einen Teil meiner Projekte findest du direkt auf GitHub – darunter Flutter-Apps,
+          React-Frontends, Spring Boot Backends & mehr.
         </p>
         <a
           href="https://github.com/goalkeeper91"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 px-6 py-3 bg-goalyBlue hover:bg-goalyCyan text-white font-semibold rounded-full shadow-md transition"
+          className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full shadow-md transition"
         >
           <FaGithub size={24} />
           Zu meinem GitHub
@@ -133,7 +147,7 @@ const ServicesPage = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 px-6 text-center">
+      <section className="py-20 px-6 text-center bg-gradient-to-br from-indigo-700 via-slate-800 to-slate-900">
         <motion.h2
           className="text-3xl font-bold mb-6"
           initial={{ opacity: 0 }}
@@ -146,7 +160,7 @@ const ServicesPage = () => {
         </p>
         <a
           href="/contact"
-          className="px-8 py-4 bg-white text-purple-700 font-bold rounded-full shadow-md hover:bg-gray-100 transition"
+          className="px-8 py-4 bg-white text-indigo-700 font-bold rounded-full shadow-md hover:bg-gray-100 transition"
         >
           Kontakt aufnehmen
         </a>
