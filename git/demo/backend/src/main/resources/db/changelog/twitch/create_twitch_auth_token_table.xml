@@ -18,6 +18,9 @@
             <column name="twitch_user_id" type="VARCHAR(128)"/>
             <column name="created_at" type="TIMESTAMP"/>
             <column name="updated_at" type="TIMESTAMP"/>
+            <column name="user_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 </databaseChangeLog>
