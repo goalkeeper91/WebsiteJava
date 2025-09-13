@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,10 +38,10 @@ public class DiscordGuild {
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "guild", cascade = CascadeType.ALL)
-    private List<DiscordVoiceChannel> voiceChannels;
+    private List<DiscordVoiceChannel> voiceChannels = new ArrayList<>();
 
     @OneToMany(mappedBy = "guild", cascade = CascadeType.ALL)
-    private List<DiscordGuildRole> roles;
+    private List<DiscordGuildRole> roles = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -40,7 +41,7 @@ public class DiscordUser {
     private Instant updatedAt;
 
     @ManyToMany(mappedBy = "members")
-    private List<DiscordGuildRole> roles;
+    private List<DiscordGuildRole> roles = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

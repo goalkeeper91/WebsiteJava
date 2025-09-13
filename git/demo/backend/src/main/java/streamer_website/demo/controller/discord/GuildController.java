@@ -5,6 +5,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 import streamer_website.demo.client.DiscordBot;
 import streamer_website.demo.entity.discord.DiscordGuild;
 import streamer_website.demo.service.discord.GuildService;
@@ -65,8 +66,8 @@ public class GuildController {
     }
 
     @PostMapping("/sync")
-    public List<DiscordGuild> syncGuilds() {
-        guildService.syncGuilds(discordBot.getGateway());
-        return guildService.getAllGuilds();
+    public Mono<ResponseEntity<String>> syncGuilds() {
+        return guildService.syncGuilds(discordBot.getGateway())
+                .then(Mono.just(ResponseEntity.ok("Guild-Synchronisierung gestartet")));
     }
 }

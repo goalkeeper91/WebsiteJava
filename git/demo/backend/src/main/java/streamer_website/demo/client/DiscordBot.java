@@ -2,6 +2,7 @@ package streamer_website.demo.client;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.gateway.intent.IntentSet;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +13,6 @@ import streamer_website.demo.handler.discord.CommandEventHandler;
 import streamer_website.demo.handler.discord.GuildEventHandler;
 import streamer_website.demo.service.discord.GuildService;
 import streamer_website.demo.service.discord.StatusService;
-import streamer_website.demo.entity.discord.DiscordGuild;
-import discord4j.rest.util.Image;
-
-import java.time.Instant;
 
 @Component
 public class DiscordBot {
@@ -51,13 +48,19 @@ public class DiscordBot {
 
         logger.info("Starte Discord Bot …");
 
-        DiscordClient client = DiscordClient.create(token);
-        gateway = client.login().block();
+        try {
+            DiscordClient client = DiscordClient.create(token);
+            gateway = client.login().block();
 
-        if (gateway == null) {
-            throw new IllegalStateException("Failed to login to Discord. Check your token.");
+            if (gateway == null) {
+                throw new IllegalStateException("Failed to login to Discord. Check your token.");
+            }
+        } catch (Exception e) {
+            logger.error("Fehler beim Discord-Login: {}", e.getMessage(), e);
+            throw new IllegalStateException("Anwendung konnte keine Verbindung zu Discord herstellen.", e);
         }
 
+        logger.info("Erfolgreich bei Discord eingeloggt. Registriere Events...");
         statusService.setRunning(true);
 
         // Events registrieren
@@ -65,27 +68,12 @@ public class DiscordBot {
         commandHandler.register(gateway);
 
         // Sync der Guilds beim Start
-        syncGuilds();
+        guildService.syncGuilds(gateway).subscribe(); // Nicht-blockierender Aufruf
 
         gateway.onDisconnect()
                 .doOnTerminate(() -> statusService.setRunning(false))
                 .subscribe();
 
         return gateway;
-    }
-
-    private void syncGuilds() {
-        gateway.getGuilds()
-                .collectList()
-                .blockOptional()
-                .ifPresent(guilds -> guilds.forEach(guild -> {
-                    DiscordGuild discordGuild = new DiscordGuild();
-                    discordGuild.setId(guild.getId().asLong());
-                    discordGuild.setName(guild.getName());
-                    discordGuild.setIconUrl(guild.getIconUrl(Image.Format.PNG).map(Object::toString).orElse(null));
-                    discordGuild.setUpdatedAt(Instant.now());
-
-                    guildService.saveOrUpdateGuild(discordGuild);
-                }));
     }
 }

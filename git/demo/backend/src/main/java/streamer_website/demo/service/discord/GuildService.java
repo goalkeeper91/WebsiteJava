@@ -5,6 +5,7 @@ import discord4j.core.object.entity.Guild;
 import discord4j.rest.util.Image;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import streamer_website.demo.entity.discord.DiscordGuild;
 import streamer_website.demo.entity.discord.DiscordGuildRole;
 import streamer_website.demo.repository.DiscordGuildRepository;
@@ -38,23 +39,25 @@ public class GuildService {
         return discordGuildRepository.findById(id);
     }
 
-    public void syncGuilds(GatewayDiscordClient gateway) {
-        gateway.getGuilds()
-                .collectList()
-                .blockOptional()
-                .ifPresent(guilds -> guilds.forEach(this::handleGuild));
+    public Mono<Void> syncGuilds(GatewayDiscordClient gateway) {
+        return gateway.getGuilds()
+                .flatMap(guild -> Mono.fromRunnable(() -> handleGuild(guild)))
+                .then();
     }
 
-    public void handleGuild(Guild guildData) {
-        DiscordGuild guild = getGuild(guildData.getId().asLong())
-                .orElse(new DiscordGuild());
+    public Mono<Void> handleGuild(Guild guildData) {
+        return Mono.fromCallable(() -> {
+            DiscordGuild guild = getGuild(guildData.getId().asLong())
+                    .orElse(new DiscordGuild());
 
-        guild.setId(guildData.getId().asLong());
-        guild.setName(guildData.getName());
-        guild.setIconUrl(guildData.getIconUrl(Image.Format.PNG).map(Object::toString).orElse(null));
-        guild.setBotAdded(true);
+            guild.setId(guildData.getId().asLong());
+            guild.setName(guildData.getName());
+            guild.setIconUrl(guildData.getIconUrl(Image.Format.PNG).map(Object::toString).orElse(null));
+            guild.setBotAdded(true);
 
-        saveOrUpdateGuild(guild);
+            saveOrUpdateGuild(guild);
+            return Mono.empty();
+        }).then();
     }
 
     public void deleteGuild(Long guildId) {
