@@ -55,7 +55,7 @@ const TiktokGrid = () => {
   }
 
   return (
-    <section className='relative w-full py-2 px-4 text-white z-20'>
+    <section className='relative w-full py-2 px-4 text-white z-20 bg-slate-900'>
       <h1 className="text-4xl font-bold mb-8 text-center">Video Highlights</h1>
 
       {featuredVideo && (

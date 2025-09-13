@@ -9,7 +9,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
-import ContactPage from "./pages/ContactPage"
+import ContactPage from "./pages/ContactPage";
+import ServicesPage from "./pages/ServicesPage";
 
 const App = () => {
   return (
@@ -22,6 +23,7 @@ const App = () => {
             <Routes>
               <Route path='/' element={<Home />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/services" element={<ServicesPage />} />
               <Route path='/about' element={<About />} />
               <Route path='/allVideos' element={<AllVideos />} />
               <Route path='/admin' element={

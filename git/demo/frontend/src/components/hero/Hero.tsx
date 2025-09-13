@@ -3,26 +3,28 @@ import { Link } from 'react-router-dom';
 
 const Hero = () => {
     return (
-        <section className="relative w-full h-full p-7  bg-cover bg-center">
-            <div className="absolute inset-0 bg-black/50 z-0" />
-            <div className='absolute z-0 inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl'></div>
+        <section className="relative w-full h-screen p-7 bg-cover bg-center bg-slate-950">
+
             <div className="relative z-20 flex flex-col items-center justify-center text-center text-white h-full px-6">
+
                 <motion.h1
-                    className="text-4xl text-goalyBlue sm:text-6xl font-extrabold mb-4"
+                    className="text-4xl sm:text-6xl font-extrabold mb-6 leading-tight"
                     initial={{ opacity: 0, y: -30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
-                    >
-                        Willkommen im Streamer-Universum
+                >
+                    Softwareentwicklung & Live Entertainment
                 </motion.h1>
+
                 <motion.p
-                    className="text-lg text-goalyCyan sm:text-2xl mb-8 max-w-2xl"
+                    className="text-lg sm:text-2xl mb-10 max-w-3xl text-goalyCyan"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3 }}
-                    >
-                        Ich bin Marcel – Tech-Enthusiast, Gamer und Live-Entertainer.
-                        Tauche ein in meine Welt!
+                >
+                    Ich bin Marcel – Full-Stack Entwickler mit Leidenschaft für Gaming & Streaming.
+                    Ob <span className="font-semibold text-goalyBlue">maßgeschneiderte Softwarelösungen</span> oder
+                    <span className="font-semibold text-goalyBlue"> Community-Content</span> – hier findest du beides.
                 </motion.p>
 
                 <motion.div
@@ -30,20 +32,20 @@ const Hero = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    >
+                >
                     <Link
-                        to="/about"
-                        className="px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition visited:text-white active:text-white"
-                        >
-                            Mehr über mich
+                        to="/services"
+                        className="px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
+                    >
+                        Entwickler anheuern
                     </Link>
                     <a
                         href="https://twitch.tv/goalkeeper91"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition visited:text-white active:text-white"
-                        >
-                            Jetzt live ansehen
+                        className="px-8 py-3 border-2 border-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
+                    >
+                        Zum Livestream
                     </a>
                 </motion.div>
             </div>

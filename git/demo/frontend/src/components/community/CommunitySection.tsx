@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { FaDiscord } from "react-icons/fa";
+import { Link } from 'react-router-dom';
 
 const CommunitySection = () => {
     const [memberCount, setMemberCount] = useState<number | null>(null);
@@ -13,38 +14,53 @@ const CommunitySection = () => {
     }, []);
 
   return (
-    <section className="relative z-10 w-full bg-slate-900/80 py-16 px-6">
-      <div className="max-w-4xl mx-auto text-center text-white">
-        <motion.h2
-          className="text-4xl font-bold mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Werde Teil der Community
-        </motion.h2>
+    <section className="relative z-10 w-full bg-slate-900 py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center text-white">
+            <motion.h2
+                className="text-4xl font-bold mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                Werde Teil meiner Community
+            </motion.h2>
 
-        <motion.p
-          className="mb-8 text-lg text-gray-300"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <strong>{memberCount ?? '...'}</strong> Mitglieder sind dir nicht genug?<br />
-          Tritt unserem Discord bei, tausch dich aus & bleib immer auf dem Laufenden.
-        </motion.p>
+            <motion.p
+                className="mb-8 text-lg text-gray-300"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+            >
+                <strong>{memberCount ?? '...'}</strong> Mitglieder diskutieren bereits über
+                <span className="text-indigo-400 font-semibold"> Technik, Gaming & Streaming</span>.
+                Sei dabei, wenn es um spannende Projekte, neue Ideen und gute Unterhaltung geht!
+            </motion.p>
 
-        <motion.a
-          href="https://discord.gg/XE8sW56"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full shadow-md transition"
-          whileHover={{ scale: 1.05 }}
-        >
-          <FaDiscord size={24} />
-          Jetzt beitreten
-        </motion.a>
-      </div>
+            <motion.a
+                href="https://discord.gg/BBBAVFCfm8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-6 py-3 bg-goalyBlue hover:bg-goalyCyan text-white font-semibold rounded-full shadow-md transition"
+                whileHover={{ scale: 1.05 }}
+            >
+                <FaDiscord size={24} />
+                Jetzt Discord beitreten
+            </motion.a>
+
+            <motion.div
+                className="mt-8 text-sm text-gray-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+            >
+                <p>
+                    👉 Du suchst einen Entwickler für dein Projekt?{" "}
+                    <Link to="/contact" className="text-indigo-400 hover:underline">
+                        Kontaktiere mich direkt
+                    </Link>
+                </p>
+            </motion.div>
+        </div>
     </section>
   );
 };

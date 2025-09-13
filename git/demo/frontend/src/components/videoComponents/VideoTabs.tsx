@@ -6,10 +6,7 @@ const VideoTabs = () => {
     const [activeTab, setActiveTab] = useState<'youtube' | 'tiktok'>('youtube');
 
     return (
-        <section className='relative w-full mx-auto py-12 text-white overflow-hidden'>
-            <div className="absolute inset-0 z-10">
-                <div className="w-full h-full bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500 opacity-30 blur-3xl" />
-            </div>
+        <section className='relative w-full mx-auto py-12 text-white overflow-hidden bg-slate-950'>
             <div className='relative z-15 flex justify-center space-x-4 mb-8'>
                 <button
                     onClick={() => setActiveTab("youtube")}

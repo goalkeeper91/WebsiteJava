@@ -49,6 +49,7 @@ const Header: React.FC = () => {
                         </a>
                         <Link to="/" className="hover:text-blue-300">Home</Link>
                         <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
+                        <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
                         {isAuthenticated && (
@@ -77,6 +78,7 @@ const Header: React.FC = () => {
                         </a>
                         <Link to="/" className="hover:text-blue-300">Home</Link>
                         <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
+                        <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
                         <Link to="/about" className="hover:text-blue-300">About</Link>
                         <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
                         {isAuthenticated && (
@@ -115,6 +117,7 @@ const Header: React.FC = () => {
                       </a>
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
                       <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
+                      <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
                       {isAuthenticated && (
@@ -140,6 +143,7 @@ const Header: React.FC = () => {
                       </a>
                       <Link to="/" className="block hover:text-blue-300">Home</Link>
                       <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
+                      <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
                       <Link to="/about" className="block hover:text-blue-300">About</Link>
                       <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
                       {isAuthenticated && (

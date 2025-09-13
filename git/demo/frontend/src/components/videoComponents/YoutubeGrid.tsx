@@ -65,7 +65,7 @@ const YoutubeGrid: React.FC = () => {
                                           <p className="text-center text-gray-400">Keine Videos gefunden.</p></section>;
 
   return (
-    <section className="relative w-full py-20 px-4 text-white overflow-hidden">
+    <section className="relative w-full py-20 px-4 text-white overflow-hidden bg-slate-900">
       <div className="max-w-6xl mx-auto z-10 relative">
         <h1 className="text-4xl font-bold mb-8 text-center">Video Highlights</h1>
 
