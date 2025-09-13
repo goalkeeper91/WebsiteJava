@@ -5,6 +5,14 @@ import { FaCode, FaCogs, FaStream, FaGithub } from "react-icons/fa";
 const ServicesPage = () => {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  type Service = {
+    title: string;
+    description: string;
+    icon: JSX.Element;
+    image?: { src: string; alt: string } | null;
+    images?: { src: string; alt: string }[];
+  };
+
   const services = [
     {
       title: "Individuelle Softwarelösungen",
