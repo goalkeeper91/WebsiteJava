@@ -4,6 +4,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.guild.GuildCreateEvent;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 import streamer_website.demo.service.discord.GuildService;
 
 @Setter
@@ -19,7 +20,7 @@ public class GuildEventHandler {
     public void register(GatewayDiscordClient gateway) {
         gateway.on(GuildCreateEvent.class, event -> {
             guildService.handleGuild(event.getGuild());
-            return null;
+            return Mono.empty();
         }).subscribe();
     }
 }
