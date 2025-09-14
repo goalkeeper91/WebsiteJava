@@ -3,12 +3,11 @@ import { Link } from 'react-router-dom';
 
 const Hero = () => {
     return (
-        <section className="relative w-full h-screen p-7 bg-cover bg-center bg-slate-950">
-
-            <div className="relative z-20 flex flex-col items-center justify-center text-center text-white h-full px-6">
+        <section className="relative w-full min-h-screen py-7 bg-cover bg-center bg-slate-950 flex items-center justify-center">
+            <div className="relative z-20 text-center text-white w-full px-4 sm:px-6 md:px-8">
 
                 <motion.h1
-                    className="text-4xl sm:text-6xl font-extrabold mb-6 leading-tight"
+                    className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-snug hyphens-auto"
                     initial={{ opacity: 0, y: -30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
@@ -17,25 +16,25 @@ const Hero = () => {
                 </motion.h1>
 
                 <motion.p
-                    className="text-lg sm:text-2xl mb-10 max-w-3xl text-goalyCyan"
+                    className="text-base sm:text-lg md:text-xl lg:text-2xl mb-10 text-white hyphens-auto"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3 }}
                 >
-                    Ich bin Marcel – Full-Stack Entwickler mit Leidenschaft für Gaming & Streaming.
-                    Ob <span className="font-semibold text-goalyBlue">maßgeschneiderte Softwarelösungen</span> oder
-                    <span className="font-semibold text-goalyBlue"> Community-Content</span> – hier findest du beides.
+                    Ich bin Marcel – Full-Stack Entwickler mit Leidenschaft für Gaming & Streaming. Ob{' '}
+                    <span className="text-indigo-400 font-semibold">maßgeschneiderte Softwarelösungen</span> oder{' '}
+                    <span className="text-indigo-400 font-semibold">Community-Content</span> – hier findest du beides.
                 </motion.p>
 
                 <motion.div
-                    className="flex flex-col sm:flex-row gap-4"
+                    className="flex flex-wrap justify-center gap-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
                 >
                     <Link
-                        to="/services"
-                        className="px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
+                        to="/contact"
+                        className="w-full sm:w-auto px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
                     >
                         Entwickler anheuern
                     </Link>
@@ -43,7 +42,7 @@ const Hero = () => {
                         href="https://twitch.tv/goalkeeper91"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-8 py-3 border-2 border-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
+                        className="w-full sm:w-auto px-6 py-3 border-2 border-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
                     >
                         Zum Livestream
                     </a>

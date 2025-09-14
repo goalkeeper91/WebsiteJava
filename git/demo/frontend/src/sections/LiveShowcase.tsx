@@ -29,7 +29,7 @@ const LiveShowcase = () => {
     }, []);
 
     return (
-        <section className='relative w-full h-full py-16 px-6 bg-slate-950'>
+        <section className='relative w-full h-full py-16 bg-slate-950'>
             <div className='relative z-10 max-w-5xl mx-auto text-center'>
                 <motion.h2
                     className='text-4xl font-bold mb-6'
@@ -67,9 +67,16 @@ const LiveShowcase = () => {
                         </p>
                     )}
                 </motion.div>
-                <Link to="/contact" className="text-indigo-400 hover:underline">
-                  Projektanfrage stellen
-                </Link>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <Link to="/contact"
+                    className="px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition">
+                        Projektanfrage stellen
+                    </Link>
+                </motion.div>
             </div>
         </section>
     );

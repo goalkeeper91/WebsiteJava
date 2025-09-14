@@ -23,14 +23,14 @@ const Header: React.FC = () => {
     return (
         <header className="fixed z-50 w-full bg-slate-700/60 text-white">
             <div className="flex items-center justify-between py-2 px-6">
-                <div className="flex items-center space-x-4">
+                <Link to="/" className="flex items-center space-x-4">
                     <img
                         src="/images/goalkeeper_logo.png"
                         alt="Profile"
                         className="w-12 h-12 rounded-full"
                     />
                     <h1 className="text-xl md:text-l font-semibold text-goalyBlue">Goalkeeper91</h1>
-                </div>
+                </Link>
 
                 <nav className="hidden md:flex space-x-6 items-center">
                     {liveChecked && isLive ? (
@@ -47,11 +47,11 @@ const Header: React.FC = () => {
                             </span>
                             Live
                         </a>
-                        <Link to="/" className="hover:text-blue-300">Home</Link>
-                        <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
-                        <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
-                        <Link to="/about" className="hover:text-blue-300">About</Link>
-                        <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
+                        <Link to="/" className="hover:text-blue-500">Home</Link>
+                        <Link to="/contact" className="hover:text-blue-500">Kontakt</Link>
+                        <Link to="/services" className="hover:text-blue-500">Lösungen</Link>
+                        <Link to="/about" className="hover:text-blue-500">About</Link>
+                        <Link to="/allVideos" className="hover:text-blue-500">Alle Videos</Link>
                         {isAuthenticated && (
                           <Link to="/admin" className="hover:text-green-400 font-bold">
                             Admin
@@ -76,11 +76,11 @@ const Header: React.FC = () => {
                             </span>
                             Offline
                         </a>
-                        <Link to="/" className="hover:text-blue-300">Home</Link>
-                        <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
-                        <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
-                        <Link to="/about" className="hover:text-blue-300">About</Link>
-                        <Link to="/allVideos" className="hover:text-blue-300">Alle Videos</Link>
+                        <Link to="/" className="hover:text-blue-500">Home</Link>
+                        <Link to="/contact" className="hover:text-blue-500">Kontakt</Link>
+                        <Link to="/services" className="hover:text-blue-500">Lösungen</Link>
+                        <Link to="/about" className="hover:text-blue-500">About</Link>
+                        <Link to="/allVideos" className="hover:text-blue-500">Alle Videos</Link>
                         {isAuthenticated && (
                           <Link to="/admin" className="hover:text-green-400 font-bold">
                             Admin
@@ -115,11 +115,11 @@ const Header: React.FC = () => {
                       >
                         🔴 Live
                       </a>
-                      <Link to="/" className="block hover:text-blue-300">Home</Link>
-                      <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
-                      <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
-                      <Link to="/about" className="block hover:text-blue-300">About</Link>
-                      <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
+                      <Link to="/" className="block hover:text-blue-500">Home</Link>
+                      <Link to="/contact" className="hover:text-blue-500">Kontakt</Link>
+                      <Link to="/services" className="hover:text-blue-500">Lösungen</Link>
+                      <Link to="/about" className="block hover:text-blue-500">About</Link>
+                      <Link to="/allVideos" className="block hover:text-blue-500">Alle Videos</Link>
                       {isAuthenticated && (
                         <Link to="/admin" className="hover:text-green-400 font-bold">
                           Admin
@@ -141,11 +141,11 @@ const Header: React.FC = () => {
                       >
                         ⚪ Offline
                       </a>
-                      <Link to="/" className="block hover:text-blue-300">Home</Link>
-                      <Link to="/contact" className="hover:text-blue-300">Kontakt</Link>
-                      <Link to="/services" className="hover:text-blue-300">Lösungen</Link>
-                      <Link to="/about" className="block hover:text-blue-300">About</Link>
-                      <Link to="/allVideos" className="block hover:text-blue-300">Alle Videos</Link>
+                      <Link to="/" className="block hover:text-blue-500">Home</Link>
+                      <Link to="/contact" className="hover:text-blue-500">Kontakt</Link>
+                      <Link to="/services" className="hover:text-blue-500">Lösungen</Link>
+                      <Link to="/about" className="block hover:text-blue-500">About</Link>
+                      <Link to="/allVideos" className="block hover:text-blue-500">Alle Videos</Link>
                       {isAuthenticated && (
                         <Link to="/admin" className="hover:text-green-400 font-bold">
                           Admin

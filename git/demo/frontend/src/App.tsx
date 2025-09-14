@@ -15,11 +15,11 @@ import ServicesPage from "./pages/ServicesPage";
 const App = () => {
   return (
     <Router>
-      <div className='flex flex-col w-screen min-h-screen bg-black-100 text-white'>
+      <div className='flex flex-col w-screen min-h-screen bg-black-100 text-white overflow-x-hidden'>
         <Header />
 
-        <main className='flex-grow w-full pt-17'>
-          <div className='w-full'>
+        <main className='flex-grow w-screen pt-17'>
+          <div className='w-full max-w-screen'>
             <Routes>
               <Route path='/' element={<Home />} />
               <Route path="/contact" element={<ContactPage />} />

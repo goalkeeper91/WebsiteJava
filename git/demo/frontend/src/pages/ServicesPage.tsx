@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { Link } from 'react-router-dom';
 import { FaCode, FaCogs, FaStream, FaGithub } from "react-icons/fa";
 
 // Typ für Service-Einträge
@@ -44,7 +45,7 @@ const ServicesPage = () => {
   return (
     <div className="relative w-full min-h-screen bg-slate-950 text-white">
       {/* Hero Section */}
-      <section className="relative text-center py-20 px-6 bg-gradient-to-br from-indigo-700 via-slate-800 to-slate-900">
+      <section className="relative text-center py-20 px-6 bg-slate-900">
         <motion.h1
           className="text-5xl font-extrabold mb-4"
           initial={{ opacity: 0, y: -20 }}
@@ -139,7 +140,7 @@ const ServicesPage = () => {
           href="https://github.com/goalkeeper91"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full shadow-md transition"
+          className="inline-flex items-center gap-3 px-6 py-3 bg-goalyBlue hover:bg-goalyCyan text-white font-semibold rounded-full shadow-md transition"
         >
           <FaGithub size={24} />
           Zu meinem GitHub
@@ -147,7 +148,7 @@ const ServicesPage = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 px-6 text-center bg-gradient-to-br from-indigo-700 via-slate-800 to-slate-900">
+      <section className="py-20 px-6 text-center bg-slate-950">
         <motion.h2
           className="text-3xl font-bold mb-6"
           initial={{ opacity: 0 }}
@@ -158,12 +159,12 @@ const ServicesPage = () => {
         <p className="text-gray-100 mb-8">
           Lass uns über deine Ideen sprechen – ob kleine Automatisierung oder komplexe Softwarelösung.
         </p>
-        <a
+        <Link
           href="/contact"
-          className="px-8 py-4 bg-white text-indigo-700 font-bold rounded-full shadow-md hover:bg-gray-100 transition"
+          className="px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
         >
           Kontakt aufnehmen
-        </a>
+        </Link>
       </section>
     </div>
   );
