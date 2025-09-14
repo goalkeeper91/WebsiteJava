@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-900 text-white py-6 w-full box-border">
-          <div className="mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
+          <div className="mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 px-6 max-w-screen overflow-hidden">
 
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap space-x-4">
               <a href="https://www.twitch.tv/goalkeeper91" target="_blank" rel="noopener noreferrer"
                 className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full transition">
                 <FaTwitch size={20} />
@@ -30,11 +30,11 @@ const Footer: React.FC = () => {
               </a>
             </div>
 
-            <div className="text-sm text-gray-400 text-center sm:text-right">
+            <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
               &copy; {new Date().getFullYear()} Goalkeeper91. Alle Rechte vorbehalten.
             </div>
 
-            <div className="text-sm text-gray-400 text-center sm:text-right">
+            <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
                 <Link to="/legal/impressum" className="hover:text-white transition">Impressum</Link>
                 <Link to="/legal/datenschutz" className="hover:text-white transition">Datenschutz</Link>

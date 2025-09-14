@@ -14,7 +14,7 @@ const CommunitySection = () => {
     }, []);
 
   return (
-    <section className="relative z-10 w-full bg-slate-900 py-16 px-6">
+    <section className="relative z-10 w-full bg-slate-900 py-16">
         <div className="max-w-4xl mx-auto text-center text-white">
             <motion.h2
                 className="text-4xl font-bold mb-4"

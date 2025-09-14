@@ -10,9 +10,7 @@ const Impressum: React.FC = () => {
   };
 
   return (
-    <section className="relative w-full min-h-screen bg-black text-white py-16 px-6">
-      {/* Hintergrund-Gradient für coolen Effekt */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-pink-500 to-yellow-400 opacity-20 blur-3xl z-0" />
+    <section className="relative w-full min-h-screen bg-black text-white py-16 px-6 bg-slate-950">
 
       <div className="relative z-10 max-w-4xl mx-auto space-y-10">
         {/* Titel */}

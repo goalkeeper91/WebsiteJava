@@ -63,7 +63,7 @@ const ContactForm = () => {
           placeholder="Dein Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-goalyBlue transition"
         />
         {errors.name && <p className="text-red-500">{errors.name}</p>}
 
@@ -73,7 +73,7 @@ const ContactForm = () => {
           placeholder="Deine Email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-goalyBlue transition"
         />
         {errors.email && <p className="text-red-500">{errors.email}</p>}
 
@@ -83,7 +83,7 @@ const ContactForm = () => {
           placeholder="Telefon (optional)"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-goalyBlue transition"
         />
 
         <input
@@ -92,7 +92,7 @@ const ContactForm = () => {
           placeholder="Betreff"
           value={formData.subject}
           onChange={handleChange}
-          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-goalyBlue transition"
         />
         {errors.subject && <p className="text-red-500">{errors.subject}</p>}
 
@@ -102,7 +102,7 @@ const ContactForm = () => {
           value={formData.message}
           onChange={handleChange}
           rows={5}
-          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          className="w-full p-4 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-goalyBlue transition"
         />
         {errors.message && <p className="text-red-500">{errors.message}</p>}
 
