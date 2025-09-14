@@ -160,7 +160,7 @@ const ServicesPage = () => {
           Lass uns über deine Ideen sprechen – ob kleine Automatisierung oder komplexe Softwarelösung.
         </p>
         <Link
-          href="/contact"
+          to="/contact"
           className="px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition"
         >
           Kontakt aufnehmen
