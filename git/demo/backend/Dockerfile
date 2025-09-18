@@ -30,4 +30,4 @@ RUN chmod +x /usr/local/bin/wait-for-it.sh
 EXPOSE 8080
 
 # ENTRYPOINT verwendet jetzt das robuste Skript
-ENTRYPOINT ["wait-for-it.sh", "postgres:5432", "--", "java", "-jar", "app.jar"]
+ENTRYPOINT ["wait-for-it.sh", "postgres", "java", "-jar", "app.jar"]

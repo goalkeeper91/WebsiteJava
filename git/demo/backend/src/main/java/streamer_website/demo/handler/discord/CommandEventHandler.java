@@ -5,6 +5,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 import streamer_website.demo.commands.discord.TaskCommands;
 
 @Component
@@ -20,21 +21,25 @@ public class CommandEventHandler {
         }
 
         String content = event.getMessage().getContent().trim();
+        System.out.println("👉 Eingehende Nachricht: " + content);
 
         if (content.startsWith("!tasks")) {
+            System.out.println("✅ Command erkannt: " + content);
             String argsStr = content.substring("!tasks".length()).trim();
             String[] args = new String[]{argsStr}; // Übergebe alles als ein String
             return reactor.core.publisher.Mono.fromRunnable(() -> taskCommands.execute(event, args));
         }
 
-        return reactor.core.publisher.Mono.empty();
+        return Mono.empty();
     }
 
     public void register(GatewayDiscordClient gateway) {
-        // Hier startet man den Stream korrekt
-        gateway.on(MessageCreateEvent.class)
-                .flatMap(this::handle)  // flatMap auf die Methode, die Mono<Void> zurückgibt
-                .subscribe();           // unbedingt subscribe, sonst passiert nichts
+        gateway.on(MessageCreateEvent.class, this::handle)
+                .onErrorContinue((throwable, o) -> {
+                    System.err.println("❌ Fehler im Command Handler: " + throwable.getMessage());
+                    throwable.printStackTrace();
+                })
+                .subscribe();
     }
 }
 
