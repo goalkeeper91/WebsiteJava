@@ -10,7 +10,7 @@ import streamer_website.demo.handler.discord.CommandEventHandler;
 public class CommandService {
     private final CommandEventHandler commandEventHandler;
 
-    public void handle(MessageCreateEvent event) {
-        commandEventHandler.handle(event).subscribe(); // wichtig: Reactor-Stream starten
+    public reactor.core.publisher.Mono<Void> handle(MessageCreateEvent event) {
+        return commandEventHandler.handle(event);
     }
 }

@@ -90,7 +90,7 @@ public class TaskCommands {
                 return;
             }
 
-            if (parts.length > 1) task.setTitle(parts[1].trim());
+            task.setTitle(parts[1].trim());
             if (parts.length > 2) task.setDescription(parts[2].trim());
             if (parts.length > 3) task.setDueDate(LocalDateTime.parse(parts[3].trim(), dateTimeFormatter));
             if (parts.length > 4) task.setPriority(parts[4].trim());
