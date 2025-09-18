@@ -17,10 +17,18 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const devMode = import.meta.env.VITE_FAKE_AUTH === "true"; // <-- Fake Flag aus .env
+
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
+    if (devMode) {
+      setUsername("goalkeeper91"); // Fake User
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`/api/auth/me`, {
@@ -49,6 +57,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (devMode) {
+      // Im Dev-Modus einfach nur State zurücksetzen
+      setUsername(null);
+      return;
+    }
+
     setLoading(true);
     try {
       await fetch("/api/auth/logout", {

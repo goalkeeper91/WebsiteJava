@@ -31,3 +31,9 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/contact/create_contact_request_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_channels_table.xml
+
+  - include:
+      file: db/changelog/discord/create_discord_tasks_table.xml
