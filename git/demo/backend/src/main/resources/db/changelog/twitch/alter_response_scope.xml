@@ -1,0 +1,16 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="2025-09-18-alter-response-scope" author="deinName">
+        <!-- response Spalte auf TEXT ändern -->
+        <modifyDataType tableName="twitch_commands" columnName="response" newDataType="TEXT"/>
+
+        <!-- scope Spalte auf TEXT ändern -->
+        <modifyDataType tableName="twitch_auth_tokens" columnName="scope" newDataType="TEXT"/>
+    </changeSet>
+
+</databaseChangeLog>

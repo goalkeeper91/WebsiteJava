@@ -37,3 +37,6 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/discord/create_discord_tasks_table.xml
+
+  - include:
+      file: db/changelog/twitch/alter_response_scope.xml
