@@ -27,7 +27,6 @@ public class TwitchAuthToken {
     private String refreshToken;
     private String tokenType;
     private Long expiresIn;
-    @Column(columnDefinition = "TEXT")
     private String scope;
     private String userName;
     private String twitchUserId;
