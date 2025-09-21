@@ -109,12 +109,6 @@ const Datenschutz: React.FC = () => {
         <p>
           Cookies sind kleine Datenpakete, die auf Ihrem Gerät gespeichert werden. Sie dienen zum Betrieb der Website, Analyse des Nutzerverhaltens oder Marketingzwecken. Sie können Cookies blockieren oder die Annahme einschränken, allerdings kann dies die Funktionalität der Website beeinträchtigen.
         </p>
-        <h3 className="text-xl font-semibold mt-4 mb-2">Einwilligung mit Cookiebot</h3>
-        <p>
-        Unsere Website nutzt die Consent-Technologie von Cookiebot, um Ihre Einwilligung zur Speicherung bestimmter Cookies auf Ihrem Endgerät oder zum Einsatz bestimmter Technologien einzuholen und diese datenschutzkonform zu dokumentieren. Anbieter dieser Technologie ist Usercentrics A/S, Havnegade 39, 1058 Kopenhagen, Dänemark (im Folgenden „Cookiebot“).
-        Wenn Sie unsere Website betreten, wird eine Verbindung zu den Servern von Cookiebot hergestellt, um Ihre Einwilligungen und sonstigen Erklärungen zur Cookie-Nutzung einzuholen. Anschließend speichert Cookiebot einen Cookie in Ihrem Browser, um Ihnen die erteilten Einwilligungen bzw. deren Widerruf zuordnen zu können. Die so erfassten Daten werden gespeichert, bis Sie uns zur Löschung auffordern, den Cookiebot-Cookie selbst löschen oder der Zweck für die Datenspeicherung entfällt. Zwingende gesetzliche Aufbewahrungspflichten bleiben unberührt.
-        Der Einsatz von Cookiebot erfolgt, um die gesetzlich vorgeschriebenen Einwilligungen für den Einsatz von Cookies einzuholen. Rechtsgrundlage hierfür ist Art. 6 Abs. 1 lit. c DSGVO.
-        </p>
 
         <h3 className="text-xl font-semibold mt-4 mb-2">Anfragen per E-Mail, Telefon oder Fax</h3>
         <p>

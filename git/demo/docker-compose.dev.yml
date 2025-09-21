@@ -22,8 +22,8 @@ services:
       dockerfile: ./frontend/Dockerfile.dev
     env_file:
       - .env
-    expose:
-      - "5173" # Vite Dev Server
+    ports:
+      - "5173:5173"
     networks:
       - app-network
     volumes:

@@ -16,20 +16,24 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const devMode = import.meta.env.VITE_FAKE_AUTH === "true"; // <-- Fake Flag aus .env
+// === Neue ENV-Schalter ===
+const FAKE_AUTH = import.meta.env.VITE_FAKE_AUTH === "true";
+const FAKE_USER = import.meta.env.VITE_FAKE_USER || "dev-user";
 
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
-    if (devMode) {
-      setUsername("goalkeeper91"); // Fake User
+    setLoading(true);
+
+    if (FAKE_AUTH) {
+      // In Dev/Test-Umgebung: immer als eingeloggt behandeln
+      setUsername(FAKE_USER);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/auth/me`, {
         credentials: "include",
@@ -57,9 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    if (devMode) {
-      // Im Dev-Modus einfach nur State zurücksetzen
-      setUsername(null);
+    if (FAKE_AUTH) {
+      // In Fake-Mode ignorieren wir Logout und bleiben eingeloggt
       return;
     }
 
@@ -84,7 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthenticated = !!username;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, username, checkAuth, logout, loading }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, username, checkAuth, logout, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
