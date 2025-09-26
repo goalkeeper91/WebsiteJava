@@ -43,7 +43,7 @@ jobs:
       - name: 📂 Deploy Frontend Build
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "rm -rf /home/${{ secrets.SERVER_USER }}/app/frontend_dist/*"
-          rsync -av \
+          rsync -av --delete \
           -e "ssh -o StrictHostKeyChecking=yes" \
           ./git/demo/frontend/dist/ \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend_dist/
