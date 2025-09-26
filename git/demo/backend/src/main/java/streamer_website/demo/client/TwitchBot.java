@@ -81,25 +81,35 @@ public class TwitchBot {
 
         if (!message.startsWith("!")) return;
 
-        String[] parts = message.split(" ", 3);
+        String[] parts = message.split(" ", 2); // nur aufteilen in Command und Rest
         String trigger = parts[0].substring(1).toLowerCase();
+        String argsPart = parts.length > 1 ? parts[1] : "";
 
         try {
             if (isMod) {
                 TwitchBotModCommand cmd = TwitchBotModCommand.fromTrigger(trigger);
                 if (cmd != null) {
                     try {
-                        String[] args = parts;
+                        String[] args;
 
-                        if (trigger.equals("title") || trigger.equals("category")) {
-                            String fullArgument = message.substring(message.indexOf(" ") + 1);
-                            args = new String[] { trigger, fullArgument };
+                        if (trigger.equals("add")) {
+                            // !add <newTrigger> <response>
+                            int firstSpace = argsPart.indexOf(" ");
+                            if (firstSpace > 0) {
+                                String newTrigger = argsPart.substring(0, firstSpace);
+                                String response = argsPart.substring(firstSpace + 1);
+                                args = new String[] { newTrigger, response };
+                            } else {
+                                args = new String[] { argsPart, "" }; // falls keine Response angegeben
+                            }
+                        } else {
+                            args = argsPart.isEmpty() ? new String[]{} : argsPart.split(" ");
                         }
 
                         cmd.execute(args, event, client, commandService);
+
                     } catch (Exception e) {
-                        logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}",
-                                trigger, message, e);
+                        logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}", trigger, message, e);
                         client.getChat().sendMessage(event.getChannel().getName(),
                                 "Fehler beim Ausführen des Commands: " + trigger);
                     }
