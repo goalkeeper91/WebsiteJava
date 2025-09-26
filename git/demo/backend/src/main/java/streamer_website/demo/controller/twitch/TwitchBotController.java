@@ -64,7 +64,7 @@ public class TwitchBotController {
         return twitchBotHandler.handleOAuthCallback(code);
     }
 
-    @GetMapping("/api/twitch/commands")
+    @GetMapping("/twitch/commands")
     public List<TwitchCommandDTO> getAllCommands() {
         return botManagerService.getAllCommands();
     }

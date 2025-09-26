@@ -18,7 +18,7 @@ const TwitchCommandsEditor: React.FC = () => {
   const fetchCommands = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/twitch/commands");
+      const res = await fetch("/api/bot/twitch/commands");
       const data = await res.json();
       setCommands(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -35,7 +35,7 @@ const TwitchCommandsEditor: React.FC = () => {
   const handleAdd = async () => {
     if (!newCommand.trigger || !newCommand.response) return;
     try {
-      const res = await fetch("/api/twitch/commands", {
+      const res = await fetch("/api/bot/twitch/commands", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newCommand),
@@ -51,7 +51,7 @@ const TwitchCommandsEditor: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/twitch/commands/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/bot/twitch/commands/${id}`, { method: "DELETE" });
       if (res.ok) fetchCommands();
     } catch (err) {
       console.error("Delete failed:", err);
@@ -68,7 +68,7 @@ const TwitchCommandsEditor: React.FC = () => {
     };
 
     try {
-      const res = await fetch(`/api/twitch/commands/${id}`, {
+      const res = await fetch(`/api/bot/twitch/commands/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
