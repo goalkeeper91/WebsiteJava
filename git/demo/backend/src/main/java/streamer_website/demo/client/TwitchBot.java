@@ -102,6 +102,17 @@ public class TwitchBot {
                             } else {
                                 args = new String[] { argsPart, "" }; // falls keine Response angegeben
                             }
+                        } else if (trigger.equals("edit")) {
+                            int firstSpace = argsPart.indexOf(" ");
+                            if (firstSpace > 0) {
+                                String editTrigger = argsPart.substring(0, firstSpace).toLowerCase();
+                                String newResponse = argsPart.substring(firstSpace + 1);
+                                args = new String[] { editTrigger, newResponse };
+                            } else {
+                                args = new String[] { argsPart, "" };
+                            }
+                        } else if (trigger.equals("title") || trigger.equals("category")) {
+                            args = new String[] { argsPart };
                         } else {
                             args = argsPart.isEmpty() ? new String[]{} : argsPart.split(" ");
                         }
