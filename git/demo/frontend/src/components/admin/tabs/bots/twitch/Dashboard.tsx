@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Play, Square, AlertTriangle, CheckCircle, RefreshCcw } from "lucide-react";
-import UptimeDisplay from "../stats/UptimeDisplay";
+import UptimeDisplay from "../../stats/UptimeDisplay";
 
 interface BotStatus {
   running: boolean;
@@ -105,20 +105,22 @@ const TwitchBotControls = () => {
               <Play className="w-4 h-4 mr-1" /> Starten
             </button>
           ) : (
-            <button
-              onClick={stopBot}
-              disabled={loading}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center"
-            >
-              <Square className="w-4 h-4 mr-1" /> Stoppen
-            </button>
-            <button
-                onClick={restartBot}
-                disabled={loading}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded flex items-center"
-            >
-                <RefreshCcw className="w-4 h-4 mr-1" /> Restart
-            </button>
+            <div className="flex space-x-2">
+                <button
+                  onClick={stopBot}
+                  disabled={loading}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center"
+                >
+                  <Square className="w-4 h-4 mr-1" /> Stoppen
+                </button>
+                <button
+                    onClick={restartBot}
+                    disabled={loading}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded flex items-center"
+                >
+                    <RefreshCcw className="w-4 h-4 mr-1" /> Restart
+                </button>
+            </div>
           )}
           <button
             onClick={fetchStatus}

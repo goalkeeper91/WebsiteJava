@@ -7,6 +7,7 @@ import streamer_website.demo.repository.TwitchAuthTokenRepository;
 import streamer_website.demo.repository.TwitchCommandRepository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,6 +64,10 @@ public class TwitchCommandService {
 
         commandCache.remove(trigger.toLowerCase());
         return deleted;
+    }
+
+    public List<TwitchCommand> getAllCommands() {
+        return repository.findAll();
     }
 
     public String getBotToken() {

@@ -1,5 +1,6 @@
 import React from "react";
-import TwitchBotControls from "./BotActions";
+import TwitchBotControls from "./twitch/Dashboard";
+import TwitchCommandsTable from "./twitch/CommandsTable";
 import DiscordBotControls from "./discord/DiscordBotStatus";
 import DiscordChannelEditor from "./discord/DiscordChannelsEditor";
 
@@ -19,10 +20,7 @@ const BotEditor: React.FC<BotEditorProps> = ({ botId, subId }) => {
         subId === "dashboard" ? (
             <TwitchBotControls />
           ) : subId === "commands" ? (
-            <div>
-              {/* Hier später deine Command-Verwaltung */}
-              <p>Hier kannst du Twitch Commands verwalten.</p>
-            </div>
+            <TwitchCommandsTable />
           ) : (
             <textarea
               className="w-full h-64 border p-2"

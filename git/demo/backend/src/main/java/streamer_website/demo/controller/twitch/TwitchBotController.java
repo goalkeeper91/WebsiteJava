@@ -7,9 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import streamer_website.demo.dto.BotStatusDto;
+import streamer_website.demo.dto.TwitchCommandDTO;
 import streamer_website.demo.handler.twitch.TwitchBotHandler;
 import streamer_website.demo.service.twitch.TwitchBotManagerService;
 import streamer_website.demo.service.twitch.TwitchTokenService;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/bot")
@@ -58,5 +62,10 @@ public class TwitchBotController {
     @GetMapping("/oauth/callback")
     public ResponseEntity<String> oauthCallback(@RequestParam String code) {
         return twitchBotHandler.handleOAuthCallback(code);
+    }
+
+    @GetMapping("/api/twitch/commands")
+    public List<TwitchCommandDTO> getAllCommands() {
+        return botManagerService.getAllCommands();
     }
 }

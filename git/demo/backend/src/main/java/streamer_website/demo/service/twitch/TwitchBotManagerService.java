@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import streamer_website.demo.client.TwitchBot;
 import streamer_website.demo.config.TwitchBotConfig;
 import streamer_website.demo.dto.BotStatusDto;
+import streamer_website.demo.dto.TwitchCommandDTO;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -51,6 +52,19 @@ public class TwitchBotManagerService {
         if (twitchBot != null) {
             twitchBot.stop(); // stoppt die IRC-Verbindung
         }
+    }
+
+    public List<TwitchCommandDTO> getAllCommands() {
+        return twitchCommandService.getAllCommands().stream()
+                .map(cmd -> new TwitchCommandDTO(
+                        cmd.getId(),
+                        cmd.getTrigger(),
+                        cmd.getResponse(),
+                        cmd.isModOnly(),
+                        cmd.getCreatedAt(),
+                        cmd.getUpdatedAt()
+                ))
+                .toList();
     }
 
     public BotStatusDto getBotStatus() {
