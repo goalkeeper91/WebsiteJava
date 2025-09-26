@@ -58,16 +58,20 @@ const TwitchCommandsEditor: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (id: number, field: keyof TwitchCommand, value: string) => {
-    const updated = commands.find((c) => c.id === id);
-    if (!updated) return;
-    updated[field] = value;
+  const handleUpdate = async (id: number, field: "trigger" | "response" | "modOnly", value: string | boolean) => {
+    const updatedCommand = commands.find(c => c.id === id);
+    if (!updatedCommand) return;
+
+    const payload: Partial<Pick<TwitchCommand, "trigger" | "response" | "modOnly">> = {
+      ...updatedCommand,
+      [field]: value,
+    };
 
     try {
       const res = await fetch(`/api/twitch/commands/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
+        body: JSON.stringify(payload),
       });
       if (res.ok) fetchCommands();
     } catch (err) {
