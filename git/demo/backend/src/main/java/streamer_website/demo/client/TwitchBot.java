@@ -81,57 +81,44 @@ public class TwitchBot {
 
         if (!message.startsWith("!")) return;
 
-        String[] parts = message.split(" ", 2); // nur aufteilen in Command und Rest
+        String[] parts = message.split(" ", 3);
         String trigger = parts[0].substring(1).toLowerCase();
-        String argsPart = parts.length > 1 ? parts[1] : "";
 
         try {
             if (isMod) {
                 TwitchBotModCommand cmd = TwitchBotModCommand.fromTrigger(trigger);
                 if (cmd != null) {
-                    try {
-                        String[] args;
-
-                        if (trigger.equals("add")) {
-                            // !add <newTrigger> <response>
-                            int firstSpace = argsPart.indexOf(" ");
-                            if (firstSpace > 0) {
-                                String newTrigger = argsPart.substring(0, firstSpace);
-                                String response = argsPart.substring(firstSpace + 1);
-                                args = new String[] { newTrigger, response };
+                    String[] args = new String[]{};
+                    switch (trigger) {
+                        case "add":
+                        case "edit":
+                            if (parts.length == 3) {
+                                args = new String[]{parts[1], parts[2]}; // [Trigger, Response]
                             } else {
-                                args = new String[] { argsPart, "" }; // falls keine Response angegeben
+                                client.getChat().sendMessage(event.getChannel().getName(),
+                                        "Fehler: Benutze !add <Trigger> <Response>");
+                                return;
                             }
-                        } else if (trigger.equals("edit")) {
-                            int firstSpace = argsPart.indexOf(" ");
-                            if (firstSpace > 0) {
-                                String editTrigger = argsPart.substring(0, firstSpace).toLowerCase();
-                                String newResponse = argsPart.substring(firstSpace + 1);
-                                args = new String[] { editTrigger, newResponse };
-                            } else {
-                                args = new String[] { argsPart, "" };
+                            break;
+                        case "title":
+                        case "category":
+                            if (parts.length > 1) {
+                                args = new String[]{parts[0], message.substring(message.indexOf(" ") + 1)};
                             }
-                        } else if (trigger.equals("title") || trigger.equals("category")) {
-                            args = new String[] { argsPart };
-                        } else {
-                            args = argsPart.isEmpty() ? new String[]{} : argsPart.split(" ");
-                        }
-
-                        cmd.execute(args, event, client, commandService);
-
-                    } catch (Exception e) {
-                        logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}", trigger, message, e);
-                        client.getChat().sendMessage(event.getChannel().getName(),
-                                "Fehler beim Ausführen des Commands: " + trigger);
+                            break;
+                        default:
+                            args = parts.length > 1 ? parts[1].split(" ") : new String[]{};
                     }
+                    cmd.execute(args, event, client, commandService);
                 }
             }
 
-            commandService.getCommand(trigger).ifPresent(cmd ->
-                    client.getChat().sendMessage(event.getChannel().getName(), cmd.getResponse()));
+            // DB-Command
+            commandService.getCommand(trigger).ifPresent(c ->
+                    client.getChat().sendMessage(event.getChannel().getName(), c.getResponse()));
 
         } catch (Exception e) {
-            client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Command: " + event.getMessage());
+            client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Commands: " + event.getMessage());
             logger.warn("Fehler beim Command", e);
         }
     }
