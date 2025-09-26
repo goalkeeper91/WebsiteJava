@@ -88,37 +88,29 @@ public class TwitchBot {
             if (isMod) {
                 TwitchBotModCommand cmd = TwitchBotModCommand.fromTrigger(trigger);
                 if (cmd != null) {
-                    String[] args = new String[]{};
-                    switch (trigger) {
-                        case "add":
-                        case "edit":
-                            if (parts.length == 3) {
-                                args = new String[]{parts[1], parts[2]}; // [Trigger, Response]
-                            } else {
-                                client.getChat().sendMessage(event.getChannel().getName(),
-                                        "Fehler: Benutze !add <Trigger> <Response>");
-                                return;
-                            }
-                            break;
-                        case "title":
-                        case "category":
-                            if (parts.length > 1) {
-                                args = new String[]{parts[0], message.substring(message.indexOf(" ") + 1)};
-                            }
-                            break;
-                        default:
-                            args = parts.length > 1 ? parts[1].split(" ") : new String[]{};
+                    try {
+                        String[] args = parts;
+
+                        if (trigger.equals("title") || trigger.equals("category")) {
+                            String fullArgument = message.substring(message.indexOf(" ") + 1);
+                            args = new String[] { trigger, fullArgument };
+                        }
+
+                        cmd.execute(args, event, client, commandService);
+                    } catch (Exception e) {
+                        logger.error("Fehler beim Ausführen des Mod-Commands {} mit Nachricht: {}",
+                                trigger, message, e);
+                        client.getChat().sendMessage(event.getChannel().getName(),
+                                "Fehler beim Ausführen des Commands: " + trigger);
                     }
-                    cmd.execute(args, event, client, commandService);
                 }
             }
 
-            // DB-Command
-            commandService.getCommand(trigger).ifPresent(c ->
-                    client.getChat().sendMessage(event.getChannel().getName(), c.getResponse()));
+            commandService.getCommand(trigger).ifPresent(cmd ->
+                    client.getChat().sendMessage(event.getChannel().getName(), cmd.getResponse()));
 
         } catch (Exception e) {
-            client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Commands: " + event.getMessage());
+            client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Command: " + event.getMessage());
             logger.warn("Fehler beim Command", e);
         }
     }
