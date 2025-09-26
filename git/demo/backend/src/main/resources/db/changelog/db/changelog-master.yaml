@@ -34,3 +34,6 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/discord/create_discord_channels_table.xml
+
+  - include:
+      file: db/changelog/discord/alter_twitch_commands_table.xml
