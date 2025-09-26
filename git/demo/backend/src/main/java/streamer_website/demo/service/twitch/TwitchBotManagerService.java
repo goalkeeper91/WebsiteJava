@@ -38,6 +38,15 @@ public class TwitchBotManagerService {
         twitchBot.start(userId);
     }
 
+    public void restartBot() {
+        if (twitchBot != null) {
+            twitchBot.restart();
+        } else {
+            logger.warn("Restart angefordert, aber Bot läuft nicht. Starte neu...");
+            startBot();
+        }
+    }
+
     public void stopBot() {
         if (twitchBot != null) {
             twitchBot.stop(); // stoppt die IRC-Verbindung

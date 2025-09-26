@@ -29,6 +29,7 @@ public class TwitchBot {
     private final TwitchTokenService twitchTokenService;
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchBot.class);
+    private String botUserIdFromDB;
 
     @Getter
     private boolean running = false;
@@ -44,6 +45,8 @@ public class TwitchBot {
             logger.warn("Bot ist bereits gestartet");
             return;
         }
+
+        this.botUserIdFromDB = botUserIdFromDB;
 
         String accessToken = twitchTokenService.getBotAccessToken();
 
@@ -72,6 +75,19 @@ public class TwitchBot {
         running = false;
         startTime = null;
         logger.info("TwitchBot gestoppt");
+    }
+
+    public void restart() {
+        logger.info("Starte den Bot neu...");
+
+        stop();
+
+        try {
+            start(this.botUserIdFromDB);
+            logger.info("TwitchBot erfolgreich neu gestartet");
+        } catch (Exception e) {
+            logger.error("Fehler beim Neustarten des Bots", e);
+        }
     }
 
     private void onMessage(ChannelMessageEvent event) {

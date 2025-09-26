@@ -33,6 +33,13 @@ const TwitchBotControls = () => {
     setLoading(false);
   };
 
+  const restartBot = async () => {
+    setLoading(true);
+    await fetch("/api/bot/restart", { method: "POST" });
+    await fetchStatus();
+    setLoading(false);
+  };
+
   const stopBot = async () => {
     setLoading(true);
     await fetch("/api/bot/stop", { method: "POST" });
@@ -104,6 +111,13 @@ const TwitchBotControls = () => {
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center"
             >
               <Square className="w-4 h-4 mr-1" /> Stoppen
+            </button>
+            <button
+                onClick={restartBot}
+                disabled={loading}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded flex items-center"
+            >
+                <RefreshCcw className="w-4 h-4 mr-1" /> Restart
             </button>
           )}
           <button

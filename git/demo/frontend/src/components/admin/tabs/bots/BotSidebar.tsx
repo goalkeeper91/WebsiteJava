@@ -1,8 +1,14 @@
 import { useState } from "react";
 
 const bots = [
-  { id: "twitchBot", name: "Twitch Bot" },
-  { id: "discordBot", name: "Discord Bot", subItems: [
+  { id: "twitchBot", name: "Twitch Bot",
+    subItems: [
+        { id: "dashboard", name: "Dashboard" },
+        { id: "commands", name: "Befehle / Commands" },
+      ],
+  },
+  { id: "discordBot", name: "Discord Bot",
+    subItems: [
       { id: "dashboard", name: "Dashboard"},
       { id: "discordChannels", name: "Channel IDs" },
     ]

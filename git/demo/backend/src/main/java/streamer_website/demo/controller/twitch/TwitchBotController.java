@@ -28,6 +28,13 @@ public class TwitchBotController {
         return ResponseEntity.ok("Bot wird gestartet");
     }
 
+    @PostMapping("/restart")
+    public ResponseEntity<String> restartBot() {
+        logger.info("[POST] /api/bot/restart called");
+        botManagerService.restartBot();
+        return ResponseEntity.ok("Bot wird neu gestartet");
+    }
+
     @PostMapping("/stop")
     public ResponseEntity<String> stopBot() {
         logger.info("[POST] /api/bot/stop called");

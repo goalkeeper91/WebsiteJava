@@ -16,7 +16,19 @@ const BotEditor: React.FC<BotEditorProps> = ({ botId, subId }) => {
       </h2>
 
       {botId === "twitchBot" ? (
-        <TwitchBotControls />
+        subId === "dashboard" ? (
+            <TwitchBotControls />
+          ) : subId === "commands" ? (
+            <div>
+              {/* Hier später deine Command-Verwaltung */}
+              <p>Hier kannst du Twitch Commands verwalten.</p>
+            </div>
+          ) : (
+            <textarea
+              className="w-full h-64 border p-2"
+              placeholder={`Bot Einstellungen "${botId}${subId ? ` > ${subId}` : ""}" anpassen...`}
+            />
+          )
       ) : botId === "discordBot" ? (
         subId === "dashboard" ? (
           <DiscordBotControls />
