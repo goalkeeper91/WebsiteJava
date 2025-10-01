@@ -9,13 +9,10 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamer_website.demo.commands.twitch.TwitchBotModCommand;
-import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.service.twitch.TwitchCommandService;
 import streamer_website.demo.service.twitch.TwitchTokenService;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 public class TwitchBot {
 
@@ -51,12 +48,9 @@ public class TwitchBot {
 
         this.botUserIdFromDB = botUserIdFromDB;
 
-        TwitchAuthToken token = twitchTokenService.findBotToken();
+        String accessToken = twitchTokenService.getBotAccessToken();
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("refresh_token", token.getRefreshToken());
-
-        OAuth2Credential credential = new OAuth2Credential("twitch", null, data);
+        OAuth2Credential credential = new OAuth2Credential("twitch", accessToken);
 
         client = TwitchClientBuilder.builder()
                 .withEnableHelix(true)

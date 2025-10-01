@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
-import streamer_website.demo.controller.twitch.TwitchAuthController;
 import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 
@@ -196,7 +195,7 @@ public class TwitchTokenService {
         return userResponse.get("data").get(0).get("id").asText();
     }
 
-    private TwitchAuthToken getValidToken(String username) {
+    public TwitchAuthToken getValidToken(String username) {
         TwitchAuthToken token = tokenRepository.findTopByUserNameOrderByCreatedAtDesc(username)
                 .orElseThrow(() -> new IllegalStateException("Kein Token für " + username + " gefunden"));
 
