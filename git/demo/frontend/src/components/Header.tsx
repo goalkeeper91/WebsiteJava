@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { NavLinks } from './Navlinks';
 
 const Header: React.FC = () => {
-    const [liveChecked, setLiveChecked] = useState(false);
     const isLive = useTwitchLiveStatus();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { isAuthenticated, username, logout } = useAuth();
