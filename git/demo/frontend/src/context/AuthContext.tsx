@@ -7,6 +7,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   loading: boolean;
   loginError: string | null;
+  authChecked: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -108,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, username, checkAuth, logout, loading, loginError }}
+      value={{ isAuthenticated, username, checkAuth, logout, loading, loginError, authChecked }}
     >
       {children}
     </AuthContext.Provider>

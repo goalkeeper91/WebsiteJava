@@ -37,7 +37,6 @@ const Header: React.FC = () => {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex space-x-6 items-center">
                         <NavLinks
-                            liveChecked={liveChecked}
                             isLive={isLive}
                             isAuthenticated={isAuthenticated}
                             username={username}
@@ -57,12 +56,11 @@ const Header: React.FC = () => {
                 {isMenuOpen && (
                     <div className="md:hidden bg-slate-800/90 px-6 pb-4 space-y-4">
                         <NavLinks
-                            liveChecked={liveChecked}
                             isLive={isLive}
                             isAuthenticated={isAuthenticated}
                             username={username}
                             handleLogout={handleLogout}
-                            isMobile={true} // Optional, falls NavLinks Unterschiede für Mobile benötigt
+                            isMobile
                         />
                     </div>
                 )}
