@@ -11,9 +11,6 @@ const Header: React.FC = () => {
     const { isAuthenticated, username, logout } = useAuth();
 
     useEffect(() => {
-      if (isLive !== null) {
-        setLiveChecked(true);
-      }
     }, [isLive]);
 
     const handleLogout = async () => {

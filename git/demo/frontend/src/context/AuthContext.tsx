@@ -17,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   loading: true,
   loginError: null,
+  authChecked: false,
 });
 
 // === Neue ENV-Schalter ===
