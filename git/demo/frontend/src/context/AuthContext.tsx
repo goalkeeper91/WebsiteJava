@@ -6,6 +6,7 @@ type AuthContextType = {
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
+  loginError: string | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ const FAKE_USER = import.meta.env.VITE_FAKE_USER || "dev-user";
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const checkAuth = async () => {
     setLoading(true);
@@ -41,20 +43,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (res.status === 401) {
         setUsername(null);
+        setLoginError("Das mit dem Login hat nicht geklappt!");
         return;
       }
 
       if (!res.ok) {
         console.error("Auth check failed:", res.statusText);
         setUsername(null);
+        setLoginError("Das mit dem Login hat nicht geklappt!");
         return;
       }
 
       const data = await res.json();
       setUsername(data.username || data.display_name);
+      setLoginError(null); // Reset error
     } catch (err) {
       console.error("Login check failed:", err);
       setUsername(null);
+      setLoginError("Das mit dem Login hat nicht geklappt!");
     } finally {
       setLoading(false);
     }
@@ -81,6 +87,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    if (!loginError) return;
+
+    const timer = setTimeout(() => {
+        setLoginError(null);
+    }, 4000); // 4 Sekunden
+
+    return () => clearTimeout(timer);
+  }, [loginError]);
+
+  useEffect(() => {
     checkAuth();
   }, []);
 
@@ -88,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, username, checkAuth, logout, loading }}
+      value={{ isAuthenticated, username, checkAuth, logout, loading, loginError }}
     >
       {children}
     </AuthContext.Provider>
