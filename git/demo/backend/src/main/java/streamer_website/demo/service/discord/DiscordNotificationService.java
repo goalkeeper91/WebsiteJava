@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.entity.ContactRequest;
 import streamer_website.demo.entity.discord.DiscordChannels;
+import streamer_website.demo.entity.twitch.TwitchCommand;
 import streamer_website.demo.repository.DiscordChannelsRepository;
 import streamer_website.demo.service.twitch.TwitchBotManagerService;
 
@@ -48,13 +49,36 @@ public class DiscordNotificationService {
                 .ofType(MessageChannel.class)
                 .flatMap(channel -> channel.createMessage(
                         MessageCreateSpec.builder()
-                                .addEmbed(buildEmbed(request))
+                                .addEmbed(buildContactEmbed(request))
                                 .build()
                 ))
                 .then();
     }
 
-    private EmbedCreateSpec buildEmbed(ContactRequest request) {
+    public Mono<Void> notifyNewTwitchCommandRequest(TwitchCommand command) {
+        String channelId = channelsRepo.findByDescriptionContainingIgnoreCase("twitch command")
+                .stream().findFirst()
+                .map(DiscordChannels::getChannelId)
+                .orElseGet(() -> {
+                    logger.warn("Kein passender Discord-Channel gefunden (beschreibung enthält 'twitch command')");
+                    return null;
+                });
+
+        if (channelId == null) {
+            return Mono.empty();
+        }
+
+        return client.getChannelById(Snowflake.of(channelId))
+                .ofType(MessageChannel.class)
+                .flatMap(channel -> channel.createMessage(
+                        MessageCreateSpec.builder()
+                                .addEmbed(buildCommandEmbed(command))
+                                .build()
+                ))
+                .then();
+    }
+
+    private EmbedCreateSpec buildContactEmbed(ContactRequest request) {
         EmbedCreateSpec.Builder builder = EmbedCreateSpec.builder()
                 .title("📩 Neue Kontaktanfrage")
                 .color(Color.BLUE)
@@ -69,6 +93,19 @@ public class DiscordNotificationService {
                 .addField("💬 Nachricht", request.getMessage(), false)
                 .footer("Eingegangen am", null)
                 .timestamp(request.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
+
+        return builder.build();
+    }
+
+    private EmbedCreateSpec buildCommandEmbed(TwitchCommand command) {
+        EmbedCreateSpec.Builder builder = EmbedCreateSpec.builder()
+                .title("📩 Neuer Command")
+                .color(Color.BLUE)
+                .addField("👤 Trigger", command.getTrigger(), false);
+
+        builder.addField("💬 Nachricht", command.getResponse(), false)
+                .footer("Erstellt am", null)
+                .timestamp(command.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
 
         return builder.build();
     }

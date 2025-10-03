@@ -5,6 +5,7 @@ import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.entity.twitch.TwitchCommand;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 import streamer_website.demo.repository.TwitchCommandRepository;
+import streamer_website.demo.service.discord.DiscordNotificationService;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,11 +19,13 @@ public class TwitchCommandService {
     private final TwitchCommandRepository repository;
     private final TwitchTokenService tokenService;
     private final Map<String, TwitchCommand> commandCache = new ConcurrentHashMap<>();
+    private final DiscordNotificationService discordService;
 
-    public TwitchCommandService(TwitchCommandRepository repository, TwitchTokenService tokenService) {
+    public TwitchCommandService(TwitchCommandRepository repository, TwitchTokenService tokenService, DiscordNotificationService discordService) {
         this.repository = repository;
         this.tokenService = tokenService;
         loadCommandsFromDB();
+        this.discordService = discordService;
     }
 
     private void loadCommandsFromDB() {
@@ -43,6 +46,7 @@ public class TwitchCommandService {
 
         TwitchCommand saved = repository.save(command);
         commandCache.put(trigger.toLowerCase(), saved);
+        discordService.notifyNewTwitchCommandRequest(saved).subscribe();
         return saved;
     }
 
