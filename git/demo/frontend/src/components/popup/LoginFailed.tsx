@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "../../context/AuthContext";
 
 export const LoginPopup: React.FC = () => {
   const { loginError } = useAuth();

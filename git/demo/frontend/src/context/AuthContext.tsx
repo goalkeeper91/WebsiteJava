@@ -25,13 +25,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  const checkAuth = async () => {
+  const checkAuth = async (showError = false) => {
     setLoading(true);
 
     if (FAKE_AUTH) {
       // In Dev/Test-Umgebung: immer als eingeloggt behandeln
       setUsername(FAKE_USER);
+      setAuthChecked(true);
       setLoading(false);
       return;
     }
@@ -43,14 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (res.status === 401) {
         setUsername(null);
-        setLoginError("Das mit dem Login hat nicht geklappt!");
+        if (showError) setLoginError("Das mit dem Login hat nicht geklappt!");
         return;
       }
 
       if (!res.ok) {
         console.error("Auth check failed:", res.statusText);
         setUsername(null);
-        setLoginError("Das mit dem Login hat nicht geklappt!");
+        if (showError) setLoginError("Das mit dem Login hat nicht geklappt!");
         return;
       }
 
@@ -60,8 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error("Login check failed:", err);
       setUsername(null);
-      setLoginError("Das mit dem Login hat nicht geklappt!");
+      if (showError) setLoginError("Das mit dem Login hat nicht geklappt!");
     } finally {
+      setAuthChecked(true);
       setLoading(false);
     }
   };
@@ -97,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loginError]);
 
   useEffect(() => {
-    checkAuth();
+    checkAuth(false);
   }, []);
 
   const isAuthenticated = !!username;

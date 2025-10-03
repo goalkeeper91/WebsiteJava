@@ -11,6 +11,7 @@ import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
 import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
+import { LoginPopup } from './components/popup/LoginFailed';
 
 const App = () => {
   return (
