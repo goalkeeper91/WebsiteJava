@@ -8,11 +8,11 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.channel.VoiceChannel;
-import discord4j.core.spec.GuildMemberEditSpec;
 import discord4j.core.spec.VoiceChannelCreateSpec;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.entity.discord.JoinToCreateConfig;
@@ -50,6 +50,12 @@ public class JoinToCreateService {
 
     }
 
+    @Scheduled(fixedRate = 150000)
+    public void refreshConfigs() {
+        System.out.println("[JoinToCreate] Aktualisiere Konfigurationen...");
+        this.initConfigs();
+    }
+
     /**
      * Registriert die VoiceState Listener.
      * Listener reagieren nur auf gültige Channels.
@@ -60,22 +66,19 @@ public class JoinToCreateService {
         // Listener für User Joins / Moves
         client.on(VoiceStateUpdateEvent.class)
                 .flatMap(event -> {
-                    Optional<VoiceState> oldOpt = event.getOld();
-
                     VoiceState current = event.getCurrent();
-                    Snowflake currentChannelId = current.getChannelId().orElse(null);
-                    Snowflake oldChannelId = oldOpt.flatMap(VoiceState::getChannelId).orElse(null);
+                    if (current == null || current.getChannelId().isEmpty()) return Mono.empty();
 
-                    // Nur wenn der aktuelle Channel ein Join-to-Create ist
-                    if (currentChannelId == null || !configs.containsKey(currentChannelId)) {
-                        return Mono.empty();
-                    }
+                    Snowflake currentChannelId = current.getChannelId().get();
+                    JoinToCreateConfig cfg = configs.get(currentChannelId);
+                    if (cfg == null) return Mono.empty(); // Kein Join-to-Create für diesen Channel
 
-                    // Keine doppelte Verarbeitung, wenn User nur moved
+                    Snowflake oldChannelId = event.getOld().flatMap(VoiceState::getChannelId).orElse(null);
+                    // Nur echte neue Join-Events verarbeiten
                     if (oldChannelId != null && oldChannelId.equals(currentChannelId)) return Mono.empty();
 
-                    JoinToCreateConfig cfg = configs.get(currentChannelId);
                     Snowflake guildId = current.getGuildId();
+                    if (guildId == null) return Mono.empty();
 
                     Mono<Guild> guildMono = client.getGuildById(guildId);
                     Mono<Member> memberMono = current.getMember()
@@ -105,13 +108,11 @@ public class JoinToCreateService {
         // Listener für leere temporäre Channels
         client.on(VoiceStateUpdateEvent.class)
                 .flatMap(event -> {
-                    // Wir schauen nur auf den alten Channel
                     VoiceState oldState = event.getOld().orElse(null);
-                    if (oldState == null) return Mono.empty();
+                    if (oldState == null || oldState.getChannelId().isEmpty()) return Mono.empty();
 
-                    // Optional<Snowflake> entpacken
-                    Snowflake oldChannelId = oldState.getChannelId().orElse(null);
-                    if (oldChannelId == null || !createdChannelIds.contains(oldChannelId)) return Mono.empty();
+                    Snowflake oldChannelId = oldState.getChannelId().get();
+                    if (!createdChannelIds.contains(oldChannelId)) return Mono.empty();
 
                     Snowflake guildId = oldState.getGuildId();
                     if (guildId == null) return Mono.empty();
