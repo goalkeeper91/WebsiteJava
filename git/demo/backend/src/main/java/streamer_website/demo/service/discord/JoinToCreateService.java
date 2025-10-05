@@ -57,29 +57,29 @@ public class JoinToCreateService {
      */
     public void register(GatewayDiscordClient client) {
 
-        // Listener: User joined / moved
+        // Listener für User Joins / Moves
         client.on(VoiceStateUpdateEvent.class)
                 .flatMap(event -> {
-                    if (event.getCurrent() == null) return Mono.empty();
+                    Optional<VoiceState> oldOpt = event.getOld();
 
-                    Optional<Snowflake> currentChannelIdOpt = event.getCurrent().getChannelId();
-                    if (currentChannelIdOpt.isEmpty()) return Mono.empty();
+                    VoiceState current = event.getCurrent();
+                    Snowflake currentChannelId = current.getChannelId().orElse(null);
+                    Snowflake oldChannelId = oldOpt.flatMap(VoiceState::getChannelId).orElse(null);
 
-                    Snowflake currentChannelId = currentChannelIdOpt.get();
+                    // Nur wenn der aktuelle Channel ein Join-to-Create ist
+                    if (currentChannelId == null || !configs.containsKey(currentChannelId)) {
+                        return Mono.empty();
+                    }
+
+                    // Keine doppelte Verarbeitung, wenn User nur moved
+                    if (oldChannelId != null && oldChannelId.equals(currentChannelId)) return Mono.empty();
+
                     JoinToCreateConfig cfg = configs.get(currentChannelId);
-                    if (cfg == null) return Mono.empty(); // Kein Join-to-Create
-
-                    if (event.getOld()
-                            .flatMap(VoiceState::getChannelId)
-                            .map(id -> id.equals(currentChannelId))
-                            .orElse(false)) return Mono.empty();
-
-                    Snowflake guildId = event.getCurrent().getGuildId();
-                    if (guildId == null) return Mono.empty();
+                    Snowflake guildId = current.getGuildId();
 
                     Mono<Guild> guildMono = client.getGuildById(guildId);
-                    Mono<Member> memberMono = event.getCurrent().getMember()
-                            .switchIfEmpty(guildMono.flatMap(g -> g.getMemberById(event.getCurrent().getUserId())));
+                    Mono<Member> memberMono = current.getMember()
+                            .switchIfEmpty(guildMono.flatMap(g -> g.getMemberById(current.getUserId())));
 
                     return Mono.zip(guildMono, memberMono)
                             .flatMap(tuple -> {
@@ -90,29 +90,30 @@ public class JoinToCreateService {
                                 return createTempChannel(guild, member, cfg)
                                         .flatMap(newChannel -> {
                                             createdChannelIds.add(newChannel.getId());
-                                            return member.edit(GuildMemberEditSpec.builder()
-                                                            .newVoiceChannel(newChannel.getId())
-                                                            .build())
+                                            System.out.println("[JoinToCreate] Temporärer Channel erstellt: " + newChannel.getName());
+                                            return member.edit(spec -> spec.setNewVoiceChannel(newChannel.getId()))
                                                     .thenReturn(newChannel);
                                         })
                                         .onErrorResume(e -> {
-                                            System.err.println("JoinToCreate Fehler: " + e.getMessage());
+                                            System.err.println("[JoinToCreate] Fehler beim Channel erstellen: " + e.getMessage());
                                             return Mono.empty();
                                         });
                             });
                 })
                 .subscribe();
 
-        // Listener: User verlässt temporären Channel
+        // Listener für leere temporäre Channels
         client.on(VoiceStateUpdateEvent.class)
                 .flatMap(event -> {
-                    Optional<Snowflake> oldChannelIdOpt = event.getOld().flatMap(VoiceState::getChannelId);
-                    if (oldChannelIdOpt.isEmpty()) return Mono.empty();
+                    // Wir schauen nur auf den alten Channel
+                    VoiceState oldState = event.getOld().orElse(null);
+                    if (oldState == null) return Mono.empty();
 
-                    Snowflake oldChannelId = oldChannelIdOpt.get();
-                    if (!createdChannelIds.contains(oldChannelId)) return Mono.empty();
+                    // Optional<Snowflake> entpacken
+                    Snowflake oldChannelId = oldState.getChannelId().orElse(null);
+                    if (oldChannelId == null || !createdChannelIds.contains(oldChannelId)) return Mono.empty();
 
-                    Snowflake guildId = event.getCurrent() != null ? event.getCurrent().getGuildId() : null;
+                    Snowflake guildId = oldState.getGuildId();
                     if (guildId == null) return Mono.empty();
 
                     return client.getGuildById(guildId)
@@ -121,13 +122,14 @@ public class JoinToCreateService {
                             .flatMap(vc -> vc.getVoiceStates().collectList()
                                     .flatMap(list -> {
                                         if (list.isEmpty()) {
+                                            System.out.println("[JoinToCreate] Lösche temporären Channel: " + vc.getName());
                                             return vc.delete()
                                                     .then(Mono.fromRunnable(() -> createdChannelIds.remove(oldChannelId)));
                                         }
                                         return Mono.empty();
                                     }))
                             .onErrorResume(e -> {
-                                System.err.println("Fehler beim Löschen temporären Channels: " + e.getMessage());
+                                System.err.println("[JoinToCreate] Fehler beim Löschen temporären Channels: " + e.getMessage());
                                 return Mono.empty();
                             });
                 })
