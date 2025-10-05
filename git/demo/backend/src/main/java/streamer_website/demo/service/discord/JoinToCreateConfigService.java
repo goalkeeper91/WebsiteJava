@@ -71,8 +71,8 @@ public class JoinToCreateConfigService {
             logger.error("Validation failed: Channel Name Prefix is empty");
             throw new RuntimeException("Channel Name Prefix darf nicht leer sein");
         }
-        if (config.getUserLimit() == null || config.getUserLimit() <= 0) {
-            logger.error("Validation failed: User Limit invalid -> {}", config.getUserLimit());
+        if (config.getUserLimit() == null) {
+            logger.error("Validation failed: User Limit invalid");
             throw new RuntimeException("User Limit darf nicht leer oder <= 0 sein");
         }
         if (config.getPrivateChannel() == null) {
