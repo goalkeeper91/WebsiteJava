@@ -13,7 +13,13 @@ type JoinToCreateChannel = {
 const DiscordJoinToCreateChannelsEditor: React.FC = () => {
   const [channels, setChannels] = useState<JoinToCreateChannel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newChannel, setNewChannel] = useState<Partial<JoinToCreateChannel>>({});
+  const [newChannel, setNewChannel] = useState<{
+    joinChannelId?: string;
+    categoryId?: string;
+    channelNamePrefix?: string;
+    userLimit?: number;
+    privateChannel?: boolean;
+  }>({});
 
   const fetchChannels = async () => {
     setLoading(true);
@@ -62,7 +68,7 @@ const DiscordJoinToCreateChannelsEditor: React.FC = () => {
     const updated = channels.find((c) => c.id === id);
     if (!updated) return;
 
-    updated[field] = value;
+    (updated as any)[field] = value;
 
     try {
       const res = await fetch(`/api/discord/join-to-create/${id}`, {
