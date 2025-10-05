@@ -2,15 +2,14 @@ package streamer_website.demo.client;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import streamer_website.demo.handler.discord.CommandEventHandler;
 import streamer_website.demo.handler.discord.GuildEventHandler;
+import streamer_website.demo.service.discord.CommandService;
 import streamer_website.demo.service.discord.GuildService;
 import streamer_website.demo.service.discord.JoinToCreateService;
 import streamer_website.demo.service.discord.StatusService;
@@ -25,7 +24,7 @@ public class DiscordBot {
     private String token; // Default leer, damit null-safe
 
     private final GuildEventHandler guildEventHandler;
-    private final CommandEventHandler commandHandler;
+    private final CommandService commandService;
     private final StatusService statusService;
     private final GuildService guildService;
     private final JoinToCreateService joinToCreateService;
@@ -51,7 +50,7 @@ public class DiscordBot {
             joinToCreateService.register(gateway);
 
             guildEventHandler.register(gateway);
-            commandHandler.register(gateway);
+            commandService.register(gateway);
             guildService.syncGuilds(gateway).subscribe();
 
             statusService.setRunning(true);
