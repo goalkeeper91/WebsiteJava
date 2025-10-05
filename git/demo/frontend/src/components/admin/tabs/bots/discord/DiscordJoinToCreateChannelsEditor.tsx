@@ -18,8 +18,10 @@ const DiscordJoinToCreateChannelsEditor: React.FC = () => {
     categoryId?: string;
     channelNamePrefix?: string;
     userLimit?: number;
-    privateChannel?: boolean;
-  }>({});
+    privateChannel: boolean;
+  }>({
+      privateChannel: false
+  });
 
   const fetchChannels = async () => {
     setLoading(true);
