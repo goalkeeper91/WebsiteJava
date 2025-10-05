@@ -50,7 +50,7 @@ const DiscordJoinToCreateChannelsEditor: React.FC = () => {
       });
       if (res.ok) {
         setNewChannel({
-            privateChannel: false;
+            privateChannel: false,
         });
         fetchChannels();
       }
