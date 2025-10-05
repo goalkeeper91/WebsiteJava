@@ -11,6 +11,7 @@ const bots = [
     subItems: [
       { id: "dashboard", name: "Dashboard"},
       { id: "discordChannels", name: "Channel IDs" },
+      { id: "discordJoinToCreateChannel", name: "Channel IDs zum Erstellen von Channels" },
     ]
   },
   { id: "widgetImplementation", name: "Widgets" },

@@ -1,12 +1,12 @@
 package streamer_website.demo.controller.discord;
 
+import discord4j.core.GatewayDiscordClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import streamer_website.demo.client.DiscordBot;
 import streamer_website.demo.entity.discord.DiscordGuild;
 import streamer_website.demo.service.discord.GuildService;
 
@@ -18,7 +18,7 @@ import java.util.Map;
 public class GuildController {
 
     private final GuildService guildService;
-    private final DiscordBot discordBot;
+    private final GatewayDiscordClient gateway;
     private static final Logger logger = LoggerFactory.getLogger(GuildController.class);
 
     @Value("${discord.bot.client-id}")
@@ -27,9 +27,9 @@ public class GuildController {
     @Value("${discord.bot.permissions}")
     private String permissions;
 
-    public GuildController(GuildService guildService, DiscordBot discordBot) {
+    public GuildController(GuildService guildService, GatewayDiscordClient gateway) {
         this.guildService = guildService;
-        this.discordBot = discordBot;
+        this.gateway = gateway;
     }
 
     @GetMapping("/invite-link")
@@ -67,7 +67,7 @@ public class GuildController {
 
     @PostMapping("/sync")
     public Mono<ResponseEntity<String>> syncGuilds() {
-        return guildService.syncGuilds(discordBot.getGateway())
+        return guildService.syncGuilds(gateway) // <- Gateway direkt nutzen
                 .then(Mono.just(ResponseEntity.ok("Guild-Synchronisierung gestartet")));
     }
 }

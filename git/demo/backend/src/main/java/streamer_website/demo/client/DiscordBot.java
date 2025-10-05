@@ -2,8 +2,8 @@ package streamer_website.demo.client;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.gateway.intent.IntentSet;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,68 +12,54 @@ import org.springframework.stereotype.Component;
 import streamer_website.demo.handler.discord.CommandEventHandler;
 import streamer_website.demo.handler.discord.GuildEventHandler;
 import streamer_website.demo.service.discord.GuildService;
+import streamer_website.demo.service.discord.JoinToCreateService;
 import streamer_website.demo.service.discord.StatusService;
 
 @Component
+@RequiredArgsConstructor
 public class DiscordBot {
 
     private static final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
 
-    @Value("${discord.bot.token}")
-    private String token;
+    @Value("${discord.bot.token:}")
+    private String token; // Default leer, damit null-safe
 
     private final GuildEventHandler guildEventHandler;
     private final CommandEventHandler commandHandler;
     private final StatusService statusService;
     private final GuildService guildService;
-
-    @Getter
-    private GatewayDiscordClient gateway;
-
-    public DiscordBot(GuildEventHandler guildEventHandler,
-                      CommandEventHandler commandHandler,
-                      StatusService statusService,
-                      GuildService guildService) {
-        this.guildEventHandler = guildEventHandler;
-        this.commandHandler = commandHandler;
-        this.statusService = statusService;
-        this.guildService = guildService;
-    }
+    private final JoinToCreateService joinToCreateService;
 
     @Bean
-    public GatewayDiscordClient start() {
+    public GatewayDiscordClient gatewayDiscordClient() {
         if (token == null || token.isEmpty()) {
-            throw new IllegalStateException("Discord token is not set!");
+            logger.warn("Kein Discord-Token gesetzt – Bot bleibt inaktiv");
+            return null;
         }
-
-        logger.info("Starte Discord Bot …");
 
         try {
+            logger.info("Starte Discord Bot…");
             DiscordClient client = DiscordClient.create(token);
-            gateway = client.login().block();
-
+            GatewayDiscordClient gateway = client.login().block();
             if (gateway == null) {
-                throw new IllegalStateException("Failed to login to Discord. Check your token.");
+                logger.error("Discord Login fehlgeschlagen");
+                return null;
             }
+
+            // Null-safe: DB kann leer sein
+            joinToCreateService.initConfigs();
+            joinToCreateService.register(gateway);
+
+            guildEventHandler.register(gateway);
+            commandHandler.register(gateway);
+            guildService.syncGuilds(gateway).subscribe();
+
+            statusService.setRunning(true);
+            logger.info("Discord Bot erfolgreich gestartet");
+            return gateway;
         } catch (Exception e) {
-            logger.error("Fehler beim Discord-Login: {}", e.getMessage(), e);
-            throw new IllegalStateException("Anwendung konnte keine Verbindung zu Discord herstellen.", e);
+            logger.error("Fehler beim Start des DiscordBots", e);
+            return null; // Kein Throw, damit Spring Container nicht crasht
         }
-
-        logger.info("Erfolgreich bei Discord eingeloggt. Registriere Events...");
-        statusService.setRunning(true);
-
-        // Events registrieren
-        guildEventHandler.register(gateway);
-        commandHandler.register(gateway);
-
-        // Sync der Guilds beim Start
-        guildService.syncGuilds(gateway).subscribe(); // Nicht-blockierender Aufruf
-
-        gateway.onDisconnect()
-                .doOnTerminate(() -> statusService.setRunning(false))
-                .subscribe();
-
-        return gateway;
     }
 }

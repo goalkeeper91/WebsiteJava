@@ -17,6 +17,12 @@
         </encoder>
     </appender>
 
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- Appender nur für TwitchService-Logs -->
     <appender name="TWITCH_SERVICE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/twitch-service.log</file>
@@ -64,6 +70,7 @@
 
     <!-- Root-Logger schreibt in FILE -->
     <root level="DEBUG">
+        <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>
 
@@ -75,7 +82,7 @@
         <appender-ref ref="TWITCH_COMMAND_FILE"/>
     </logger>
 
-    <logger name="streamer_website.demo.client.DiscordBot" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.client.DiscordBot" level="DEBUG" additivity="true">
         <appender-ref ref="DISCORD_COMMAND_FILE"/>
     </logger>
 

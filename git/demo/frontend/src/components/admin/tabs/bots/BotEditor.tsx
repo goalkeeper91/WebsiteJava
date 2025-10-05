@@ -3,6 +3,7 @@ import TwitchBotControls from "./twitch/Dashboard";
 import TwitchCommandsTable from "./twitch/CommandsTable";
 import DiscordBotControls from "./discord/DiscordBotStatus";
 import DiscordChannelEditor from "./discord/DiscordChannelsEditor";
+import DiscordJoinToCreateEditor from "./discord/DiscordJoinToCreateChannelsEditor";
 
 type BotEditorProps = {
   botId: string;
@@ -32,7 +33,9 @@ const BotEditor: React.FC<BotEditorProps> = ({ botId, subId }) => {
           <DiscordBotControls />
         ) : subId === "discordChannels" ? (
           <DiscordChannelEditor />
-        ) : (
+        ) : subId === "discordJoinToCreateChannel" ? (
+          <DiscordJoinToCreateEditor />
+        ): (
           <textarea
             className="w-full h-64 border p-2"
             placeholder={`Bot Einstellungen "${botId}${subId ? ` > ${subId}` : ""}" anpassen...`}
