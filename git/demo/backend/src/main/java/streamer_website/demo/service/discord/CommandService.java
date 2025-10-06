@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.commands.discord.Command;
-import streamer_website.demo.commands.discord.PingCommand;
 
 import java.util.Arrays;
 import java.util.HashMap;
