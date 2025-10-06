@@ -2,6 +2,7 @@ package streamer_website.demo.controller.discord;
 
 import discord4j.core.GatewayDiscordClient;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/discord/guild")
+@Lazy
 public class GuildController {
 
     private final GuildService guildService;

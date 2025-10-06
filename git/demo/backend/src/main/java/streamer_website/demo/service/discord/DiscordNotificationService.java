@@ -8,28 +8,34 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.entity.ContactRequest;
 import streamer_website.demo.entity.discord.DiscordChannels;
 import streamer_website.demo.entity.twitch.TwitchCommand;
 import streamer_website.demo.repository.DiscordChannelsRepository;
-import streamer_website.demo.service.twitch.TwitchBotManagerService;
 
 import java.time.ZoneId;
+import jakarta.inject.Provider;
 
 
 @Service
+@Lazy
 public class DiscordNotificationService {
 
-    private final GatewayDiscordClient client;
+    private final Provider<GatewayDiscordClient> client;
     private final DiscordChannelsRepository channelsRepo;
     private static final Logger logger = LoggerFactory.getLogger(DiscordNotificationService.class);
 
-    public DiscordNotificationService(GatewayDiscordClient client, DiscordChannelsRepository channelsRepo) {
+    public DiscordNotificationService(Provider<GatewayDiscordClient> client, DiscordChannelsRepository channelsRepo) {
         this.client = client;
         this.channelsRepo = channelsRepo;
+    }
+
+    // Hilfsmethode für den einfachen Zugriff auf den Client
+    private GatewayDiscordClient getClient() {
+        return client.get();
     }
 
     public Mono<Void> notifyNewContactRequest(ContactRequest request) {
@@ -45,7 +51,8 @@ public class DiscordNotificationService {
             return Mono.empty();
         }
 
-        return client.getChannelById(Snowflake.of(channelId))
+        // 3. ÄNDERUNG: Zugriff über getClient()
+        return getClient().getChannelById(Snowflake.of(channelId))
                 .ofType(MessageChannel.class)
                 .flatMap(channel -> channel.createMessage(
                         MessageCreateSpec.builder()
@@ -68,7 +75,8 @@ public class DiscordNotificationService {
             return Mono.empty();
         }
 
-        return client.getChannelById(Snowflake.of(channelId))
+        // 4. ÄNDERUNG: Zugriff über getClient()
+        return getClient().getChannelById(Snowflake.of(channelId))
                 .ofType(MessageChannel.class)
                 .flatMap(channel -> channel.createMessage(
                         MessageCreateSpec.builder()
