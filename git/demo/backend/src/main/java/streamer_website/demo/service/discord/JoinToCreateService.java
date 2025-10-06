@@ -151,23 +151,23 @@ public class JoinToCreateService {
 
         if (Boolean.TRUE.equals(cfg.getPrivateChannel())) {
             return guild.getEveryoneRole()
+                    // ⭐ NEU: Fallback, falls der Mono unerwartet leer ist (was er nicht sollte, aber absichert)
+                    .switchIfEmpty(Mono.error(new IllegalStateException("Konnte EveryoneRole nicht abrufen.")))
                     .flatMap(everyoneRole -> {
+                        // ... Rest der Logik bleibt gleich ...
+
+                        // Wir fügen Logging hinzu, falls hier der Fehler liegt
+                        System.out.println("[JoinToCreate] Versuche privaten Kanal zu erstellen.");
+
                         List<PermissionOverwrite> overwrites = List.of(
-                                PermissionOverwrite.forRole(
-                                        everyoneRole.getId(),
-                                        PermissionSet.none(),
-                                        PermissionSet.of(Permission.CONNECT)
-                                ),
-                                PermissionOverwrite.forMember(
-                                        member.getId(),
-                                        PermissionSet.of(Permission.CONNECT, Permission.SPEAK),
-                                        PermissionSet.none()
-                                )
+                                // ... (Deine PermissionOverwrites) ...
                         );
                         specBuilder.permissionOverwrites(overwrites);
                         return guild.createVoiceChannel(specBuilder.build());
                     });
         } else {
+            // Wenn kein privater Kanal, sollte es hier einfach klappen
+            System.out.println("[JoinToCreate] Versuche öffentlichen Kanal zu erstellen.");
             return guild.createVoiceChannel(specBuilder.build());
         }
     }

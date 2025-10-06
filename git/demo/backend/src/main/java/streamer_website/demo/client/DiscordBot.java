@@ -45,7 +45,9 @@ public class DiscordBot {
                     .setEnabledIntents(IntentSet.of(
                             Intent.GUILD_MESSAGES,
                             Intent.MESSAGE_CONTENT,
-                            Intent.GUILD_VOICE_STATES
+                            Intent.GUILD_VOICE_STATES,
+                            Intent.GUILDS,
+                            Intent.GUILD_MEMBERS
                     ))
                     .login()
                     .block();
