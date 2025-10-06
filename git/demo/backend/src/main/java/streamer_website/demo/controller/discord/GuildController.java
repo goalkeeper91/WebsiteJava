@@ -16,7 +16,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/discord/guild")
-@Lazy
 public class GuildController {
 
     private final GuildService guildService;

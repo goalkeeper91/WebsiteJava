@@ -8,7 +8,6 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import streamer_website.demo.entity.ContactRequest;
@@ -21,7 +20,6 @@ import jakarta.inject.Provider;
 
 
 @Service
-@Lazy
 public class DiscordNotificationService {
 
     private final Provider<GatewayDiscordClient> client;

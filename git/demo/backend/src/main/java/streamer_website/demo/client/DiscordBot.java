@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import streamer_website.demo.handler.discord.GuildEventHandler;
 import streamer_website.demo.service.discord.CommandService;
@@ -30,7 +29,6 @@ public class DiscordBot {
     private final JoinToCreateService joinToCreateService;
 
     @Bean
-    @Lazy
     public GatewayDiscordClient gatewayDiscordClient(@Value("${discord.bot.token:}") String token) {
         if (token == null || token.isEmpty()) {
             logger.warn("Kein Discord-Token gesetzt – Bot bleibt inaktiv");
