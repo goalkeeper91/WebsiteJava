@@ -57,7 +57,7 @@ jobs:
             
             # Backend und Services neu starten
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --build --no-cache --remove-orphans
 
             # Nur nginx Proxy reloaden (falls Config angepasst)
             docker compose -f docker-compose.prod.yml restart proxy
