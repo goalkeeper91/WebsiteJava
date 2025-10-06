@@ -57,10 +57,8 @@ public class CommandService {
                         .then();
                 }
 
-                // Command ausführen
-                cmd.execute(event, args);
-                    return Mono.empty();
-                })
+                return cmd.execute(event, args);
+            }) // <-- Der flatMap-Block ist jetzt geschlossen.
                 .subscribe();
         }
 }
