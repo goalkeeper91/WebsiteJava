@@ -13,6 +13,7 @@ import streamer_website.demo.entity.TaskStatus;
 import streamer_website.demo.repository.TaskRepository;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,7 +46,7 @@ public class TaskService {
                 .addField("Priorität", task.getPriority().label, true)
                 .addField("Fällig am", task.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")), true)
                 .footer("Erstellt von: " + task.getCreatorName() + " | Reagiere zur Statusänderung:\n" + statusEmotes, null)
-                .timestamp(Instant.from(task.getDueDate()))
+                .timestamp(task.getDueDate().atZone(ZoneId.of("Europe/Berlin")).toInstant())
                 .build();
     }
 
