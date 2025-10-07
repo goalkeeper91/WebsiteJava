@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import streamer_website.demo.handler.discord.GuildEventHandler;
+import streamer_website.demo.handler.discord.TaskReactionHandler;
 import streamer_website.demo.service.discord.CommandService;
 import streamer_website.demo.service.discord.GuildService;
 import streamer_website.demo.service.discord.JoinToCreateService;
@@ -27,6 +28,7 @@ public class DiscordBot {
     private final StatusService statusService;
     private final GuildService guildService;
     private final JoinToCreateService joinToCreateService;
+    private final TaskReactionHandler taskReactionHandler;
 
     @Bean
     public GatewayDiscordClient gatewayDiscordClient(@Value("${discord.bot.token:}") String token) {
@@ -45,7 +47,8 @@ public class DiscordBot {
                             Intent.MESSAGE_CONTENT,
                             Intent.GUILD_VOICE_STATES,
                             Intent.GUILDS,
-                            Intent.GUILD_MEMBERS
+                            Intent.GUILD_MEMBERS,
+                            Intent.GUILD_MESSAGE_REACTIONS
                     ))
                     .login()
                     .block();
@@ -55,12 +58,12 @@ public class DiscordBot {
                 return null;
             }
 
-            // ⭐ BEHALTEN: Service Registrierung erfolgt DIREKT HIER
             joinToCreateService.initConfigs();
             joinToCreateService.register(gateway);
             guildEventHandler.register(gateway);
             commandService.register(gateway);
             guildService.syncGuilds(gateway).subscribe();
+            taskReactionHandler.register(gateway);
 
             statusService.setRunning(true);
             logger.info("Discord Bot erfolgreich gestartet");
