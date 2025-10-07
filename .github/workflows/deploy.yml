@@ -35,7 +35,7 @@ jobs:
       # 🚀 Copy Backend + Config to Server
       - name: 🖥️ Copy Backend & Config to Server
         run: |
-          rsync -av --delete --exclude 'node_modules' --exclude 'logs' \
+          rsync -av --exclude 'node_modules' --exclude 'logs' \
           -e "ssh -o StrictHostKeyChecking=yes" \
           ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
