@@ -12,6 +12,7 @@ public class TwitchCommandDTO {
     private String trigger;
     private String response;
     private boolean modOnly;
+    private Integer duration;
     private Instant createdAt;
     private Instant updatedAt;
 }

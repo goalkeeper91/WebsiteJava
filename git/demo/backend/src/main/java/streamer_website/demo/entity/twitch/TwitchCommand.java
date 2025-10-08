@@ -27,6 +27,9 @@ public class TwitchCommand {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean modOnly = false;
 
+    @Column(nullable = true)
+    private Integer duration;
+
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 

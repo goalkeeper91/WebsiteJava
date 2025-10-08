@@ -6,6 +6,7 @@ interface TwitchCommand {
   trigger: string;
   response: string;
   modOnly: boolean;
+  duration?: number; // <--- neu für Timer
   createdAt: string;
   updatedAt: string;
 }
@@ -58,11 +59,15 @@ const TwitchCommandsEditor: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (id: number, field: "trigger" | "response" | "modOnly", value: string | boolean) => {
+  const handleUpdate = async (
+    id: number,
+    field: "trigger" | "response" | "modOnly" | "duration",
+    value: string | boolean | number
+  ) => {
     const updatedCommand = commands.find(c => c.id === id);
     if (!updatedCommand) return;
 
-    const payload: Partial<Pick<TwitchCommand, "trigger" | "response" | "modOnly">> = {
+    const payload: Partial<TwitchCommand> = {
       ...updatedCommand,
       [field]: value,
     };
@@ -101,6 +106,23 @@ const TwitchCommandsEditor: React.FC = () => {
           onChange={(e) => setNewCommand({ ...newCommand, response: e.target.value })}
           className="border p-2 rounded flex-1 min-w-[200px]"
         />
+        <input
+          type="number"
+          placeholder="Timer (Sekunden)"
+          value={newCommand.duration || ""}
+          onChange={(e) =>
+            setNewCommand({ ...newCommand, duration: e.target.value ? Number(e.target.value) : undefined })
+          }
+          className="border p-2 rounded w-[120px]"
+        />
+        <label className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={newCommand.modOnly || false}
+            onChange={(e) => setNewCommand({ ...newCommand, modOnly: e.target.checked })}
+          />{" "}
+          Mod Only
+        </label>
         <button
           onClick={handleAdd}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -129,6 +151,22 @@ const TwitchCommandsEditor: React.FC = () => {
                 onChange={(e) => handleUpdate(cmd.id, "response", e.target.value)}
                 className="border p-2 rounded flex-1 min-w-[200px]"
               />
+              <input
+                type="number"
+                value={cmd.duration || ""}
+                onChange={(e) =>
+                  handleUpdate(cmd.id, "duration", e.target.value ? Number(e.target.value) : undefined)
+                }
+                className="border p-2 rounded w-[120px]"
+              />
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={cmd.modOnly}
+                  onChange={(e) => handleUpdate(cmd.id, "modOnly", e.target.checked)}
+                />{" "}
+                Mod Only
+              </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleDelete(cmd.id)}

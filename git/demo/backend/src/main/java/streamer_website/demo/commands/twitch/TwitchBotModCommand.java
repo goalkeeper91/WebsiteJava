@@ -14,20 +14,40 @@ import java.util.List;
 public enum TwitchBotModCommand {
 
     ADD("add", (parts, event, client, service) -> {
-        if (parts.length == 3) {
+        if (parts.length == 5) {
             String newTrigger = parts[1].toLowerCase();
             String response = parts[2];
-            service.addCommand(newTrigger, response, false);
+            boolean modOnly = Boolean.parseBoolean(parts[3]);
+
+            Integer timer = null;
+            try {
+                timer = Integer.parseInt(parts[4]);
+            } catch (NumberFormatException e) {
+                client.getChat().sendMessage(event.getChannel().getName(),
+                "Der Command wird ohne Timer erstellt.");
+            }
+
+            service.addCommand(newTrigger, response, modOnly, timer);
             client.getChat().sendMessage(event.getChannel().getName(),
                     "Command !" + newTrigger + " hinzugefügt!");
         }
     }),
 
     EDIT("edit", (parts, event, client, service) -> {
-        if (parts.length == 3) {
+        if (parts.length == 4) {
             String editTrigger = parts[1].toLowerCase();
             String newResponse = parts[2];
-            service.editCommand(editTrigger, newResponse);
+
+            Integer timer = null;
+
+            try {
+                timer = Integer.parseInt(parts[3]);
+            } catch (NumberFormatException e) {
+                client.getChat().sendMessage(event.getChannel().getName(),
+                        "Der Command wird ohne Timer erstellt.");
+            }
+
+            service.editCommand(editTrigger, newResponse, timer);
             client.getChat().sendMessage(event.getChannel().getName(), "Command !" + editTrigger + " aktualisiert!");
         }
     }),

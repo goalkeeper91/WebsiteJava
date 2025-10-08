@@ -5,6 +5,7 @@ import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import com.github.twitch4j.common.enums.CommandPermission;
+import com.github.twitch4j.helix.domain.StreamList;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,8 @@ import streamer_website.demo.service.twitch.TwitchCommandService;
 import streamer_website.demo.service.twitch.TwitchTokenService;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.concurrent.*;
 
 public class TwitchBot {
 
@@ -30,6 +33,11 @@ public class TwitchBot {
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchBot.class);
     private String botUserIdFromDB;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService timerScheduler = Executors.newScheduledThreadPool(4);
+    private final ConcurrentHashMap<Long, ScheduledFuture<?>> activeTimers = new ConcurrentHashMap<>();
+    private boolean runningTimersStarted = false;
 
     @Getter
     private boolean running = false;
@@ -90,6 +98,23 @@ public class TwitchBot {
         }
     }
 
+    public boolean isStreamLive() {
+        StreamList streams = client.getHelix()
+                .getStreams(
+                        null,
+                        null,
+                        null,
+                        1,
+                        null,
+                        null,
+                        null,
+                        Collections.singletonList(channelName.toLowerCase())
+                )
+                .execute();
+
+        return !streams.getStreams().isEmpty();
+    }
+
     private void onMessage(ChannelMessageEvent event) {
         boolean isMod = event.getPermissions().contains(CommandPermission.MODERATOR)
                 || event.getPermissions().contains(CommandPermission.BROADCASTER);
@@ -97,8 +122,8 @@ public class TwitchBot {
 
         if (!message.startsWith("!")) return;
 
-        String[] parts = message.split(" ", 3);
-        String trigger = parts[0].substring(1).toLowerCase();
+        String[] parts = message.substring(1).split(";");
+        String trigger = parts[0].toLowerCase();
 
         try {
             if (isMod) {
@@ -129,5 +154,51 @@ public class TwitchBot {
             client.getChat().sendMessage(event.getChannel().getName(), "Fehler beim Verarbeiten des Command: " + event.getMessage());
             logger.warn("Fehler beim Command", e);
         }
+    }
+
+    public void startLiveStatusPolling() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                boolean live = isStreamLive();
+                if (live && !runningTimersStarted) {
+                    logger.info("Stream ist live — Timer-Commands starten");
+                    startAllTimerCommands();
+                    runningTimersStarted = true;
+                } else if (!live && runningTimersStarted) {
+                    logger.info("Stream ist offline — Timer-Commands stoppen");
+                    stopAllTimerCommands();
+                    runningTimersStarted = false;
+                }
+            } catch (Exception e) {
+                logger.error("Fehler beim Live-Check", e);
+            }
+        }, 0, 10, TimeUnit.SECONDS);
+    }
+
+    public void startAllTimerCommands() {
+        commandService.getTimerCommands().forEach(cmd -> {
+            if (activeTimers.containsKey(cmd.getId())) return;
+
+            ScheduledFuture<?> future = timerScheduler.scheduleAtFixedRate(() -> {
+                try {
+                    if (client != null) {
+                        client.getChat().sendMessage(channelName, cmd.getResponse());
+                    }
+                } catch (Exception e) {
+                    logger.error("Fehler beim Timer-Command '{}'", cmd.getTrigger(), e);
+                }
+            }, cmd.getDuration(), cmd.getDuration(), TimeUnit.SECONDS);
+
+            activeTimers.put(cmd.getId(), future);
+            logger.info("Timer für Command '{}' gestartet (alle {} Sekunden)", cmd.getTrigger(), cmd.getDuration());
+        });
+    }
+
+    public void stopAllTimerCommands() {
+        activeTimers.forEach((id, future) -> {
+            future.cancel(true);
+            logger.info("Timer für Command-ID {} gestoppt", id);
+        });
+        activeTimers.clear();
     }
 }
