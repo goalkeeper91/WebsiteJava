@@ -62,7 +62,7 @@ const TwitchCommandsEditor: React.FC = () => {
   const handleUpdate = async (
     id: number,
     field: "trigger" | "response" | "modOnly" | "duration",
-    value: string | boolean | number
+    value: string | number | boolean | undefined  // <-- hier erweitern
   ) => {
     const updatedCommand = commands.find(c => c.id === id);
     if (!updatedCommand) return;
