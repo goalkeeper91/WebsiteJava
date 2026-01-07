@@ -61,7 +61,6 @@ public class TwitchBotManagerService {
                         cmd.getTrigger(),
                         cmd.getResponse(),
                         cmd.isModOnly(),
-                        cmd.getDuration(),
                         cmd.getCreatedAt(),
                         cmd.getUpdatedAt()
                 ))

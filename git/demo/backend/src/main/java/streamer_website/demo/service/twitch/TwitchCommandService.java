@@ -41,7 +41,6 @@ public class TwitchCommandService {
         command.setTrigger(trigger);
         command.setResponse(response);
         command.setModOnly(modOnly);
-        command.setDuration(duration);
         command.setCreatedAt(Instant.now());
         command.setUpdatedAt(Instant.now());
 
@@ -54,9 +53,6 @@ public class TwitchCommandService {
     public Optional<TwitchCommand> editCommand(String trigger, String newResponse, Integer newDuration) {
         return repository.findByTriggerIgnoreCase(trigger).map(cmd -> {
             cmd.setResponse(newResponse);
-            if (newDuration != null) {
-                cmd.setDuration(newDuration);
-            }
             cmd.setUpdatedAt(Instant.now());
             TwitchCommand saved = repository.save(cmd);
             commandCache.put(trigger.toLowerCase(), saved);
@@ -86,12 +82,4 @@ public class TwitchCommandService {
     public String getUserToken(String username) {
         return tokenService.getUserAccessToken(username);
     }
-
-    public List<TwitchCommand> getTimerCommands() {
-        return repository.findAll()
-                .stream()
-                .filter(cmd -> cmd.getDuration() != null && cmd.getDuration() > 0)
-                .toList();
-    }
-
 }

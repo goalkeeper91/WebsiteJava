@@ -10,18 +10,27 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private static final String ADMIN_TWITCH_ID = "727153297";
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public void createOrUpdate(TwitchUser twitchUser){
+    public void createOrUpdate(TwitchUser twitchUser) {
         User user = userRepository.findById(twitchUser.id())
-                .orElse(new User());
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setTwitchId(twitchUser.id());
+                    newUser.setAdmin(false);
+                    return newUser;
+                });
 
-        user.setTwitchId(twitchUser.id());
         user.setUsername(twitchUser.username());
         user.setEmail(twitchUser.email());
-        user.setAdmin(true);
+
+        if (twitchUser.id().equals(ADMIN_TWITCH_ID)) {
+            user.setAdmin(true);
+        }
 
         userRepository.save(user);
     }

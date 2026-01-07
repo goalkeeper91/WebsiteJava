@@ -21,16 +21,33 @@ public class TwitchAuthToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Convert(converter = EncryptedStringConverter.class)
-    private String accessToken;
-    @Convert(converter = EncryptedStringConverter.class)
-    private String refreshToken;
-    private String tokenType;
-    private Long expiresIn;
-    private String scope;
-    private String userName;
+    @Column(name = "twitch_user_id", unique = true, nullable = false)
     private String twitchUserId;
+
+    @Column(name = "user_name")
+    private String userName;
+
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "access_token", length = 1024)
+    private String accessToken;
+
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "refresh_token", length = 1024)
+    private String refreshToken;
+
+    @Column(name = "token_type")
+    private String tokenType;
+
+    @Column(name = "expires_in")
+    private Long expiresIn;
+
+    @Column(columnDefinition = "TEXT")
+    private String scope;
+
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at")
     private Instant updatedAt;
 
     @PrePersist

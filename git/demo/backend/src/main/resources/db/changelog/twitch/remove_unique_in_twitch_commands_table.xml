@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="fix_twitch_commands_multi_tenant" author="Marcel">
+        <addColumn tableName="twitch_commands">
+            <column name="twitch_user_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <update tableName="twitch_commands">
+            <column name="twitch_user_id" value="default_value"/>
+            <where>twitch_user_id IS NULL</where>
+        </update>
+
+        <addNotNullConstraint tableName="twitch_commands" columnName="twitch_user_id" columnDataType="VARCHAR(255)"/>
+
+        <dropUniqueConstraint tableName="twitch_commands" constraintName="twitch_commands_trigger_key"/>
+
+        <addUniqueConstraint tableName="twitch_commands"
+                             columnNames="twitch_user_id, trigger"
+                             constraintName="uq_user_trigger"/>
+
+        <dropColumn tableName="twitch_commands" columnName="duration"/>
+    </changeSet>
+
+</databaseChangeLog>

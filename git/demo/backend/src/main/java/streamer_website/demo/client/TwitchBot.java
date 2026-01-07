@@ -162,43 +162,14 @@ public class TwitchBot {
                 boolean live = isStreamLive();
                 if (live && !runningTimersStarted) {
                     logger.info("Stream ist live — Timer-Commands starten");
-                    startAllTimerCommands();
                     runningTimersStarted = true;
                 } else if (!live && runningTimersStarted) {
                     logger.info("Stream ist offline — Timer-Commands stoppen");
-                    stopAllTimerCommands();
                     runningTimersStarted = false;
                 }
             } catch (Exception e) {
                 logger.error("Fehler beim Live-Check", e);
             }
         }, 0, 10, TimeUnit.SECONDS);
-    }
-
-    public void startAllTimerCommands() {
-        commandService.getTimerCommands().forEach(cmd -> {
-            if (activeTimers.containsKey(cmd.getId())) return;
-
-            ScheduledFuture<?> future = timerScheduler.scheduleAtFixedRate(() -> {
-                try {
-                    if (client != null) {
-                        client.getChat().sendMessage(channelName, cmd.getResponse());
-                    }
-                } catch (Exception e) {
-                    logger.error("Fehler beim Timer-Command '{}'", cmd.getTrigger(), e);
-                }
-            }, cmd.getDuration(), cmd.getDuration(), TimeUnit.SECONDS);
-
-            activeTimers.put(cmd.getId(), future);
-            logger.info("Timer für Command '{}' gestartet (alle {} Sekunden)", cmd.getTrigger(), cmd.getDuration());
-        });
-    }
-
-    public void stopAllTimerCommands() {
-        activeTimers.forEach((id, future) -> {
-            future.cancel(true);
-            logger.info("Timer für Command-ID {} gestoppt", id);
-        });
-        activeTimers.clear();
     }
 }
