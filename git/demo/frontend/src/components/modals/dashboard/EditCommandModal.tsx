@@ -26,16 +26,16 @@ export default function EditCommandModal({
     setError("");
 
     try {
-      // Update über trigger (nicht id)
-      await updateCommand(command.trigger, {
+      await updateCommand(command.id, {
+        trigger,
         response,
         cooldown,
         enabled
       });
 
-      // Erstelle das aktualisierte Command Objekt
       const updatedCommand: ChatCommand = {
         ...command,
+        trigger,
         response,
         cooldown,
         enabled
@@ -63,12 +63,14 @@ export default function EditCommandModal({
             <input
               type="text"
               value={trigger}
-              disabled
-              className="w-full p-2 rounded bg-gray-600 text-gray-400 cursor-not-allowed"
-              title="Trigger kann nicht geändert werden"
+              onChange={(e) => setTrigger(e.target.value)}
+              required
+              pattern="[a-zA-Z0-9_]+"
+              title="Nur Buchstaben, Zahlen und Unterstriche"
+              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              ℹ️ Trigger kann nach Erstellung nicht mehr geändert werden
+            <p className="text-xs text-gray-400 mt-1">
+              ✨ Trigger kann jetzt geändert werden!
             </p>
           </div>
 

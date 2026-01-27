@@ -22,22 +22,6 @@ public class ChatCommandService implements ChatCommandServiceInterface {
     private final TwitchChannelRepository channelRepository;
     private final BotSignalService botSignalService;
 
-    /* =========================
-     * Helper: Twitch User ID → Internal Channel ID
-     * ========================= */
-
-    private String getInternalChannelId(String twitchUserId) {
-        TwitchChannel channel = channelRepository.findByTwitchUserId(twitchUserId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Channel nicht registriert. Bitte erneut einloggen."
-                ));
-        return channel.getId().toString();
-    }
-
-    /* =========================
-     * Lesen (Parameter ist jetzt überall twitchUserId)
-     * ========================= */
-
     @Override
     @Transactional(readOnly = true)
     public Page<ChatCommand> getCommands(String twitchUserId, Pageable pageable) {
@@ -70,9 +54,12 @@ public class ChatCommandService implements ChatCommandServiceInterface {
         return repository.findByChannelIdAndTriggerIgnoreCase(internalChannelId, trigger);
     }
 
-    /* =========================
-     * Schreiben
-     * ========================= */
+    @Transactional(readOnly = true)
+    @Override
+    public Optional<ChatCommand> getCommandById(String twitchUserId, Long id) {
+        String internalChannelId = getInternalChannelId(twitchUserId);
+        return repository.findByIdAndChannelId(id, internalChannelId);
+    }
 
     @Override
     public ChatCommand createCommand(String twitchUserId, String trigger, String response, Integer cooldown) {
@@ -96,16 +83,15 @@ public class ChatCommandService implements ChatCommandServiceInterface {
 
         ChatCommand saved = repository.save(command);
 
-        // Signal an Bot senden
         botSignalService.sendCommandUpdateSignal(twitchUserId);
 
         return saved;
     }
 
-    @Override
     public ChatCommand updateCommand(
             String twitchUserId,
-            String trigger,
+            Long id,
+            String newTrigger,
             String newResponse,
             Integer newCooldown,
             Boolean enabled
@@ -113,8 +99,23 @@ public class ChatCommandService implements ChatCommandServiceInterface {
         String internalChannelId = getInternalChannelId(twitchUserId);
 
         ChatCommand command = repository
-                .findByChannelIdAndTriggerIgnoreCase(internalChannelId, trigger)
+                .findByIdAndChannelId(id, internalChannelId)
                 .orElseThrow(() -> new IllegalArgumentException("Command nicht gefunden"));
+
+        // ✅ Trigger kann jetzt geändert werden!
+        if (newTrigger != null && !newTrigger.isBlank()) {
+            String normalized = normalizeTrigger(newTrigger);
+
+            // Prüfe ob neuer Trigger bereits existiert (außer bei gleichem Command)
+            repository.findByChannelIdAndTriggerIgnoreCase(internalChannelId, normalized)
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(id)) {
+                            throw new IllegalStateException("Trigger bereits vergeben");
+                        }
+                    });
+
+            command.setTrigger(normalized);
+        }
 
         if (newResponse != null) {
             command.setResponse(newResponse);
@@ -130,47 +131,46 @@ public class ChatCommandService implements ChatCommandServiceInterface {
 
         ChatCommand saved = repository.save(command);
 
-        // Signal an Bot senden
         botSignalService.sendCommandUpdateSignal(twitchUserId);
 
         return saved;
     }
 
-    @Override
-    public void deleteCommand(String twitchUserId, String trigger) {
-        String internalChannelId = getInternalChannelId(twitchUserId);
-
-        if (!repository.existsByChannelIdAndTriggerIgnoreCase(internalChannelId, trigger)) {
-            throw new IllegalArgumentException("Command nicht gefunden");
-        }
-
-        repository.deleteByChannelIdAndTriggerIgnoreCase(internalChannelId, trigger);
-
-        // Signal an Bot senden
-        botSignalService.sendCommandUpdateSignal(twitchUserId);
-    }
-
-    @Override
-    public ChatCommand toggleCommand(String twitchUserId, String trigger, boolean enabled) {
+    public void deleteCommand(String twitchUserId, Long id) {
         String internalChannelId = getInternalChannelId(twitchUserId);
 
         ChatCommand command = repository
-                .findByChannelIdAndTriggerIgnoreCase(internalChannelId, trigger)
+                .findByIdAndChannelId(id, internalChannelId)
+                .orElseThrow(() -> new IllegalArgumentException("Command nicht gefunden"));
+
+        repository.delete(command);
+
+        botSignalService.sendCommandUpdateSignal(twitchUserId);
+    }
+
+    public ChatCommand toggleCommand(String twitchUserId, Long id, boolean enabled) {
+        String internalChannelId = getInternalChannelId(twitchUserId);
+
+        ChatCommand command = repository
+                .findByIdAndChannelId(id, internalChannelId)
                 .orElseThrow(() -> new IllegalArgumentException("Command nicht gefunden"));
 
         command.setEnabled(enabled);
 
         ChatCommand saved = repository.save(command);
 
-        // Signal an Bot senden
         botSignalService.sendCommandUpdateSignal(twitchUserId);
 
         return saved;
     }
 
-    /* =========================
-     * Intern
-     * ========================= */
+    private String getInternalChannelId(String twitchUserId) {
+        TwitchChannel channel = channelRepository.findByTwitchUserId(twitchUserId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Channel nicht registriert. Bitte erneut einloggen."
+                ));
+        return channel.getId().toString();
+    }
 
     private void validateTrigger(String trigger) {
         if (trigger == null || trigger.isBlank()) {

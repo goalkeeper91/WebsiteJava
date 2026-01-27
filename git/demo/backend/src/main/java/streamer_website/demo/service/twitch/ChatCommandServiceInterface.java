@@ -2,15 +2,12 @@ package streamer_website.demo.service.twitch;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import streamer_website.demo.entity.twitch.ChatCommand;
 
 import java.util.Optional;
 
 public interface ChatCommandServiceInterface {
-
-    /* =========================
-     * Lesen (Dashboard)
-     * ========================= */
 
     Page<ChatCommand> getCommands(
             String twitchUserId,
@@ -34,9 +31,8 @@ public interface ChatCommandServiceInterface {
             String trigger
     );
 
-    /* =========================
-     * Schreiben (Dashboard)
-     * ========================= */
+    @Transactional(readOnly = true)
+    Optional<ChatCommand> getCommandById(String twitchUserId, Long id);
 
     ChatCommand createCommand(
             String twitchUserId,
@@ -47,6 +43,7 @@ public interface ChatCommandServiceInterface {
 
     ChatCommand updateCommand(
             String twitchUserId,
+            Long id,
             String trigger,
             String newResponse,
             Integer newCooldown,
@@ -55,12 +52,12 @@ public interface ChatCommandServiceInterface {
 
     void deleteCommand(
             String twitchUserId,
-            String trigger
+            Long id
     );
 
     ChatCommand toggleCommand(
             String twitchUserId,
-            String trigger,
+            Long id,
             boolean enabled
     );
 }

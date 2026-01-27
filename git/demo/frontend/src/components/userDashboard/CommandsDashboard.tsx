@@ -14,7 +14,6 @@ export default function CommandsDashboard() {
   const [editingCommand, setEditingCommand] = useState<ChatCommand | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Initial load und bei page change
   useEffect(() => {
     loadCommands();
   }, [page]);
@@ -23,35 +22,31 @@ export default function CommandsDashboard() {
     setLoading(true);
     try {
       const data = await fetchCommands(page, 10);
-      console.log("Loaded commands:", data); // Debug
+      console.log("Loaded commands:", data);
 
       setCommands(data.content || []);
       setTotalPages(data.totalPages || 0);
       setTotalElements(data.totalElements || 0);
     } catch (err) {
       console.error("Fehler beim Laden der Commands:", err);
-      // Zeige Fehler dem User
       alert("Fehler beim Laden der Commands");
     } finally {
       setLoading(false);
     }
   }
 
-  // Filter Commands lokal (nur visuelle Filterung)
   const filteredCommands = commands.filter((cmd) =>
     cmd.trigger.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cmd.response.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Toggle Enabled/Disabled Status
   async function handleToggleEnabled(cmd: ChatCommand) {
-    // Optimistic Update
     setCommands(prev =>
-      prev.map(c => c.trigger === cmd.trigger ? { ...c, enabled: !c.enabled } : c)
+      prev.map(c => c.id === cmd.id ? { ...c, enabled: !c.enabled } : c)
     );
 
     try {
-      await updateCommand(cmd.trigger, {
+      await updateCommand(cmd.id, {
         enabled: !cmd.enabled
       });
 
@@ -59,49 +54,43 @@ export default function CommandsDashboard() {
     } catch (err) {
       console.error("Fehler beim Update:", err);
 
-      // Rollback bei Fehler
       setCommands(prev =>
-        prev.map(c => c.trigger === cmd.trigger ? { ...c, enabled: cmd.enabled } : c)
+        prev.map(c => c.id === cmd.id ? { ...c, enabled: cmd.enabled } : c)
       );
 
       alert("Fehler beim Aktualisieren des Status");
     }
   }
 
-  // Delete Command
   async function handleDelete(cmd: ChatCommand) {
     if (!confirm(`Command "!${cmd.trigger}" wirklich löschen?`)) {
       return;
     }
 
-    // Optimistic Update
-    setCommands(prev => prev.filter(c => c.trigger !== cmd.trigger));
+    setCommands(prev => prev.filter(c => c.id !== cmd.id));
     setTotalElements(prev => prev - 1);
 
     try {
-      await deleteCommand(cmd.trigger);
+      await deleteCommand(cmd.id);
       console.log(`Command ${cmd.trigger} deleted`);
     } catch (err) {
       console.error("Fehler beim Löschen:", err);
 
-      // Reload bei Fehler
       loadCommands();
 
       alert("Fehler beim Löschen des Commands");
     }
   }
 
-  // Command wurde erstellt
   function handleCommandCreated(newCommand: ChatCommand) {
     setCommands(prev => [newCommand, ...prev]);
     setTotalElements(prev => prev + 1);
     setShowCreateModal(false);
   }
 
-  // Command wurde editiert
   function handleCommandUpdated(updatedCommand: ChatCommand) {
     setCommands(prev =>
-      prev.map(c => c.trigger === updatedCommand.trigger ? updatedCommand : c)
+      prev.map(c => c.id === updatedCommand.id ? updatedCommand : c)
     );
     setEditingCommand(null);
   }
@@ -170,7 +159,7 @@ export default function CommandsDashboard() {
       <div className="space-y-2">
         {filteredCommands.map((cmd) => (
           <div
-            key={cmd.trigger}
+            key={cmd.id}
             className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-800 rounded p-4 gap-3 hover:bg-gray-750 transition-colors"
           >
             <div className="flex-1 min-w-0 w-full">

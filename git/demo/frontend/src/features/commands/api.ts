@@ -33,35 +33,30 @@ export async function createCommand(payload: {
 }
 
 export async function updateCommand(
-  trigger: string,
+  id: number | string,
   payload: {
+    trigger?: string;
     response?: string;
     cooldown?: number;
     enabled?: boolean;
   }
 ) {
-  const res = await fetch(
-    `/api/dashboard/commands/${trigger}`,
-    {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }
-  );
+  const res = await fetch(`/api/dashboard/commands/${id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
   if (!res.ok) throw new Error("Command konnte nicht aktualisiert werden");
   return res.json();
 }
 
-export async function deleteCommand(trigger: string) {
-  const res = await fetch(
-    `/api/dashboard/commands/${trigger}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    }
-  );
+export async function deleteCommand(id: number | string) {
+  const res = await fetch(`/api/dashboard/commands/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
 
   if (!res.ok) throw new Error("Command konnte nicht gelöscht werden");
 }

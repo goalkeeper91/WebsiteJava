@@ -10,19 +10,11 @@ import java.util.Optional;
 
 public interface TwitchChatCommandRepository extends JpaRepository<ChatCommand, Long> {
 
-    /* =====================================================
-     * Basis-Abfragen
-     * ===================================================== */
-
     List<ChatCommand> findAllByChannelId(String channelId);
 
     List<ChatCommand> findAllByChannelIdAndEnabledTrue(String channelId);
 
     List<ChatCommand> findAllByChannelIdAndEnabled(String channelId, Boolean enabled);
-
-    /* =====================================================
-     * Einzelne Commands (Bot + Backend)
-     * ===================================================== */
 
     Optional<ChatCommand> findByChannelIdAndTriggerIgnoreCase(
             String channelId,
@@ -34,6 +26,8 @@ public interface TwitchChatCommandRepository extends JpaRepository<ChatCommand, 
             String trigger
     );
 
+    Optional<ChatCommand> findByIdAndChannelId(Long id, String channelId);
+
     boolean existsByChannelIdAndTriggerIgnoreCase(
             String channelId,
             String trigger
@@ -43,10 +37,6 @@ public interface TwitchChatCommandRepository extends JpaRepository<ChatCommand, 
             String channelId,
             String trigger
     );
-
-    /* =====================================================
-     * Suche / Filter (Dashboard)
-     * ===================================================== */
 
     List<ChatCommand> findByChannelIdAndTriggerContainingIgnoreCase(
             String channelId,
@@ -58,10 +48,6 @@ public interface TwitchChatCommandRepository extends JpaRepository<ChatCommand, 
             String search,
             Pageable pageable
     );
-
-    /* =====================================================
-     * Pagination (Dashboard)
-     * ===================================================== */
 
     Page<ChatCommand> findByChannelId(
             String channelId,

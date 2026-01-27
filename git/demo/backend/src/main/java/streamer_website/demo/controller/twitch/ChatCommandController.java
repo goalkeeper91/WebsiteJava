@@ -16,18 +16,12 @@ import streamer_website.demo.entity.twitch.ChatCommand;
 import streamer_website.demo.mapper.twitch.ChatCommandMapper;
 import streamer_website.demo.service.twitch.ChatCommandService;
 
-import java.util.Map;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/dashboard/commands")
 public class ChatCommandController {
 
     private final ChatCommandService chatCommandService;
-
-    /* =========================
-     * GET – Listen / Suche
-     * ========================= */
 
     @GetMapping
     public Page<ChatCommandDto> getCommands(
@@ -37,41 +31,35 @@ public class ChatCommandController {
             Pageable pageable
     ) {
         TwitchUser user = requireUser(session);
-        String channelId = user.id();
         Page<ChatCommand> page;
 
         if (search != null && !search.isBlank()) {
-            page = chatCommandService.searchCommands(channelId, search, pageable);
+            page = chatCommandService.searchCommands(user.id(), search, pageable);
         } else if (enabled != null) {
-            page = chatCommandService.getCommandsByStatus(channelId, enabled, pageable);
+            page = chatCommandService.getCommandsByStatus(user.id(), enabled, pageable);
         } else {
-            page = chatCommandService.getCommands(channelId, pageable);
+            page = chatCommandService.getCommands(user.id(), pageable);
         }
 
         return page.map(ChatCommandMapper::toDto);
     }
 
-    /* =========================
-     * GET – Einzelner Command
-     * ========================= */
-
-    @GetMapping("/{trigger}")
+    @GetMapping("/{id}")
     public ChatCommandDto getCommand(
             HttpSession session,
-            @PathVariable String trigger
+            @PathVariable Long id
     ) {
         TwitchUser user = requireUser(session);
 
         ChatCommand command = chatCommandService
-                .getCommand(user.id(), trigger)
-                .orElseThrow(() -> new IllegalArgumentException("Command nicht gefunden"));
+                .getCommandById(user.id(), id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Command nicht gefunden"
+                ));
 
         return ChatCommandMapper.toDto(command);
     }
-
-    /* =========================
-     * POST – Anlegen
-     * ========================= */
 
     @PostMapping
     public ChatCommandDto createCommand(
@@ -90,21 +78,18 @@ public class ChatCommandController {
         return ChatCommandMapper.toDto(command);
     }
 
-    /* =========================
-     * PUT – Aktualisieren
-     * ========================= */
-
-    @PutMapping("/{trigger}")
+    @PutMapping("/{id}")
     public ChatCommandDto updateCommand(
             HttpSession session,
-            @PathVariable String trigger,
-            @RequestBody UpdateChatCommandRequest request
+            @PathVariable Long id,
+            @RequestBody @Valid UpdateChatCommandRequest request
     ) {
         TwitchUser user = requireUser(session);
 
         ChatCommand command = chatCommandService.updateCommand(
                 user.id(),
-                trigger,
+                id,
+                request.getTrigger(),
                 request.getResponse(),
                 request.getCooldown(),
                 request.getEnabled()
@@ -113,35 +98,26 @@ public class ChatCommandController {
         return ChatCommandMapper.toDto(command);
     }
 
-    /* =========================
-     * DELETE – Löschen
-     * ========================= */
-
-    @DeleteMapping("/{trigger}")
+    @DeleteMapping("/{id}")
     public void deleteCommand(
             HttpSession session,
-            @PathVariable String trigger
+            @PathVariable Long id
     ) {
         TwitchUser user = requireUser(session);
-
-        chatCommandService.deleteCommand(user.id(), trigger);
+        chatCommandService.deleteCommand(user.id(), id);
     }
 
-    /* =========================
-     * PATCH – Enable / Disable
-     * ========================= */
-
-    @PatchMapping("/{trigger}/toggle")
+    @PatchMapping("/{id}/toggle")
     public ChatCommandDto toggleCommand(
             HttpSession session,
-            @PathVariable String trigger,
+            @PathVariable Long id,
             @RequestParam boolean enabled
     ) {
         TwitchUser user = requireUser(session);
 
         ChatCommand command = chatCommandService.toggleCommand(
                 user.id(),
-                trigger,
+                id,
                 enabled
         );
 
@@ -159,6 +135,3 @@ public class ChatCommandController {
         return user;
     }
 }
-
-
-
