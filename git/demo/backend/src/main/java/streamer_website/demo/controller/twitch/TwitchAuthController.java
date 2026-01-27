@@ -10,10 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import streamer_website.demo.dto.TwitchTokenResponse;
-import streamer_website.demo.dto.TwitchUser;
+import streamer_website.demo.dto.twitch.TwitchUser;
 import streamer_website.demo.entity.twitch.TwitchAuthToken;
-import streamer_website.demo.service.BotSignalService;
 import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
 import streamer_website.demo.service.twitch.TwitchTokenService;
@@ -39,20 +37,53 @@ public class TwitchAuthController {
     private final TwitchService twitchService;
     private final TwitchTokenService tokenService;
     private final UserService userService;
-    private final BotSignalService botSignalService;
 
     private static final Logger logger = LoggerFactory.getLogger(TwitchAuthController.class);
 
     @GetMapping("/twitch")
     public void redirectToTwitch(HttpServletResponse response) throws IOException {
         // Scopes für Streamer: E-Mail, Chat lesen/schreiben und Stream-Infos verwalten
-        String scopes = "user:read:email chat:read chat:edit channel:manage:broadcast";
+        String scopes = String.join(" ",
+                "user:read:email",
+                "user:bot",
+                "channel:bot",
+                "chat:read",
+                "chat:edit",
+
+                "user:read:chat",
+                "user:write:chat",
+                "channel:manage:broadcast",
+                "moderator:read:followers",
+                "moderator:read:chatters"
+        );
 
         String url = "https://id.twitch.tv/oauth2/authorize" +
                 "?response_type=code" +
                 "&client_id=" + clientId +
                 "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8) +
                 "&scope=" + URLEncoder.encode(scopes, StandardCharsets.UTF_8);
+
+        response.sendRedirect(url);
+    }
+
+    @GetMapping("/twitch/bot")
+    public void redirectBotToTwitch(HttpServletResponse response) throws IOException {
+
+        String scopes = String.join(" ",
+                "user:bot",
+                "chat:read",
+                "chat:edit",
+                "user:read:chat",
+                "user:write:chat",
+                "moderator:read:chatters"
+        );
+
+        String url = "https://id.twitch.tv/oauth2/authorize" +
+                "?response_type=code" +
+                "&client_id=" + clientId +
+                "&redirect_uri=" + URLEncoder.encode(redirectUri + "/bot", StandardCharsets.UTF_8) +
+                "&scope=" + URLEncoder.encode(scopes, StandardCharsets.UTF_8) +
+                "&force_verify=true";
 
         response.sendRedirect(url);
     }
@@ -67,10 +98,9 @@ public class TwitchAuthController {
             TwitchUser twitchUser = twitchService.getUserInfo(tokenEntity.getUserName());
 
             userService.createOrUpdate(twitchUser);
+            userService.syncTwitchChannel(twitchUser);
 
             session.setAttribute("user", twitchUser);
-
-            botSignalService.sendBotJoinSignal(twitchUser.id());
 
             response.sendRedirect(frontendUrl + "/dashboard");
 
@@ -79,4 +109,22 @@ public class TwitchAuthController {
             response.sendRedirect(frontendUrl + "/error?msg=auth_failed");
         }
     }
+
+    @GetMapping("/twitch/callback/bot")
+    public void handleBotCallback(
+            @RequestParam("code") String code,
+            HttpServletResponse response
+    ) throws IOException {
+
+        try {
+            TwitchAuthToken tokenEntity = tokenService.exchangeCodeForToken(code, true);
+
+            response.sendRedirect(frontendUrl + "/admin/bot");
+
+        } catch (Exception e) {
+            logger.error("Fehler beim Bot-Login", e);
+            response.sendRedirect(frontendUrl + "/error?msg=bot_auth_failed");
+        }
+    }
+
 }

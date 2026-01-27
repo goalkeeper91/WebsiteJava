@@ -2,25 +2,20 @@ package streamer_website.demo.service.twitch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import streamer_website.demo.dto.TwitchTokenResponse;
-import streamer_website.demo.dto.TwitchUser;
-import streamer_website.demo.entity.twitch.TwitchAuthToken;
+import streamer_website.demo.dto.twitch.TwitchUser;
 import streamer_website.demo.entity.twitch.TwitchChannelStats;
 import streamer_website.demo.repository.TwitchChannelStatsRepository;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class TwitchService {
 
@@ -31,64 +26,32 @@ public class TwitchService {
     private String baseUri;
 
     private final TwitchTokenService tokenService;
-    private final TwitchChannelStatsRepository twitchChannelStatsRepository;
-    private WebClient twitchApiClient;
-
+    public final TwitchChannelStatsRepository twitchChannelStatsRepository;
     private final WebClient.Builder webClientBuilder;
 
-    public TwitchService(TwitchTokenService tokenService,
-                         TwitchChannelStatsRepository twitchChannelStatsRepository,
-                         WebClient.Builder webClientBuilder) {
-        this.tokenService = tokenService;
-        this.twitchChannelStatsRepository = twitchChannelStatsRepository;
-        this.webClientBuilder = webClientBuilder;
-    }
+    private WebClient twitchApiClient;
 
     @PostConstruct
     private void init() {
         this.twitchApiClient = webClientBuilder.baseUrl(baseUri).build();
     }
 
-    public TwitchTokenResponse exchangeCodeForAccessToken(String code, boolean forBot) {
-        TwitchAuthToken token = tokenService.exchangeCodeForToken(code, forBot);
+    // ---------------- USER / BOT TOKEN USAGE ----------------
 
-        TwitchTokenResponse response = new TwitchTokenResponse();
-        response.setAccessToken(token.getAccessToken());
-        response.setRefreshToken(token.getRefreshToken());
-        response.setExpiresIn(token.getExpiresIn());
-
-        List<String> scopes = Arrays.asList(token.getScope().split(" "));
-        response.setScope(scopes);
-
-        return response;
+    private String getAccessTokenForUser(String username) {
+        return tokenService.getValidUserToken(username).getAccessToken();
     }
 
-    public boolean isLive(String username) {
-        try {
-            String token = tokenService.getUserAccessToken(username);
-
-            String userId = getFromTwitch("/helix/users?login=" + username, token)
-                    .get("data").get(0).get("id").asText();
-
-            JsonNode streamData = getFromTwitch("/helix/streams?user_id=" + userId, token);
-
-            return !streamData.get("data").isEmpty();
-        } catch (Exception e) {
-            log.error("Failed to check Twitch live status for {}: {}", username, e.getMessage());
-            return false;
-        }
-    }
+    // ---------------- TWITCH API CALLS ----------------
 
     public TwitchUser getUserInfo(String username) {
-        // 1️⃣ Holen des Tokens
-        String accessToken = tokenService.getUserAccessToken(username);
+        String accessToken = getAccessTokenForUser(username);
         if (accessToken == null) {
-            throw new RuntimeException("Kein Access-Token für Benutzer " + username + " gefunden. OAuth-Code nötig.");
+            throw new IllegalStateException("Kein Access-Token für Benutzer " + username + " vorhanden.");
         }
 
-        // 2️⃣ Abruf der Twitch-Userinfos
         JsonNode userData = twitchApiClient.get()
-                .uri("https://api.twitch.tv/helix/users?login=" + username)
+                .uri("/helix/users?login=" + username)
                 .header("Authorization", "Bearer " + accessToken)
                 .header("Client-Id", clientId)
                 .retrieve()
@@ -96,7 +59,7 @@ public class TwitchService {
                 .block();
 
         if (userData == null || !userData.has("data") || userData.get("data").isEmpty()) {
-            throw new RuntimeException("Konnte Twitch-Userinfo nicht abrufen für " + username);
+            throw new IllegalStateException("Konnte Twitch-Userinfo nicht abrufen für " + username);
         }
 
         JsonNode userNode = userData.get("data").get(0);
@@ -115,61 +78,64 @@ public class TwitchService {
         );
     }
 
-    public TwitchChannelStats fetchAndSaveChannelStats(String accessToken, String twitchUserId) {
-        JsonNode userResponse = getFromTwitch("/helix/users?id=" + twitchUserId, accessToken);
-        if (userResponse == null || userResponse.get("data").isEmpty()) {
-            throw new RuntimeException("Could not retrieve user data from Twitch.");
+    public boolean isLive(String username) {
+        try {
+            String accessToken = getAccessTokenForUser(username);
+            String userId = getUserInfo(username).id();
+
+            JsonNode streamData = twitchApiClient.get()
+                    .uri("/helix/streams?user_id=" + userId)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Client-Id", clientId)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block();
+
+            return streamData != null && !streamData.get("data").isEmpty();
+        } catch (Exception e) {
+            log.error("Fehler beim Prüfen des Live-Status für {}: {}", username, e.getMessage());
+            return false;
         }
-
-        JsonNode userNode = userResponse.get("data").get(0);
-
-        TwitchUser twitchUser = new TwitchUser(
-                userNode.get("id").asText(),
-                userNode.get("login").asText(),
-                userNode.get("display_name").asText(),
-                userNode.get("email").asText(null),
-                userNode.get("description").asText(null),
-                userNode.get("profile_image_url").asText(null),
-                userNode.get("offline_image_url").asText(null),
-                userNode.get("broadcaster_type").asText(null),
-                userNode.get("view_count").asInt(0),
-                Instant.parse(userNode.get("created_at").asText())
-        );
-
-        int followers = Optional.ofNullable(getFollowerCount(twitchUserId, accessToken))
-                .orElse(0);
-
-        return updateChannelStats(twitchUser, followers);
     }
 
+    public TwitchChannelStats fetchAndSaveChannelStats(String username) {
+        String accessToken = getAccessTokenForUser(username);
+        TwitchUser user = getUserInfo(username);
+
+        JsonNode userResponse = twitchApiClient.get()
+                .uri("/helix/users?id=" + user.id())
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Client-Id", clientId)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        if (userResponse == null || userResponse.get("data").isEmpty()) {
+            throw new IllegalStateException("Konnte User-Daten von Twitch nicht abrufen.");
+        }
+
+        int followers = Optional.ofNullable(getFollowerCount(user.id(), accessToken)).orElse(0);
+
+        return updateChannelStats(user, followers);
+    }
 
     public Integer getFollowerCount(String broadcasterId, String accessToken) {
         try {
-            FollowersResponse response = twitchApiClient.get()
+            JsonNode response = twitchApiClient.get()
                     .uri(uriBuilder -> uriBuilder.path("/helix/channels/followers")
                             .queryParam("broadcaster_id", broadcasterId)
                             .build())
                     .header("Authorization", "Bearer " + accessToken)
-                    .header("Client-ID", clientId)
+                    .header("Client-Id", clientId)
                     .retrieve()
-                    .bodyToMono(FollowersResponse.class)
+                    .bodyToMono(JsonNode.class)
                     .block();
 
-            return response != null ? response.getTotal() : 0;
+            return response != null && response.has("total") ? response.get("total").asInt() : 0;
         } catch (Exception e) {
-            log.warn("Failed to fetch follower count for broadcaster {}", broadcasterId, e);
+            log.warn("Fehler beim Abrufen der Follower für {}: {}", broadcasterId, e.getMessage());
             return 0;
         }
-    }
-
-    private JsonNode getFromTwitch(String uri, String accessToken) {
-        return twitchApiClient.get()
-                .uri(uri)
-                .header("Client-ID", clientId)
-                .header("Authorization", "Bearer " + accessToken)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
     }
 
     private TwitchChannelStats updateChannelStats(TwitchUser user, int followers) {
@@ -190,30 +156,5 @@ public class TwitchService {
         stats.setAccountCreatedAt(user.createdAt());
 
         return twitchChannelStatsRepository.save(stats);
-    }
-
-    public Optional<TwitchChannelStats> getLatestChannelStats(String username) {
-        return twitchChannelStatsRepository.findByTwitchUserId(
-                twitchChannelStatsRepository.findIdByDisplayName(username)
-                        .orElse(null) // Optional-Anpassung je nach Repo-Methode
-        );
-    }
-
-    public Optional<TwitchChannelStats> refreshAndSaveChannelStats(String username) {
-        try {
-            String token = tokenService.getUserAccessToken(username);
-            TwitchUser user = getUserInfo(username);
-            TwitchChannelStats stats = fetchAndSaveChannelStats(token, user.id());
-            return Optional.of(stats);
-        } catch (Exception e) {
-            log.error("Failed to refresh Twitch stats for {}: {}", username, e.getMessage());
-            return Optional.empty();
-        }
-    }
-
-    @Setter
-    @Getter
-    public static class FollowersResponse {
-        private int total;
     }
 }

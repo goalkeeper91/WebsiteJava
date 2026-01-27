@@ -1,17 +1,18 @@
 package streamer_website.demo.service.twitch;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import streamer_website.demo.entity.twitch.TwitchAuthToken;
+import streamer_website.demo.entity.twitch.TwitchTokenType;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
+import streamer_website.demo.service.BotSignalService;
 
 import java.time.Instant;
 
@@ -22,7 +23,7 @@ public class TwitchTokenService {
 
     private final TwitchAuthTokenRepository tokenRepository;
     private final WebClient twitchApiClient = WebClient.create();
-    private static final Logger logger = LoggerFactory.getLogger(TwitchTokenService.class);
+    private final BotSignalService botSignalService;
 
     @Value("${twitch.clientId}")
     private String clientId;
@@ -36,192 +37,83 @@ public class TwitchTokenService {
     @Value("${twitch.bot.username}")
     private String botUsername;
 
-    public String getUserAccessToken(String username) {
-        return tokenRepository.findTopByUserNameOrderByCreatedAtDesc(username)
-                .map(token -> {
-                    Instant expiresAt = token.getCreatedAt().plusSeconds(token.getExpiresIn());
-                    if (Instant.now().isAfter(expiresAt)) {
-                        token = refreshToken(token);
-                    }
-                    return token.getAccessToken();
-                })
-                .orElse(null);
-    }
-
-    public String getBotAccessToken() {
-        return getValidToken(botUsername).getAccessToken();
-    }
-
-    public TwitchAuthToken findBotToken() {
-        return tokenRepository.findTopByUserNameOrderByCreatedAtDesc(botUsername)
-                .orElse(null);
-    }
-
-    public TwitchAuthToken saveTokenFromCode(String code, String username) {
-        try {
-            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_id", clientId);
-            formData.add("client_secret", clientSecret);
-            formData.add("code", code);
-            formData.add("grant_type", "authorization_code");
-            formData.add("redirect_uri", redirectUri);
-
-            JsonNode response = twitchApiClient.post()
-                    .uri("https://id.twitch.tv/oauth2/token")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .bodyValue(formData)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (response == null || !response.has("access_token")) {
-                throw new IllegalStateException("Twitch response ohne Access-Token");
-            }
-
-            TwitchAuthToken token = TwitchAuthToken.builder()
-                    .userName(username)
-                    .accessToken(response.get("access_token").asText())
-                    .refreshToken(response.get("refresh_token").asText())
-                    .expiresIn(response.get("expires_in").asLong())
-                    .createdAt(Instant.now())
-                    .tokenType(response.get("token_type").asText())
-                    .scope(response.get("scope").toString())
-                    .build();
-
-            return tokenRepository.save(token);
-
-        } catch (Exception e) {
-            log.error("Fehler beim Speichern des Tokens für {}: {}", username, e.getMessage(), e);
-            throw new RuntimeException("Konnte Token nicht speichern", e);
-        }
-    }
-
-    public String buildOAuthUrl(boolean forBot) {
-        String scope = forBot
-                ? "chat:read chat:edit channel:manage:broadcast"
-                : "user:read:email"; // hier kannst du für User eigene Scopes definieren
-
-        return "https://id.twitch.tv/oauth2/authorize" +
-                "?client_id=" + clientId +
-                "&redirect_uri=" + redirectUri +
-                "&response_type=code" +
-                "&scope=" + scope +
-                "&force_verify=true";
-    }
+    // ---------------------- PUBLIC METHODS ----------------------
 
     public TwitchAuthToken exchangeCodeForToken(String code, boolean forBot) {
-        if (forBot) {
-            return saveTokenFromCode(code, botUsername);
-        } else {
-            JsonNode tokenResponse = fetchTokenFromCode(code);
+        JsonNode tokenResponse = fetchTokenFromCode(code);
 
-            String accessToken = tokenResponse.get("access_token").asText();
-            String refreshToken = tokenResponse.get("refresh_token").asText();
-            long expiresIn = tokenResponse.get("expires_in").asLong();
-            String tokenType = tokenResponse.get("token_type").asText();
-            String scope = tokenResponse.get("scope").toString();
+        String accessToken = tokenResponse.get("access_token").asText();
+        String[] userInfo = fetchUsernameAndId(accessToken);
 
-            String username = fetchUsernameFromAccessToken(accessToken);
-            String userId = fetchUserIdFromAccessToken(accessToken);
+        String username = forBot ? botUsername : userInfo[0];
+        String userId = userInfo[1];
+        TwitchTokenType owner = forBot ? TwitchTokenType.BOT : TwitchTokenType.USER;
 
-            TwitchAuthToken token = TwitchAuthToken.builder()
-                    .userName(username)
-                    .twitchUserId(userId)
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .expiresIn(expiresIn)
-                    .createdAt(Instant.now())
-                    .tokenType(tokenType)
-                    .scope(scope)
-                    .build();
-
-            return tokenRepository.save(token);
-        }
+        return upsertToken(username, userId, tokenResponse, owner);
     }
 
-    private JsonNode fetchTokenFromCode(String code) {
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", clientId);
-        formData.add("client_secret", clientSecret);
-        formData.add("code", code);
-        formData.add("grant_type", "authorization_code");
-        formData.add("redirect_uri", redirectUri);
+    public TwitchAuthToken getValidBotToken() {
+        TwitchAuthToken token = tokenRepository
+                .findByUserNameAndTokenOwner(botUsername, TwitchTokenType.BOT)
+                .orElseThrow(() -> new IllegalStateException("Kein Bot-Token vorhanden"));
 
-        JsonNode response = twitchApiClient.post()
-                .uri("https://id.twitch.tv/oauth2/token")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .bodyValue(formData)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
-
-        if (response == null || !response.has("access_token")) {
-            throw new IllegalStateException("Twitch response ohne Access-Token");
-        }
-
-        return response;
-    }
-
-    private String fetchUsernameFromAccessToken(String accessToken) {
-        JsonNode userResponse = twitchApiClient.get()
-                .uri("https://api.twitch.tv/helix/users")
-                .header("Authorization", "Bearer " + accessToken)
-                .header("Client-Id", clientId)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
-
-        if (userResponse == null || !userResponse.has("data") || userResponse.get("data").isEmpty()) {
-            throw new IllegalStateException("Konnte Twitch-Userinfo nicht abrufen");
-        }
-
-        logger.info("Fetched Twitch username: {}", userResponse.get("data").get(0).get("login").asText());
-        return userResponse.get("data").get(0).get("login").asText();
-    }
-
-    private String fetchUserIdFromAccessToken(String accessToken) {
-        JsonNode userResponse = twitchApiClient.get()
-                .uri("https://api.twitch.tv/helix/users")
-                .header("Authorization", "Bearer " + accessToken)
-                .header("Client-Id", clientId)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
-
-        if (userResponse == null || !userResponse.has("data") || userResponse.get("data").isEmpty()) {
-            throw new IllegalStateException("Konnte Twitch-Userinfo nicht abrufen");
-        }
-
-        return userResponse.get("data").get(0).get("id").asText();
-    }
-
-    public TwitchAuthToken getValidToken(String username) {
-        TwitchAuthToken token = tokenRepository.findTopByUserNameOrderByCreatedAtDesc(username)
-                .orElseThrow(() -> new IllegalStateException("Kein Token für " + username + " gefunden"));
-
-        Instant expiresAt = token.getCreatedAt().plusSeconds(token.getExpiresIn());
-        if (Instant.now().isAfter(expiresAt)) {
-            log.info("Access token für {} abgelaufen, refreshe...", username);
+        if (isExpired(token)) {
             token = refreshToken(token);
         }
         return token;
     }
 
+    public TwitchAuthToken getValidUserToken(String username) {
+        TwitchAuthToken token = tokenRepository
+                .findByUserNameAndTokenOwner(username, TwitchTokenType.USER)
+                .orElseThrow(() -> new IllegalStateException("Kein Token für User " + username));
+
+        if (isExpired(token)) {
+            token = refreshToken(token);
+        }
+        return token;
+    }
+
+    // ---------------------- PRIVATE METHODS ----------------------
+
+    private TwitchAuthToken upsertToken(String username, String userId, JsonNode response, TwitchTokenType owner) {
+        TwitchAuthToken token = tokenRepository
+                .findByUserNameAndTokenOwner(username, owner)
+                .orElseGet(TwitchAuthToken::new);
+
+        token.setUserName(username);
+        token.setTwitchUserId(userId);
+        token.setAccessToken(response.get("access_token").asText());
+        token.setRefreshToken(response.get("refresh_token").asText());
+        token.setExpiresIn(response.get("expires_in").asLong());
+        token.setCreatedAt(Instant.now());
+        token.setTokenType(response.get("token_type").asText());
+        token.setScope(response.get("scope").toString());
+        token.setTokenOwner(owner);
+
+        TwitchAuthToken savedToken = tokenRepository.save(token);
+
+        if (owner == TwitchTokenType.USER) {
+            botSignalService.sendBotJoinSignal(userId);
+            log.info("Bot-Signal gesendet für User: {}", userId);
+        }
+
+        return savedToken;
+    }
+
+    private boolean isExpired(TwitchAuthToken token) {
+        return Instant.now().isAfter(token.getCreatedAt().plusSeconds(token.getExpiresIn()));
+    }
+
     private TwitchAuthToken refreshToken(TwitchAuthToken oldToken) {
         try {
-            var response = twitchApiClient.post()
-                    .uri("https://id.twitch.tv/oauth2/token" +
-                            "?grant_type=refresh_token" +
-                            "&refresh_token=" + oldToken.getRefreshToken() +
-                            "&client_id=" + clientId +
-                            "&client_secret=" + clientSecret)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("grant_type", "refresh_token");
+            formData.add("refresh_token", oldToken.getRefreshToken());
+            formData.add("client_id", clientId);
+            formData.add("client_secret", clientSecret);
 
-            if (response == null || !response.has("access_token")) {
-                throw new IllegalStateException("Twitch response ohne Access-Token beim Refresh");
-            }
+            JsonNode response = postTokenRequest(formData);
 
             oldToken.setAccessToken(response.get("access_token").asText());
             if (response.has("refresh_token")) {
@@ -238,24 +130,41 @@ public class TwitchTokenService {
         }
     }
 
-    private String fetchUsernameFromCode(String code) {
-        JsonNode tokenResponse = twitchApiClient.post()
-                .uri("https://id.twitch.tv/oauth2/token" +
-                        "?client_id=" + clientId +
-                        "&client_secret=" + clientSecret +
-                        "&code=" + code +
-                        "&grant_type=authorization_code" +
-                        "&redirect_uri=" + redirectUri)
+    private JsonNode fetchTokenFromCode(String code) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("client_id", clientId);
+        formData.add("client_secret", clientSecret);
+        formData.add("code", code);
+        formData.add("grant_type", "authorization_code");
+        formData.add("redirect_uri", redirectUri);
+
+        return postTokenRequest(formData);
+    }
+
+    private JsonNode postTokenRequest(MultiValueMap<String, String> formData) {
+        JsonNode response = twitchApiClient.post()
+                .uri("https://id.twitch.tv/oauth2/token")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .bodyValue(formData)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
 
-        if (tokenResponse == null || !tokenResponse.has("access_token")) {
+        if (response == null || !response.has("access_token")) {
             throw new IllegalStateException("Twitch response ohne Access-Token");
         }
+        return response;
+    }
 
-        String accessToken = tokenResponse.get("access_token").asText();
+    private String[] fetchUsernameAndId(String accessToken) {
+        JsonNode user = fetchUserInfo(accessToken);
+        return new String[]{
+                user.get("login").asText(),
+                user.get("id").asText()
+        };
+    }
 
+    private JsonNode fetchUserInfo(String accessToken) {
         JsonNode userResponse = twitchApiClient.get()
                 .uri("https://api.twitch.tv/helix/users")
                 .header("Authorization", "Bearer " + accessToken)
@@ -268,6 +177,6 @@ public class TwitchTokenService {
             throw new IllegalStateException("Konnte Twitch-Userinfo nicht abrufen");
         }
 
-        return userResponse.get("data").get(0).get("login").asText();
+        return userResponse.get("data").get(0);
     }
 }

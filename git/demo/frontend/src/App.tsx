@@ -11,6 +11,7 @@ import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
 import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
+import Dashboard from "./pages/[user]/Dashboard";
 import { LoginPopup } from './components/popup/LoginFailed';
 
 const App = () => {
@@ -35,6 +36,11 @@ const App = () => {
                     </ProtectedRoute>
                   }
               />
+              <Route path='/dashboard' element={
+                  <ProtectedRoute>
+                      <Dashboard />
+                  </ProtectedRoute>
+              } />
               <Route path="/legal/impressum" element={<Impressum />} />
               <Route path="/legal/datenschutz" element={<Datenschutz />} />
               <Route path="/legal/agb" element={<Agb />} />

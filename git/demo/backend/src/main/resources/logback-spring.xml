@@ -74,11 +74,11 @@
         <appender-ref ref="FILE"/>
     </root>
 
-    <logger name="streamer_website.demo.service" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.service" level="DEBUG" additivity="true">
         <appender-ref ref="TWITCH_SERVICE_FILE"/>
     </logger>
 
-    <logger name="streamer_website.demo.client.TwitchBot" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.client.TwitchBot" level="DEBUG" additivity="true">
         <appender-ref ref="TWITCH_COMMAND_FILE"/>
     </logger>
 
@@ -86,7 +86,7 @@
         <appender-ref ref="DISCORD_COMMAND_FILE"/>
     </logger>
 
-    <logger name="streamer_website.demo.controller.discord" level="DEBUG" additivity="false">
+    <logger name="streamer_website.demo.controller.discord" level="DEBUG" additivity="true">
         <appender-ref ref="DISCORD_CONTROLLER_FILE"/>
     </logger>
 

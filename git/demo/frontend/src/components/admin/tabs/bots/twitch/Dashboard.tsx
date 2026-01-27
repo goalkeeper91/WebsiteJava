@@ -141,24 +141,12 @@ const TwitchBotControls = () => {
         )}
         {!status?.tokenPresent && (
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch("/api/bot/oauth/url?forBot=true");
-                if (!res.ok) throw new Error("Fehler beim Abrufen der OAuth-URL");
-                const url = await res.text();
-
-                window.location.href = url;
-              } catch (err) {
-                console.error(err);
-                alert("Konnte OAuth nicht starten");
-              } finally {
-                setLoading(false);
-              }
+            onClick={() => {
+              window.location.href = `/auth/twitch/bot`;
             }}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            disabled={loading}
           >
-            {loading ? "Authentifizierung läuft..." : "Bot authentifizieren"}
+            Bot authentifizieren
           </button>
         )}
       </div>

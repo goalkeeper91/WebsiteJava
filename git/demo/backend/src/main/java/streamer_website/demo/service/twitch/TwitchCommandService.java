@@ -17,13 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TwitchCommandService {
 
     private final TwitchCommandRepository repository;
-    private final TwitchTokenService tokenService;
     private final Map<String, TwitchCommand> commandCache = new ConcurrentHashMap<>();
     private final DiscordNotificationService discordService;
 
-    public TwitchCommandService(TwitchCommandRepository repository, TwitchTokenService tokenService, DiscordNotificationService discordService) {
+    public TwitchCommandService(TwitchCommandRepository repository, DiscordNotificationService discordService) {
         this.repository = repository;
-        this.tokenService = tokenService;
         loadCommandsFromDB();
         this.discordService = discordService;
     }
@@ -69,17 +67,5 @@ public class TwitchCommandService {
 
         commandCache.remove(trigger.toLowerCase());
         return deleted;
-    }
-
-    public List<TwitchCommand> getAllCommands() {
-        return repository.findAll();
-    }
-
-    public String getBotToken() {
-        return tokenService.getBotAccessToken();
-    }
-
-    public String getUserToken(String username) {
-        return tokenService.getUserAccessToken(username);
     }
 }

@@ -1,5 +1,7 @@
-package streamer_website.demo.dto;
+package streamer_website.demo.dto.twitch;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.Instant;
 
 public record TwitchUser(
@@ -13,5 +15,8 @@ public record TwitchUser(
         String broadcasterType,
         int viewCount,
         Instant createdAt
-) {}
+) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+}
 

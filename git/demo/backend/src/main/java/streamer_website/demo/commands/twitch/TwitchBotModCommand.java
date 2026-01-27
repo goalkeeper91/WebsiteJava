@@ -1,3 +1,4 @@
+/*
 package streamer_website.demo.commands.twitch;
 
 import com.github.twitch4j.TwitchClient;
@@ -159,3 +160,4 @@ public enum TwitchBotModCommand {
         void execute(String[] parts, ChannelMessageEvent event, TwitchClient client, TwitchCommandService service);
     }
 }
+*/

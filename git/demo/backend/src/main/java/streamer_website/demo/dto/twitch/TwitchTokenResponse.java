@@ -1,4 +1,4 @@
-package streamer_website.demo.dto;
+package streamer_website.demo.dto.twitch;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

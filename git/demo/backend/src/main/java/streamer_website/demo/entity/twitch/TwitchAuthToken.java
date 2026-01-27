@@ -44,6 +44,10 @@ public class TwitchAuthToken {
     @Column(columnDefinition = "TEXT")
     private String scope;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TwitchTokenType tokenOwner;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 

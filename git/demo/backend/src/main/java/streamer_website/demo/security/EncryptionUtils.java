@@ -7,6 +7,7 @@ import java.util.Base64;
 public class EncryptionUtils {
 
     private static final String ALGORITHM = "AES";
+    private static final String CIPHER_TRANSFORMATION = "AES/ECB/PKCS5Padding"; // Für Cipher.getInstance
 
     //@Value("${app.secret.key}")
     private static final String secretKey = "1234567890123456";
@@ -15,7 +16,7 @@ public class EncryptionUtils {
         if (input == null) return null;
         try {
             SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), ALGORITHM);
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
 
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return Base64.getEncoder().encodeToString(cipher.doFinal(input.getBytes()));
@@ -28,7 +29,7 @@ public class EncryptionUtils {
         if (input == null) return null;
         try {
             SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), ALGORITHM);
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
             cipher.init(Cipher.DECRYPT_MODE, key);
             return new String(cipher.doFinal(Base64.getDecoder().decode(input)));
         } catch (Exception e) {

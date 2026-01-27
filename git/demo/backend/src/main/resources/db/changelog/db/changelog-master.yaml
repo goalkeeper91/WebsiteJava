@@ -58,3 +58,21 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/subscription/create_subscriptions_table.xml
+
+  - include:
+      file: db/changelog/twitch/add_token_owner_to_twitch_auth_token.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_channels.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_chat_commands.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_chat_keywords.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_chat_timers.xml
+
+  - include:
+      file: db/changelog/twitch/create_twitch_events.xml

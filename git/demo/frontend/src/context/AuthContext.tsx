@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const data = await res.json();
-      setUsername(data.username || data.display_name);
+      setUsername(data.username);
       setLoginError(null); // Reset error
     } catch (err) {
       console.error("Login check failed:", err);

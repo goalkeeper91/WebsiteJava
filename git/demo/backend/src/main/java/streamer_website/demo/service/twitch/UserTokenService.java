@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import streamer_website.demo.dto.TwitchTokenResponse;
+import streamer_website.demo.dto.twitch.TwitchTokenResponse;
 import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.repository.TwitchAuthTokenRepository;
 

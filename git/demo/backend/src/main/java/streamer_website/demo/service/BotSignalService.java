@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BotSignalService {
     private final StringRedisTemplate redisTemplate;
-    private static final String CHANNEL = "twitch_bot_signals";
+    private static final String CHANNEL = "twitch_bot_signal";
 
     public void sendBotJoinSignal(String twitchUserId) {
         redisTemplate.convertAndSend(CHANNEL, "JOIN:" + twitchUserId);

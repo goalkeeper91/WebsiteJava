@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="create_chat_commands" author="Marcel">
+        <createTable tableName="chat_commands">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="channel_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="command" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="response" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="cooldown" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="chat_commands"
+                baseColumnNames="channel_id"
+                referencedTableName="twitch_channels"
+                referencedColumnNames="id"
+                constraintName="fk_chat_commands_channel"
+                onDelete="CASCADE"/>
+
+        <addUniqueConstraint
+                tableName="chat_commands"
+                columnNames="channel_id, command"
+                constraintName="uq_command_per_channel"/>
+    </changeSet>
+</databaseChangeLog>

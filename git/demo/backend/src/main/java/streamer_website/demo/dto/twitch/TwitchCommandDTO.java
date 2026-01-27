@@ -1,4 +1,4 @@
-package streamer_website.demo.dto;
+package streamer_website.demo.dto.twitch;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

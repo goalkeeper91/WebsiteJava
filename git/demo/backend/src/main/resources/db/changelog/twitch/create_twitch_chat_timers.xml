@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="create_chat_timers" author="Marcel">
+        <createTable tableName="chat_timers">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="channel_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="message" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="interval_minutes" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_triggered" type="TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="chat_timers"
+                baseColumnNames="channel_id"
+                referencedTableName="twitch_channels"
+                referencedColumnNames="id"
+                constraintName="fk_chat_timers_channel"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
