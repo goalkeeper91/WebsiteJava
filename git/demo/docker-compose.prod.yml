@@ -13,7 +13,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
     networks:
       - app-network
-    command: ["/bin/bash", "-c", "until printf '' > /dev/tcp/postgres/5432 2>/dev/null; do echo 'Warte auf die PostgreSQL-Datenbank...'; sleep 1; done; echo 'Datenbank bereit, starte die Anwendung.'; exec java -Dlogging.level.root=TRACE -jar app.jar"]
+    command: ["java", "-Dlogging.level.root=TRACE", "-jar", "app.jar"]
 
   frontend:
     build:
