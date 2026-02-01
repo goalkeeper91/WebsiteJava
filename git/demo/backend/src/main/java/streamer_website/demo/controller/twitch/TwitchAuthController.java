@@ -44,18 +44,27 @@ public class TwitchAuthController {
     public void redirectToTwitch(HttpServletResponse response) throws IOException {
         // Scopes für Streamer: E-Mail, Chat lesen/schreiben und Stream-Infos verwalten
         String scopes = String.join(" ",
+                // Basis
                 "user:read:email",
-                "user:bot",
-                "channel:bot",
+
+                // Chat (optional, aber ok)
                 "chat:read",
                 "chat:edit",
-
                 "user:read:chat",
                 "user:write:chat",
+
+                // Channel / Stream
                 "channel:manage:broadcast",
+
+                // EventSub – FOLLOW / CHATTERS
                 "moderator:read:followers",
-                "moderator:read:chatters"
+                "moderator:read:chatters",
+
+                // EventSub – SUBS / CHEERS / RAIDS
+                "channel:read:subscriptions",
+                "bits:read"
         );
+
 
         String url = "https://id.twitch.tv/oauth2/authorize" +
                 "?response_type=code" +
@@ -75,7 +84,10 @@ public class TwitchAuthController {
                 "chat:edit",
                 "user:read:chat",
                 "user:write:chat",
-                "moderator:read:chatters"
+                "moderator:read:chatters",
+                "moderator:read:followers",
+                "channel:read:subscriptions",
+                "bits:read"
         );
 
         String url = "https://id.twitch.tv/oauth2/authorize" +

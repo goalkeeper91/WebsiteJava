@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1cab5f98-2038-47c4-9a47-b407915ca027" name="Changes" comment="refactored edditing for trigger">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/config/RedisConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/config/WebSocketConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/controller/twitch/StreamController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/ActivityDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/CategoryDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/DashboardStatsDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/LiveStreamDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/StreamInfoDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/dto/twitch/UpdateStreamInfoRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/entity/twitch/StreamActivity.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/repository/StreamActivityRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/service/twitch/ActivityService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/service/twitch/StreamService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/service/twitch/TwitchApiService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/websocket/ActivityFeedWebSocketHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/db/changelog/twitch/create_stream_activity_table.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/stream/ActivityFeedPanel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/stream/DashboardStatsPanel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/stream/StreamInfoPanel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/stream/api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/stream/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useWebSocket.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/controller/twitch/TwitchAuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/controller/twitch/TwitchAuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/service/BotSignalService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/streamer_website/demo/service/BotSignalService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/db/changelog/db/changelog-master.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/changelog/db/changelog-master.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package-info" />
+        <option value="Enum" />
+        <option value="AnnotationType" />
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/../.." value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;goalkeeper91&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/goalkeeper91/WebsiteJava.git&quot;,
+    &quot;accountId&quot;: &quot;9d01d031-1735-49fa-8713-7f0fd4da09ff&quot;
+  }
+}</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="30BOaGsoIHaIKSbNpx6JeVbqW4J" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.DemoApplication (1).executor&quot;: &quot;Run&quot;,
+    &quot;Application.DemoApplication.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutControllerTest.shouldCreateNewAbout.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutControllerTest.shouldReturnAboutInfo.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutRepositoryTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutRepositoryTest.shouldSaveAndFindAbout.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutServiceTest.shouldReturnAboutText (1).executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AboutServiceTest.shouldReturnAboutText.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchAuthControllerTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchAuthControllerTest.shouldHandleTwitchCallbackAndAuthorizeUser.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchAuthControllerTest.shouldRedirectToTwitchAuth.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchControllerTest.shouldReturnLiveStatusTrue.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest (1).executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest.returnsFalseOnApiError.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest.returnsFalseWhenStreamIsOffline.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest.returnsTrueWhenStreamIsLive (1).executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TwitchServiceTest.returnsTrueWhenStreamIsLive.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Entwicklung/git/demo/backend/src/main/resources/db/changelog/twitch&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.annotationProcessors&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="javax.annotation" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Entwicklung\git\demo\backend\src\main\resources\db\changelog\twitch" />
+      <recent name="D:\Entwicklung\git\demo\backend\src\main\resources\db\changelog\users" />
+      <recent name="D:\Entwicklung\git\demo\backend\src\main\resources\db\changelog\discord" />
+      <recent name="D:\Entwicklung\git\demo\frontend" />
+      <recent name="D:\Entwicklung\git\demo\postgres" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Entwicklung\git\demo\frontend\src\features\commands" />
+      <recent name="D:\Entwicklung\git\demo\frontend\public" />
+      <recent name="D:\Entwicklung\git\demo\frontend\src\components\admin\tabs\bots\twitch" />
+      <recent name="D:\Entwicklung\git\demo\backend\src\main\resources\db\changelog\discord" />
+      <recent name="D:\Entwicklung\git\demo\backend\src\main\java\streamer_website\demo\entity\discord" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="streamer_website.demo.controller" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="streamer_website.demo.entity.twitch" />
+      <recent name="streamer_website.demo.entity.discord" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.DemoApplication">
+    <configuration name="DemoApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="streamer_website.demo.DemoApplication" />
+      <module name="demo" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="streamer_website.demo.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TwitchAuthControllerTest.shouldHandleTwitchCallbackAndAuthorizeUser" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="demo (1) (streamer_website)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="streamer_website.demo.controller.twitch.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="streamer_website.demo.controller" />
+      <option name="MAIN_CLASS_NAME" value="streamer_website.demo.controller.TwitchAuthControllerTest" />
+      <option name="METHOD_NAME" value="shouldHandleTwitchCallbackAndAuthorizeUser" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TwitchAuthControllerTest.shouldRedirectToTwitchAuth" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="demo (1) (streamer_website)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="streamer_website.demo.controller.twitch.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="streamer_website.demo.controller" />
+      <option name="MAIN_CLASS_NAME" value="streamer_website.demo.controller.TwitchAuthControllerTest" />
+      <option name="METHOD_NAME" value="shouldRedirectToTwitchAuth" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TwitchControllerTest.shouldReturnLiveStatusTrue" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="demo (1) (streamer_website)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="streamer_website.demo.controller.twitch.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="streamer_website.demo.controller" />
+      <option name="MAIN_CLASS_NAME" value="streamer_website.demo.controller.TwitchControllerTest" />
+      <option name="METHOD_NAME" value="shouldReturnLiveStatusTrue" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TwitchServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="demo (1) (streamer_website)" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="streamer_website.demo.service.twitch.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="streamer_website.demo.service" />
+      <option name="MAIN_CLASS_NAME" value="streamer_website.demo.service.TwitchServiceTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.DemoApplication" />
+        <item itemvalue="JUnit.TwitchServiceTest" />
+        <item itemvalue="JUnit.TwitchControllerTest.shouldReturnLiveStatusTrue" />
+        <item itemvalue="JUnit.TwitchAuthControllerTest.shouldRedirectToTwitchAuth" />
+        <item itemvalue="JUnit.TwitchAuthControllerTest.shouldHandleTwitchCallbackAndAuthorizeUser" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-26cb7f24e5b0-intellij.indexing.shared.core-IU-253.29346.138" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1cab5f98-2038-47c4-9a47-b407915ca027" name="Changes" comment="" />
+      <created>1753097561369</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1753097561369</updated>
+    </task>
+    <task id="LOCAL-00108" summary="bugfixes for chat interaction">
+      <option name="closed" value="true" />
+      <created>1758213413539</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1758213413539</updated>
+    </task>
+    <task id="LOCAL-00109" summary="bugfixes for chat interaction">
+      <option name="closed" value="true" />
+      <created>1758214023649</created>
+      <option name="number" value="00109" />
+      <option name="presentableId" value="LOCAL-00109" />
+      <option name="project" value="LOCAL" />
+      <updated>1758214023649</updated>
+    </task>
+    <task id="LOCAL-00110" summary="bugfixes for chat interaction">
+      <option name="closed" value="true" />
+      <created>1758215821459</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1758215821459</updated>
+    </task>
+    <task id="LOCAL-00111" summary="rerolled task notifications to repair website, implemented channels id interface to handle more channels and refactored notification for contact">
+      <option name="closed" value="true" />
+      <created>1758456630966</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1758456630967</updated>
+    </task>
+    <task id="LOCAL-00112" summary="alter twitch commands table">
+      <option name="closed" value="true" />
+      <created>1758878998153</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1758878998153</updated>
+    </task>
+    <task id="LOCAL-00113" summary="alter twitch commands table added to changelog">
+      <option name="closed" value="true" />
+      <created>1758880089501</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1758880089501</updated>
+    </task>
+    <task id="LOCAL-00114" summary="repared changelog">
+      <option name="closed" value="true" />
+      <created>1758889028517</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1758889028517</updated>
+    </task>
+    <task id="LOCAL-00115" summary="repaired onMessage">
+      <option name="closed" value="true" />
+      <created>1758891662262</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1758891662263</updated>
+    </task>
+    <task id="LOCAL-00116" summary="refactored onMessage">
+      <option name="closed" value="true" />
+      <created>1758892618272</created>
+      <option name="number" value="00116" />
+      <option name="presentableId" value="LOCAL-00116" />
+      <option name="project" value="LOCAL" />
+      <updated>1758892618273</updated>
+    </task>
+    <task id="LOCAL-00117" summary="refactored onMessage">
+      <option name="closed" value="true" />
+      <created>1758893103165</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1758893103165</updated>
+    </task>
+    <task id="LOCAL-00118" summary="refactored onMessage">
+      <option name="closed" value="true" />
+      <created>1758894926447</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1758894926447</updated>
+    </task>
+    <task id="LOCAL-00119" summary="implemented restart function and added submenue for bots">
+      <option name="closed" value="true" />
+      <created>1758900257995</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
+      <option name="project" value="LOCAL" />
+      <updated>1758900257995</updated>
+    </task>
+    <task id="LOCAL-00120" summary="implements submenue for bots, return all twitch commands and show them in overview">
+      <option name="closed" value="true" />
+      <created>1758905532047</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1758905532047</updated>
+    </task>
+    <task id="LOCAL-00121" summary="refactored small bug">
+      <option name="closed" value="true" />
+      <created>1758906987813</created>
+      <option name="number" value="00121" />
+      <option name="presentableId" value="LOCAL-00121" />
+      <option name="project" value="LOCAL" />
+      <updated>1758906987813</updated>
+    </task>
+    <task id="LOCAL-00122" summary="refactored changed url´s">
+      <option name="closed" value="true" />
+      <created>1758908231022</created>
+      <option name="number" value="00122" />
+      <option name="presentableId" value="LOCAL-00122" />
+      <option name="project" value="LOCAL" />
+      <updated>1758908231022</updated>
+    </task>
+    <task id="LOCAL-00123" summary="updated bot token usage for auto refresh">
+      <option name="closed" value="true" />
+      <created>1759335039146</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
+      <option name="project" value="LOCAL" />
+      <updated>1759335039146</updated>
+    </task>
+    <task id="LOCAL-00124" summary="added scheduler for auto token refresh">
+      <option name="closed" value="true" />
+      <created>1759336807552</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
+      <option name="project" value="LOCAL" />
+      <updated>1759336807552</updated>
+    </task>
+    <task id="LOCAL-00125" summary="implements notification for new twitch commands">
+      <option name="closed" value="true" />
+      <created>1759480838047</created>
+      <option name="number" value="00125" />
+      <option name="presentableId" value="LOCAL-00125" />
+      <option name="project" value="LOCAL" />
+      <updated>1759480838048</updated>
+    </task>
+    <task id="LOCAL-00126" summary="implemented feedback for login error">
+      <option name="closed" value="true" />
+      <created>1759482443161</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1759482443161</updated>
+    </task>
+    <task id="LOCAL-00127" summary="added some error handling changed favicon to goaly logo">
+      <option name="closed" value="true" />
+      <created>1759488072357</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1759488072357</updated>
+    </task>
+    <task id="LOCAL-00128" summary="refactored header styling for mobile versions">
+      <option name="closed" value="true" />
+      <created>1759489094114</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1759489094114</updated>
+    </task>
+    <task id="LOCAL-00129" summary="refactored missing parts for build error">
+      <option name="closed" value="true" />
+      <created>1759490389264</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1759490389264</updated>
+    </task>
+    <task id="LOCAL-00130" summary="refactored missing parts for build error">
+      <option name="closed" value="true" />
+      <created>1759490674546</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1759490674546</updated>
+    </task>
+    <task id="LOCAL-00131" summary="refactored missing parts for build error">
+      <option name="closed" value="true" />
+      <created>1759490870646</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1759490870646</updated>
+    </task>
+    <task id="LOCAL-00132" summary="added favicon to github">
+      <option name="closed" value="true" />
+      <created>1759491167956</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1759491167957</updated>
+    </task>
+    <task id="LOCAL-00133" summary="implements create channel function to discord bot">
+      <option name="closed" value="true" />
+      <created>1759667285094</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1759667285094</updated>
+    </task>
+    <task id="LOCAL-00134" summary="refactored types in DiscordJoinToCreateChannelsEditor.tsx">
+      <option name="closed" value="true" />
+      <created>1759667499653</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1759667499653</updated>
+    </task>
+    <task id="LOCAL-00135" summary="fixed an issue to listen on user">
+      <option name="closed" value="true" />
+      <created>1759669359767</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1759669359767</updated>
+    </task>
+    <task id="LOCAL-00136" summary="fixed problem with not excepting 0 and default false checkbox">
+      <option name="closed" value="true" />
+      <created>1759670716790</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1759670716790</updated>
+    </task>
+    <task id="LOCAL-00137" summary="fixed problem with not excepting 0 and default false checkbox">
+      <option name="closed" value="true" />
+      <created>1759670916635</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1759670916635</updated>
+    </task>
+    <task id="LOCAL-00138" summary="Merge remote-tracking branch 'origin/main'">
+      <option name="closed" value="true" />
+      <created>1759671018950</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1759671018950</updated>
+    </task>
+    <task id="LOCAL-00139" summary="implemented a scheduler for auto update initconfigs">
+      <option name="closed" value="true" />
+      <created>1759675184808</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1759675184809</updated>
+    </task>
+    <task id="LOCAL-00140" summary="implements command handler">
+      <option name="closed" value="true" />
+      <created>1759684344504</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1759684344505</updated>
+    </task>
+    <task id="LOCAL-00141" summary="refactored discordgateway to listen for commands">
+      <option name="closed" value="true" />
+      <created>1759734521219</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1759734521219</updated>
+    </task>
+    <task id="LOCAL-00142" summary="refactored discordgateway to listen for commands">
+      <option name="closed" value="true" />
+      <created>1759735345378</created>
+      <option name="number" value="00142" />
+      <option name="presentableId" value="LOCAL-00142" />
+      <option name="project" value="LOCAL" />
+      <updated>1759735345379</updated>
+    </task>
+    <task id="LOCAL-00143" summary="Merge remote-tracking branch 'origin/main'">
+      <option name="closed" value="true" />
+      <created>1759735620871</created>
+      <option name="number" value="00143" />
+      <option name="presentableId" value="LOCAL-00143" />
+      <option name="project" value="LOCAL" />
+      <updated>1759735620871</updated>
+    </task>
+    <task id="LOCAL-00144" summary="Merge remote-tracking branch 'origin/main'">
+      <option name="closed" value="true" />
+      <created>1759735893578</created>
+      <option name="number" value="00144" />
+      <option name="presentableId" value="LOCAL-00144" />
+      <option name="project" value="LOCAL" />
+      <updated>1759735893578</updated>
+    </task>
+    <task id="LOCAL-00145" summary="ficed a small bug">
+      <option name="closed" value="true" />
+      <created>1759747646326</created>
+      <option name="number" value="00145" />
+      <option name="presentableId" value="LOCAL-00145" />
+      <option name="project" value="LOCAL" />
+      <updated>1759747646327</updated>
+    </task>
+    <task id="LOCAL-00146" summary="refactored discord bot logic">
+      <option name="closed" value="true" />
+      <created>1759750100861</created>
+      <option name="number" value="00146" />
+      <option name="presentableId" value="LOCAL-00146" />
+      <option name="project" value="LOCAL" />
+      <updated>1759750100861</updated>
+    </task>
+    <task id="LOCAL-00147" summary="refactored lazy">
+      <option name="closed" value="true" />
+      <created>1759760347383</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1759760347383</updated>
+    </task>
+    <task id="LOCAL-00148" summary="refactored commandService and handling, added task command and task handling">
+      <option name="closed" value="true" />
+      <created>1759813140658</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1759813140658</updated>
+    </task>
+    <task id="LOCAL-00149" summary="fixed a naming bug">
+      <option name="closed" value="true" />
+      <created>1759821142288</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1759821142288</updated>
+    </task>
+    <task id="LOCAL-00150" summary="fixed datetime bug">
+      <option name="closed" value="true" />
+      <created>1759822112743</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1759822112743</updated>
+    </task>
+    <task id="LOCAL-00151" summary="implemented timer for commands, updated twotch bot to handle commands with timer">
+      <option name="closed" value="true" />
+      <created>1759940719511</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1759940719512</updated>
+    </task>
+    <task id="LOCAL-00152" summary="fixed undefined type error">
+      <option name="closed" value="true" />
+      <created>1759940943232</created>
+      <option name="number" value="00152" />
+      <option name="presentableId" value="LOCAL-00152" />
+      <option name="project" value="LOCAL" />
+      <updated>1759940943232</updated>
+    </task>
+    <task id="LOCAL-00153" summary="fixed ssl renew bug">
+      <option name="closed" value="true" />
+      <created>1763925679918</created>
+      <option name="number" value="00153" />
+      <option name="presentableId" value="LOCAL-00153" />
+      <option name="project" value="LOCAL" />
+      <updated>1763925679919</updated>
+    </task>
+    <task id="LOCAL-00154" summary="refactored docker and backend to switch internal bots to external python bots">
+      <option name="closed" value="true" />
+      <created>1767816572094</created>
+      <option name="number" value="00154" />
+      <option name="presentableId" value="LOCAL-00154" />
+      <option name="project" value="LOCAL" />
+      <updated>1767816572094</updated>
+    </task>
+    <task id="LOCAL-00155" summary="refactored user handling, removed TwitchBot, implemented User Dashboard">
+      <option name="closed" value="true" />
+      <created>1769528049545</created>
+      <option name="number" value="00155" />
+      <option name="presentableId" value="LOCAL-00155" />
+      <option name="project" value="LOCAL" />
+      <updated>1769528049546</updated>
+    </task>
+    <task id="LOCAL-00156" summary="refactored edditing for trigger">
+      <option name="closed" value="true" />
+      <created>1769530642052</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1769530642052</updated>
+    </task>
+    <option name="localTasksCounter" value="157" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="implemented feedback for login error" />
+    <MESSAGE value="added some error handling changed favicon to goaly logo" />
+    <MESSAGE value="refactored header styling for mobile versions" />
+    <MESSAGE value="refactored missing parts for build error" />
+    <MESSAGE value="added favicon to github" />
+    <MESSAGE value="implements create channel function to discord bot" />
+    <MESSAGE value="refactored types in DiscordJoinToCreateChannelsEditor.tsx" />
+    <MESSAGE value="fixed an issue to listen on user" />
+    <MESSAGE value="fixed problem with not excepting 0 and default false checkbox" />
+    <MESSAGE value="implemented a scheduler for auto update initconfigs" />
+    <MESSAGE value="implements command handler" />
+    <MESSAGE value="refactored discordgateway to listen for commands" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/main'" />
+    <MESSAGE value="ficed a small bug" />
+    <MESSAGE value="refactored discord bot logic" />
+    <MESSAGE value="refactored lazy" />
+    <MESSAGE value="refactored commandService and handling, added task command and task handling" />
+    <MESSAGE value="fixed a naming bug" />
+    <MESSAGE value="fixed datetime bug" />
+    <MESSAGE value="implemented timer for commands, updated twotch bot to handle commands with timer" />
+    <MESSAGE value="fixed undefined type error" />
+    <MESSAGE value="fixed ssl renew bug" />
+    <MESSAGE value="refactored docker and backend to switch internal bots to external python bots" />
+    <MESSAGE value="refactored user handling, removed TwitchBot, implemented User Dashboard" />
+    <MESSAGE value="refactored edditing for trigger" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactored edditing for trigger" />
+  </component>
+</project>
