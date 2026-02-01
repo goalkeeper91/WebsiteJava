@@ -1,5 +1,5 @@
 # === Build Stage ===
-FROM maven:3.9-eclipse-temurin-24 AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN mvn clean package -DskipTests
 
 # === Runtime Stage ===
 # Verwenden Sie ein schlankes JRE-Image für die Laufzeit
-FROM eclipse-temurin:24-jre
+FROM eclipse-temurin:21-jre
 
 # Fügt die Hosts-Datei aus dem Build-Kontext hinzu, um DNS-Probleme zu umgehen.
 COPY hosts.docker /etc/hosts
