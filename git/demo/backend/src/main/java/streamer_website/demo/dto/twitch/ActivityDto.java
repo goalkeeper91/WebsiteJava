@@ -4,15 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
 
-@Entity
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ActivityDto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String twitchUserId;
     private String type;
     private String username;
