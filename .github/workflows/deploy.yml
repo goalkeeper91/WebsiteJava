@@ -35,7 +35,7 @@ jobs:
       # 🚀 Copy Backend + Config to Server
       - name: 🖥️ Copy Backend & Config to Server
         run: |
-          rsync -av --exclude 'node_modules' --exclude 'logs' \
+          rsync -av --delete --exclude 'node_modules' --exclude 'logs' \
           -e "ssh -o StrictHostKeyChecking=yes" \
           ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
@@ -55,13 +55,15 @@ jobs:
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
             
-            # Backend und Services neu starten
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
-
-            # Nur nginx Proxy reloaden (falls Config angepasst)
-            docker compose -f docker-compose.prod.yml restart proxy
-
+            # Radikales Aufräumen der alten Java-Builds auf dem Host
+            rm -rf backend/target
+            
+            # Docker-Build ohne Cache erzwingen für maximale Sauberkeit
+            docker compose -f docker-compose.prod.yml build --no-cache backend
+            
+            # Services neu starten
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
             # Aufräumen
             docker image prune -f
           EOF
