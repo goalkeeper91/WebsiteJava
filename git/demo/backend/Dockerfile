@@ -1,28 +1,26 @@
 # === Build Stage ===
-FROM maven:3.9-eclipse-temurin-21 AS build
-# Hinweis: Temurin 24 ist sehr neu (Early Access), 21 ist der aktuelle LTS-Standard.
+FROM maven:3.9-eclipse-temurin-24 AS build
 
 WORKDIR /app
 
-# 1. Nur die POMs kopieren, um Layer-Caching für Dependencies zu nutzen
-COPY pom.xml .
-COPY backend/pom.xml backend/
+COPY . .
 
-# 2. Nur den tatsächlichen Source-Code des Backends kopieren
-# Das verhindert, dass "Geisterdateien" aus dem Root oder anderen Ordnern mitrutschen
-COPY backend/src backend/src
-
-# 3. Den Build explizit für das Backend ausführen
-# Wir gehen in den Backend-Ordner, damit Maven lokal dort baut
-WORKDIR /app/backend
+# Führen Sie den Maven-Build durch, um die ausführbare JAR-Datei zu erstellen
 RUN mvn clean package -DskipTests
 
 # === Runtime Stage ===
-FROM eclipse-temurin:21-jre
+# Verwenden Sie ein schlankes JRE-Image für die Laufzeit
+FROM eclipse-temurin:24-jre
+
+# Fügt die Hosts-Datei aus dem Build-Kontext hinzu, um DNS-Probleme zu umgehen.
+COPY hosts.docker /etc/hosts
+
+# Installieren Sie den PostgreSQL-Client, da das Skript psql benötigt
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Der Pfad zur JAR hat sich durch das 'WORKDIR' oben geändert:
-COPY --from=build /app/backend/target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 # Korrigierter Pfad: Da der Build-Kontext der Backend-Ordner ist, muss
 # der Pfad nur der Dateiname sein.
