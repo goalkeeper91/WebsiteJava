@@ -1,5 +1,6 @@
 package streamer_website.demo.controller.twitch;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +98,7 @@ public class TwitchAuthController {
     @GetMapping("/twitch/callback")
     public void handleTwitchCallback(@RequestParam("code") String code,
                                      HttpServletResponse response,
-                                     HttpSession session) throws IOException {
+                                     HttpServletRequest request) throws IOException {
         try {
             TwitchAuthToken tokenEntity = tokenService.exchangeCodeForToken(code, false);
 
@@ -106,6 +107,7 @@ public class TwitchAuthController {
             userService.createOrUpdate(twitchUser);
             userService.syncTwitchChannel(twitchUser);
 
+            HttpSession session = request.getSession(true);
             session.setAttribute("user", twitchUser);
 
             response.sendRedirect(frontendUrl + "/dashboard");
