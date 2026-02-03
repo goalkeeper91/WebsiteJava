@@ -36,12 +36,12 @@ jobs:
       - name: 🖥️ Copy Backend & Config to Server
         run: |
           rsync -av --delete \
-          --exclude 'node_modules' \
-          --exclude 'logs' \
-          --exclude '.env' \
-          --exclude 'frontend_dist' \
+          --exclude 'target' \
+          --exclude 'application.properties' \
           -e "ssh -o StrictHostKeyChecking=yes" \
-          ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          ./backend/ \
+          user@host:/home/user/app/backend/
+
 
       # 🚀 Copy Frontend Build to Server
       - name: 📂 Deploy Frontend Build
