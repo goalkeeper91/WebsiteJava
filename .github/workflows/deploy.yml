@@ -38,7 +38,7 @@ jobs:
           rsync -av --delete \
           --exclude 'node_modules' \
           --exclude 'logs' \
-          --exclude '.env' \              # NEU: .env nicht löschen!
+          --exclude '.env' \
           --exclude 'frontend_dist' \
           -e "ssh -o StrictHostKeyChecking=yes" \
           ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
