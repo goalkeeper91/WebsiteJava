@@ -35,7 +35,7 @@ jobs:
       # 🚀 Copy Backend + Config to Server
       - name: 🖥️ Copy Backend & Config to Server
         run: |
-          rsync -av --rsync -av --delete \
+          rsync -av --delete \
           --exclude 'node_modules' \
           --exclude 'logs' \
           --exclude '.env' \
