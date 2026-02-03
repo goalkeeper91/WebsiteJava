@@ -42,25 +42,19 @@ public class TwitchAuthController {
 
     @GetMapping("/twitch")
     public void redirectToTwitch(HttpServletResponse response) throws IOException {
-        // Scopes für Streamer: E-Mail, Chat lesen/schreiben und Stream-Infos verwalten
         String scopes = String.join(" ",
-                // Basis
                 "user:read:email",
 
-                // Chat (optional, aber ok)
                 "chat:read",
                 "chat:edit",
                 "user:read:chat",
                 "user:write:chat",
 
-                // Channel / Stream
                 "channel:manage:broadcast",
 
-                // EventSub – FOLLOW / CHATTERS
                 "moderator:read:followers",
                 "moderator:read:chatters",
 
-                // EventSub – SUBS / CHEERS / RAIDS
                 "channel:read:subscriptions",
                 "bits:read"
         );
