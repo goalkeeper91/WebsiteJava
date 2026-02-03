@@ -65,7 +65,7 @@ services:
       - ./nginx/timer.conf:/etc/nginx/conf.d/timer.conf:ro
       - ./certs:/etc/nginx/certs
       - ./certbot-www:/var/www/certbot
-      - ./frontend_dist:/var/www/frontend:ro
+      - ./frontend/dist:/var/www/frontend:ro
       - ./subathon-timer:/var/www/subathon:ro
     depends_on:
       frontend:
