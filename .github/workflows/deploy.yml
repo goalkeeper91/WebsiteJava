@@ -41,8 +41,7 @@ jobs:
           --exclude '.env' \
           --exclude 'frontend_dist' \
           -e "ssh -o StrictHostKeyChecking=yes" \
-          ./ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          ./git/demo/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
 
       # 🚀 Copy Frontend Build to Server
       - name: 📂 Deploy Frontend Build
