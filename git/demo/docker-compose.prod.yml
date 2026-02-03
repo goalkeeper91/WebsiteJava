@@ -15,6 +15,18 @@ services:
       - app-network
     command: ["java", "-Dlogging.level.root=TRACE", "-jar", "app.jar"]
 
+  redis:
+    image: redis:7
+    container_name: redis_central
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
   frontend:
     build:
       context: .
@@ -50,13 +62,11 @@ services:
       - "443:443"
     volumes:
       - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
-      # HIER DIE NEUE ZEILE FÜR DEN TIMER:
       - ./nginx/timer.conf:/etc/nginx/conf.d/timer.conf:ro
       - ./certs:/etc/nginx/certs
       - ./certbot-www:/var/www/certbot
       - ./frontend/dist:/var/www/frontend:ro
-      # UND HIER DEN ORDNER FÜR DIE TIMER-DATEIEN:
-      - ./subathon_dist:/var/www/subathon:ro
+      - ./subathon-timer:/var/www/subathon:ro
     depends_on:
       frontend:
         condition: service_started
