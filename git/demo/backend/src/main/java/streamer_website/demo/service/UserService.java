@@ -3,6 +3,7 @@ package streamer_website.demo.service;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import streamer_website.demo.dto.twitch.TwitchUser;
 import streamer_website.demo.entity.User;
@@ -11,7 +12,6 @@ import streamer_website.demo.repository.TwitchChannelRepository;
 import streamer_website.demo.repository.UserRepository;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -20,14 +20,15 @@ public class UserService {
     private final TwitchChannelRepository twitchChannelRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    private static final String ADMIN_TWITCH_ID = "727153297";
+    @Value("${twitch.admin_twitch_id}")
+    private String admin_twitch_id;
 
     public UserService(UserRepository userRepository, TwitchChannelRepository twitchChannelRepository) {
         this.userRepository = userRepository;
         this.twitchChannelRepository = twitchChannelRepository;
     }
 
-    public void createOrUpdate(TwitchUser twitchUser) {
+    public User createOrUpdate(TwitchUser twitchUser) {
         User user = userRepository.findById(twitchUser.id())
                 .orElseGet(() -> {
                     User newUser = new User();
@@ -39,11 +40,11 @@ public class UserService {
         user.setUsername(twitchUser.username());
         user.setEmail(twitchUser.email());
 
-        if (twitchUser.id().equals(ADMIN_TWITCH_ID)) {
+        if (twitchUser.id().equals(admin_twitch_id)) {
             user.setAdmin(true);
         }
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     @Transactional

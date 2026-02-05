@@ -73,6 +73,7 @@ public class TwitchService {
                 userNode.has("profile_image_url") ? userNode.get("profile_image_url").asText() : null,
                 userNode.has("offline_image_url") ? userNode.get("offline_image_url").asText() : null,
                 userNode.has("broadcaster_type") ? userNode.get("broadcaster_type").asText() : null,
+                false,
                 userNode.has("view_count") ? userNode.get("view_count").asInt() : 0,
                 Instant.parse(userNode.get("created_at").asText())
         );

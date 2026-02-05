@@ -34,7 +34,6 @@ const Header: React.FC = () => {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex space-x-6 items-center">
                         <NavLinks
-                            isLive={isLive}
                             isAuthenticated={isAuthenticated}
                             username={username}
                             handleLogout={handleLogout}

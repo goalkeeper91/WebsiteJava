@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import streamer_website.demo.dto.twitch.TwitchUser;
+import streamer_website.demo.entity.User;
 import streamer_website.demo.entity.twitch.TwitchAuthToken;
 import streamer_website.demo.service.twitch.TwitchService;
 import streamer_website.demo.service.UserService;
@@ -104,8 +105,23 @@ public class TwitchAuthController {
 
             TwitchUser twitchUser = twitchService.getUserInfo(tokenEntity.getUserName());
 
-            userService.createOrUpdate(twitchUser);
+            User dbUser = userService.createOrUpdate(twitchUser);
+
             userService.syncTwitchChannel(twitchUser);
+
+            twitchUser = new TwitchUser(
+                    twitchUser.id(),
+                    twitchUser.login(),
+                    twitchUser.username(),
+                    twitchUser.email(),
+                    twitchUser.description(),
+                    twitchUser.profileImageUrl(),
+                    twitchUser.offlineImageUrl(),
+                    twitchUser.broadcasterType(),
+                    dbUser.isAdmin(),
+                    twitchUser.viewCount(),
+                    twitchUser.createdAt()
+            );
 
             HttpSession session = request.getSession(true);
             session.setAttribute("user", twitchUser);

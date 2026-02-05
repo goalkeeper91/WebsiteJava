@@ -13,6 +13,7 @@ public record TwitchUser(
         String profileImageUrl,
         String offlineImageUrl,
         String broadcasterType,
+        Boolean isAdmin,
         int viewCount,
         Instant createdAt
 ) implements Serializable {
