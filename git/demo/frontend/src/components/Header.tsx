@@ -6,12 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { NavLinks } from './Navlinks';
 
 const Header: React.FC = () => {
-    const isLive = useTwitchLiveStatus();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { isAuthenticated, username, logout } = useAuth();
-
-    useEffect(() => {
-    }, [isLive]);
 
     const handleLogout = async () => {
         await logout();
@@ -52,7 +48,6 @@ const Header: React.FC = () => {
                 {isMenuOpen && (
                     <div className="md:hidden bg-slate-800/90 px-6 pb-4 space-y-4">
                         <NavLinks
-                            isLive={isLive}
                             isAuthenticated={isAuthenticated}
                             username={username}
                             handleLogout={handleLogout}
