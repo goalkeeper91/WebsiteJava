@@ -105,56 +105,39 @@ const Datenschutz: React.FC = () => {
 
         <h2 className="text-2xl font-semibold mb-4">4. Datenerfassung auf dieser Website</h2>
 
-        <h3 className="text-xl font-semibold mt-4 mb-2">Cookies</h3>
+        <h3 className="text-xl font-semibold mt-4 mb-2">Cookies und Local Storage</h3>
         <p>
-          Cookies sind kleine Datenpakete, die auf Ihrem Gerät gespeichert werden. Sie dienen zum Betrieb der Website, Analyse des Nutzerverhaltens oder Marketingzwecken. Sie können Cookies blockieren oder die Annahme einschränken, allerdings kann dies die Funktionalität der Website beeinträchtigen.
+          Wir nutzen technisch notwendige Cookies und den Local Storage Ihres Browsers, um Ihren Login-Status sicherzustellen. Ohne diese Speicherung kann die Dashboard-Funktionalität nicht bereitgestellt werden.
         </p>
 
         <h3 className="text-xl font-semibold mt-4 mb-2">Anfragen per E-Mail, Telefon oder Fax</h3>
         <p>
-          Kontaktanfragen werden zum Zwecke der Bearbeitung gespeichert und nur mit Einwilligung weitergegeben. Die Speicherung erfolgt bis zur Löschung, Widerruf oder Erfüllung des Zwecks.
+          Kontaktanfragen werden zum Zwecke der Bearbeitung gespeichert und nur mit Einwilligung weitergegeben.
         </p>
 
         <h2 className="text-2xl font-semibold mb-4">5. Plugins und Tools</h2>
 
         <h3 className="text-xl font-semibold mt-4 mb-2">YouTube mit erweitertem Datenschutz</h3>
         <p>
-          Videos von YouTube werden im erweiterten Datenschutzmodus eingebunden. Betreiber: Google Ireland Limited, Dublin, Irland. Keine personalisierten Cookies, stattdessen Local Storage Elemente.
+          Videos von YouTube werden im erweiterten Datenschutzmodus eingebunden. Betreiber: Google Ireland Limited, Dublin, Irland.
+        </p>
+
+        <h2 className="text-2xl font-semibold mb-4">6. Twitch OAuth und API-Nutzung</h2>
+        <p className="mb-2">
+          Wir bieten die Anmeldung über den Dienst „Twitch“ an (Twitch Interactive, Inc., USA).
+        </p>
+        <p className="mb-2">
+          <strong>Datenkategorien & Speicherung:</strong> Beim Login speichern wir dauerhaft in unserer Datenbank: Twitch-User-ID, Anzeigename, Profilbild-URL und einen verschlüsselten Access-Token.
+        </p>
+        <p className="mb-2">
+          <strong>Zweck:</strong> Synchronisation von Kanal-Events (Subs, Bits, Follows) für den Timer sowie Speicherung Ihrer Dashboard-Konfiguration.
         </p>
         <p>
-          Weitere Infos:{" "}
-          <a
-            href="https://support.google.com/youtube/answer/171780"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-goalyBlue underline"
-          >
-            YouTube Datenschutz
-          </a>{" "}
-          &{" "}
-          <a
-            href="https://policies.google.com/privacy?hl=de"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-goalyBlue underline"
-          >
-            Google Datenschutzerklärung
-          </a>
-        </p>
-        <p>
-          Das Unternehmen verfügt über die Zertifizierung „EU-US Data Privacy Framework (DPF)“. Weitere Infos:{" "}
-          <a
-            href="https://www.dataprivacyframework.gov/participant/5780"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-goalyBlue underline"
-          >
-            DPF Teilnehmer
-          </a>
+          <strong>Rechtsgrundlage:</strong> Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) und Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Zur Löschung Ihrer Daten senden Sie bitte eine E-Mail an info@goalkeeper91.de.
         </p>
 
       <p className="text-sm mt-10 text-gray-400">
-        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a>
+        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a> & Ergänzungen für Twitch API.
       </p>
      </div>
     </section>
