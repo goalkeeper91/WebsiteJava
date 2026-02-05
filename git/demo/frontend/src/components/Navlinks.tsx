@@ -20,10 +20,6 @@ export const NavLinks: React.FC<NavLinksProps> = ({
     ? "block hover:text-blue-500"
     : "hover:text-blue-500";
 
-  const liveClass = isMobile
-    ? "block text-white font-bold"
-    : "relative text-white font-bold hover:text-red-400";
-
   return (
     <div className={isMobile ? "space-y-2" : "flex space-x-6 items-center"}>
 
