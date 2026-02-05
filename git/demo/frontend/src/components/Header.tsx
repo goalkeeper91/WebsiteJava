@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
-import useTwitchLiveStatus from '../hooks/useTwitchLiveStatus';
 import { useAuth } from '../context/AuthContext';
 import { NavLinks } from './Navlinks';
 
