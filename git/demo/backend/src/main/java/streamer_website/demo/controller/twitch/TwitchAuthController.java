@@ -36,6 +36,9 @@ public class TwitchAuthController {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${twitch.admin_twitch_id")
+    private String adminTwitchId;
+
     private final TwitchService twitchService;
     private final TwitchTokenService tokenService;
     private final UserService userService;
@@ -72,7 +75,17 @@ public class TwitchAuthController {
     }
 
     @GetMapping("/twitch/bot")
-    public void redirectBotToTwitch(HttpServletResponse response) throws IOException {
+    public void redirectBotToTwitch(HttpServletResponse response, HttpSession session) throws IOException {
+
+        TwitchUser currentUser = (TwitchUser) session.getAttribute("user");
+
+        if (currentUser == null || !currentUser.id().equals(adminTwitchId)) {
+            logger.warn("Unbefugter Zugriff auf /auth/twitch/bot von: {}",
+                    currentUser != null ? currentUser.username() : "Anonym");
+
+            response.sendRedirect(frontendUrl + "/dashboard?error=unauthorized");
+            return;
+        }
 
         String scopes = String.join(" ",
                 "user:bot",
