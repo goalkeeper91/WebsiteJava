@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type AuthContextType = {
   isAuthenticated: boolean;
+  isAdmin: boolean;
   username: string | null;
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
@@ -12,6 +13,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
+  isAdmin: false,
   username: null,
   checkAuth: async () => {},
   logout: async () => {},
@@ -26,6 +28,7 @@ const FAKE_USER = import.meta.env.VITE_FAKE_USER || "dev-user";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [username, setUsername] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -36,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (FAKE_AUTH) {
       // In Dev/Test-Umgebung: immer als eingeloggt behandeln
       setUsername(FAKE_USER);
+      setIsAdmin(true);
       setAuthChecked(true);
       setLoading(false);
       return;
@@ -48,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (res.status === 401) {
         setUsername(null);
+        setIsAdmin(false);
         if (showError) setLoginError("Das mit dem Login hat nicht geklappt!");
         return;
       }
@@ -60,11 +65,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const data = await res.json();
-      setUsername(data.username);
-      setLoginError(null); // Reset error
+      setUsername(data.username || data.login);
+      setIsAdmin(data.isAdmin || false);
+      setLoginError(null);
     } catch (err) {
       console.error("Login check failed:", err);
       setUsername(null);
+      setIsAdmin(false);
       if (showError) setLoginError("Das mit dem Login hat nicht geklappt!");
     } finally {
       setAuthChecked(true);
@@ -88,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Logout failed:", e);
     } finally {
       setUsername(null);
+      setIsAdmin(true);
       setLoading(false);
     }
   };
@@ -110,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, username, checkAuth, logout, loading, loginError, authChecked }}
+      value={{ isAdmin, isAuthenticated, username, checkAuth, logout, loading, loginError, authChecked }}
     >
       {children}
     </AuthContext.Provider>
