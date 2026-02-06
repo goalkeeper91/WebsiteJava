@@ -17,7 +17,6 @@ public class AuthApiController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedInUser(HttpSession session) {
-        // Hol das ganze Objekt, so wie wir es im AuthController gespeichert haben
         TwitchUser user = (TwitchUser) session.getAttribute("user");
 
         if (user == null) {
@@ -26,14 +25,7 @@ public class AuthApiController {
                     .body("Not logged in");
         }
 
-        // Wir geben die Daten so zurück, dass dein React-Frontend (data.username) sie versteht
-        return ResponseEntity.ok(
-                Map.of(
-                        "userId", user.id(),
-                        "username", user.login(), // TwitchUser.login() ist meist der Anzeigename
-                        "profileImageUrl", user.profileImageUrl()
-                )
-        );
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/logout")

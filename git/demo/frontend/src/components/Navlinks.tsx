@@ -31,7 +31,7 @@ export const NavLinks: React.FC<NavLinksProps> = ({
       <Link to="/allVideos" className={linkClass}>Alle Videos</Link>
 
       {/* Admin Link */}
-      {isAuthenticated && isAdmin && (
+      {isAdmin && (
         <Link to="/admin" className={`${linkClass} text-green-400 font-bold`}>
           Admin
         </Link>

@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
 
     if (FAKE_AUTH) {
-      // In Dev/Test-Umgebung: immer als eingeloggt behandeln
       setUsername(FAKE_USER);
       setIsAdmin(true);
       setAuthChecked(true);
@@ -81,7 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     if (FAKE_AUTH) {
-      // In Fake-Mode ignorieren wir Logout und bleiben eingeloggt
       return;
     }
 
@@ -95,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Logout failed:", e);
     } finally {
       setUsername(null);
-      setIsAdmin(true);
+      setIsAdmin(false);
       setLoading(false);
     }
   };
