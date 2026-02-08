@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Datenbank
+  postgres:
+    image: postgres:15-alpine
+    container_name: twitch_auth_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-twitch_auth}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  # Redis für Bot-Kommunikation
+  redis:
+    image: redis:7-alpine
+    container_name: twitch_auth_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  # Liquibase für Migrations
+  liquibase:
+    image: liquibase/liquibase:4.25
+    container_name: twitch_auth_liquibase
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations/liquibase:/liquibase/changelog
+    command:
+      - --changelog-file=changelog/changelog-master.xml
+      - --url=jdbc:postgresql://postgres:5432/${DB_NAME:-twitch_auth}
+      - --username=${DB_USER:-postgres}
+      - --password=${DB_PASSWORD:-postgres}
+      - update
+    networks:
+      - backend
+
+  # Go Backend Application
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: twitch_auth_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      liquibase:
+        condition: service_completed_successfully
+    environment:
+      # Server
+      PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-twitch_auth}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_SSLMODE: disable
+      DB_MAX_OPEN_CONNS: 25
+      DB_MAX_IDLE_CONNS: 5
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+
+      # Twitch OAuth
+      TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
+      TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
+      TWITCH_REDIRECT_URL: ${TWITCH_REDIRECT_URL}
+
+      # Security
+      GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+
+      # Session
+      SESSION_NAME: ${SESSION_NAME:-twitch_auth_session}
+      SESSION_MAX_AGE: ${SESSION_MAX_AGE:-86400}
+      SESSION_SECURE: ${SESSION_SECURE:-false}
+      SESSION_HTTP_ONLY: ${SESSION_HTTP_ONLY:-true}
+      SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
+
+      # Frontend
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost}
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: twitch_auth_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      # Für HTTPS:
+      # - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Für HTTPS SSL Zertifikate:
+      # - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge

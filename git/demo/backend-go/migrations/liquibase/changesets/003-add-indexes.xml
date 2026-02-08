@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="003-add-indexes" author="Marcel">
+
+        <!-- Index auf username für schnelle Suche -->
+        <createIndex indexName="idx_users_username" tableName="users">
+            <column name="username"/>
+        </createIndex>
+
+        <!-- Index auf email für schnelle Suche -->
+        <createIndex indexName="idx_users_email" tableName="users">
+            <column name="email"/>
+        </createIndex>
+
+        <!-- Index auf updated_at für Sortierung -->
+        <createIndex indexName="idx_auth_tokens_updated_at" tableName="twitch_auth_tokens">
+            <column name="updated_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_users_username" tableName="users"/>
+            <dropIndex indexName="idx_users_email" tableName="users"/>
+            <dropIndex indexName="idx_auth_tokens_updated_at" tableName="twitch_auth_tokens"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
