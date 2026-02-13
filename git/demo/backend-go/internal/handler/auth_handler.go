@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -9,23 +10,32 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
-	"demo/backend-go/internal/service"
+	"demo/backend-go/internal/domain"
 )
+
+type AuthServiceInterface interface {
+	GetAuthURL() (string, string, error)
+	GetBotAuthURL() (string, string, error)
+	HandleCallback(ctx context.Context, code string) (*domain.User, error)
+	HandleBotCallback(ctx context.Context, code string) (*domain.User, error)
+	GetUserByTwitchID(ctx context.Context, twitchID string) (*domain.User, error)
+}
 
 const (
 	sessionUserKey  = "user_id"
 	sessionStateKey = "oauth_state"
+	sessionBotStateKey = "oauth_bot_state"
 )
 
 type AuthHandler struct {
-	authService  *service.AuthService
+	authService  AuthServiceInterface
 	sessionStore *sessions.CookieStore
 	sessionName  string
 	frontendURL  string
 }
 
 func NewAuthHandler(
-	authService *service.AuthService,
+	authService AuthServiceInterface,
 	sessionStore *sessions.CookieStore,
 	sessionName string,
 	frontendURL string,
@@ -38,10 +48,13 @@ func NewAuthHandler(
 	}
 }
 
-// RegisterRoutes registriert alle Auth-Routen
 func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/auth/login", h.Login).Methods("GET")
 	router.HandleFunc("/auth/callback", h.Callback).Methods("GET")
+
+	router.HandleFunc("/auth/login/bot", h.BotLogin).Methods("GET")
+	router.HandleFunc("/auth/callback/bot", h.BotCallback).Methods("GET")
+
 	router.HandleFunc("/auth/logout", h.Logout).Methods("POST")
 	router.HandleFunc("/auth/me", h.Me).Methods("GET")
 }
@@ -112,6 +125,92 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) BotLogin(w http.ResponseWriter, r *http.Request) {
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		log.Printf("Fehler beim Laden der Session: %v", err)
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=not_authenticated", http.StatusTemporaryRedirect)
+		return
+	}
+
+	userID, ok := session.Values[sessionUserKey].(string)
+	if !ok || userID == "" {
+		log.Printf("Kein User in Session - Bot Auth abgelehnt")
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=not_authenticated", http.StatusTemporaryRedirect)
+		return
+	}
+
+	user, err := h.authService.GetUserByTwitchID(r.Context(), userID)
+	if err != nil || !user.IsAdmin {
+		log.Printf("Unbefugter Zugriff auf Bot Auth von User: %s", userID)
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=unauthorized", http.StatusTemporaryRedirect)
+		return
+	}
+
+	authURL, state, err := h.authService.GetBotAuthURL()
+	if err != nil {
+		log.Printf("Fehler beim Generieren der Bot Auth URL: %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	session.Values[sessionBotStateKey] = state
+	if err := session.Save(r, w); err != nil {
+		log.Printf("Fehler beim Speichern der Session: %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("✅ Bot Auth initiiert für Admin User: %s", user.Username)
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) BotCallback(w http.ResponseWriter, r *http.Request) {
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		log.Printf("Fehler beim Laden der Session: %v", err)
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=session_error", http.StatusTemporaryRedirect)
+		return
+	}
+
+	storedState, ok := session.Values[sessionBotStateKey].(string)
+	if !ok || storedState == "" {
+		log.Printf("Kein Bot State in Session gefunden")
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=invalid_bot_state", http.StatusTemporaryRedirect)
+		return
+	}
+
+	receivedState := r.URL.Query().Get("state")
+	if receivedState != storedState {
+		log.Printf("Bot State Mismatch: erwartet %s, erhalten %s", storedState, receivedState)
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=bot_state_mismatch", http.StatusTemporaryRedirect)
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		log.Printf("Kein Bot Authorization Code erhalten")
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=no_bot_code", http.StatusTemporaryRedirect)
+		return
+	}
+
+	botUser, err := h.authService.HandleBotCallback(r.Context(), code)
+	if err != nil {
+		log.Printf("Fehler beim Verarbeiten des Bot Callbacks: %v", err)
+		http.Redirect(w, r, h.frontendURL+"/dashboard?error=bot_auth_failed", http.StatusTemporaryRedirect)
+		return
+	}
+
+	delete(session.Values, sessionBotStateKey)
+	if err := session.Save(r, w); err != nil {
+		log.Printf("Fehler beim Speichern der Session: %v", err)
+	}
+
+	log.Printf("✅ Bot Account erfolgreich authentifiziert: %s (ID: %s)", botUser.Username, botUser.TwitchID)
+
+	http.Redirect(w, r, h.frontendURL+"/dashboard?success=bot_authenticated&bot_username="+botUser.Username, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {

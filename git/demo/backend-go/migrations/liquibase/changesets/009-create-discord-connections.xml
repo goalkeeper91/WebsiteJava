@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="V001-create-discord-connections" author="your_name">
+        <comment>Create discord_connections table and associated indexes</comment>
+
+        <createTable tableName="discord_connections" remarks="Discord OAuth connections for users">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             unique="true"
+                             uniqueConstraintName="unique_user_discord"
+                             foreignKeyName="fk_discord_connections_user"
+                             referencedTableName="users"
+                             referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="discord_user_id" type="BIGINT">
+                <constraints nullable="false"
+                             unique="true"
+                             uniqueConstraintName="unique_discord_user"/>
+            </column>
+            <column name="discord_username" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discord_discriminator" type="VARCHAR(10)"/>
+            <column name="access_token" type="TEXT" remarks="Encrypted Discord OAuth access token">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refresh_token" type="TEXT" remarks="Encrypted Discord OAuth refresh token">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token_expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_discord_connections_user_id" tableName="discord_connections">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_discord_connections_discord_user_id" tableName="discord_connections">
+            <column name="discord_user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

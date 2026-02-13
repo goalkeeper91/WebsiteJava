@@ -5,9 +5,17 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
-    <!-- Initial Schema -->
     <include file="changesets/001-create-users-table.yaml" relativeToChangelogFile="true"/>
     <include file="changesets/002-create-twitch-auth-tokens-table.xml" relativeToChangelogFile="true"/>
     <include file="changesets/003-add-indexes.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/004-create-twitch-channels-table.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/005-create-chat-commands-table.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/006-create-stream-activities-table.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/007-create-contact-requests-table.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/008-add-is-bot-to-users.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/009-create-discord-connections.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/010-create-discord-guilds.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/011-create-discord-guild-settings.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/012-create-join-to-create-configs.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

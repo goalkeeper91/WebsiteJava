@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -26,11 +27,33 @@ type TwitchUserResponse struct {
 	} `json:"data"`
 }
 
+var (
+	UserScopes = []string{
+		"user:read:email",
+	}
+
+	BotScopes = []string{
+		"user:bot",                      // Bot-specific scope
+		"user:read:email",               // Basic user info
+		"chat:read",                     // Chat lesen
+		"chat:edit",                     // Chat schreiben
+		"user:read:chat",                // User Chat Einstellungen lesen
+		"user:write:chat",               // User Chat Einstellungen schreiben
+		"channel:manage:broadcast",      // Stream Info ändern
+		"moderator:read:followers",      // Follower lesen
+		"moderator:read:chatters",       // Chatter lesen
+		"channel:read:subscriptions",    // Subscriptions lesen
+		"bits:read",                     // Bits/Cheers lesen
+	}
+)
+
 type AuthService struct {
 	userRepo      repository.UserRepository
 	tokenRepo     repository.AuthTokenRepository
 	oauthConfig   *oauth2.Config
+	botOauthConfig *oauth2.Config
 	frontendURL   string
+	adminTwitchID string
 }
 
 func NewAuthService(
@@ -38,12 +61,23 @@ func NewAuthService(
 	tokenRepo repository.AuthTokenRepository,
 	oauthConfig *oauth2.Config,
 	frontendURL string,
+	adminTwitchID string,
 ) *AuthService {
+	botOauthConfig := &oauth2.Config{
+		ClientID:     oauthConfig.ClientID,
+		ClientSecret: oauthConfig.ClientSecret,
+		RedirectURL:  strings.TrimSuffix(oauthConfig.RedirectURL, "/callback") + "/callback/bot",
+		Scopes:       BotScopes,
+		Endpoint:     oauthConfig.Endpoint,
+	}
+
 	return &AuthService{
-		userRepo:    userRepo,
-		tokenRepo:   tokenRepo,
-		oauthConfig: oauthConfig,
-		frontendURL: frontendURL,
+		userRepo:       userRepo,
+		tokenRepo:      tokenRepo,
+		oauthConfig:    oauthConfig,
+		botOauthConfig: botOauthConfig,
+		frontendURL:    frontendURL,
+		adminTwitchID:  adminTwitchID,
 	}
 }
 
@@ -58,7 +92,37 @@ func (s *AuthService) GetAuthURL() (string, string, error) {
 }
 
 func (s *AuthService) HandleCallback(ctx context.Context, code string) (*domain.User, error) {
-	token, err := s.oauthConfig.Exchange(ctx, code)
+	return s.handleCallback(ctx, code, false)
+}
+
+
+func (s *AuthService) GetBotAuthURL() (string, string, error) {
+	state, err := generateStateToken()
+	if err != nil {
+		return "", "", fmt.Errorf("fehler beim Generieren des State Tokens: %w", err)
+	}
+
+	url := s.botOauthConfig.AuthCodeURL(state,
+		oauth2.AccessTypeOffline,
+		oauth2.SetAuthURLParam("force_verify", "true"),
+	)
+
+	return url, state, nil
+}
+
+func (s *AuthService) HandleBotCallback(ctx context.Context, code string) (*domain.User, error) {
+	return s.handleCallback(ctx, code, true)
+}
+
+// ===== SHARED CALLBACK LOGIC =====
+
+func (s *AuthService) handleCallback(ctx context.Context, code string, isBot bool) (*domain.User, error) {
+	config := s.oauthConfig
+	if isBot {
+		config = s.botOauthConfig
+	}
+
+	token, err := config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("fehler beim Token-Austausch: %w", err)
 	}
@@ -74,7 +138,7 @@ func (s *AuthService) HandleCallback(ctx context.Context, code string) (*domain.
 
 	userData := twitchUserResp.Data[0]
 
-	user, err := s.upsertUser(ctx, twitchUserResp)
+	user, err := s.upsertUser(ctx, twitchUserResp, isBot)
 	if err != nil {
 		return nil, fmt.Errorf("fehler beim Speichern des Users: %w", err)
 	}
@@ -95,6 +159,8 @@ func (s *AuthService) HandleCallback(ctx context.Context, code string) (*domain.
 
 	return user, nil
 }
+
+// ===== HELPER METHODS =====
 
 func (s *AuthService) GetUserByTwitchID(ctx context.Context, twitchID string) (*domain.User, error) {
 	return s.userRepo.GetByTwitchID(ctx, twitchID)
@@ -161,23 +227,41 @@ func (s *AuthService) getTwitchUser(ctx context.Context, accessToken string) (*T
 	return &userResp, nil
 }
 
-func (s *AuthService) upsertUser(ctx context.Context, twitchUserResp *TwitchUserResponse) (*domain.User, error) {
+func (s *AuthService) upsertUser(ctx context.Context, twitchUserResp *TwitchUserResponse, isBot bool) (*domain.User, error) {
 	if len(twitchUserResp.Data) == 0 {
 		return nil, fmt.Errorf("keine User-Daten in Twitch Response")
 	}
 
 	userData := twitchUserResp.Data[0]
 
+	idFromTwitch := strings.TrimSpace(userData.ID)
+	idFromConfig := strings.TrimSpace(s.adminTwitchID)
+	isAdmin := idFromTwitch == idFromConfig
+
 	existingUser, err := s.userRepo.GetByTwitchID(ctx, userData.ID)
 	if err == nil {
 		existingUser.Update(userData.Login, userData.Email)
+		existingUser.IsAdmin = isAdmin
+
+		if isBot {
+			existingUser.MarkAsBot()
+		}
+
 		if err := s.userRepo.Update(ctx, existingUser); err != nil {
 			return nil, err
 		}
 		return existingUser, nil
 	}
 
-	newUser := domain.NewUser(userData.ID, userData.Login, userData.Email)
+	var newUser *domain.User
+	if isBot {
+		newUser = domain.NewBotUser(userData.ID, userData.Login, userData.Email)
+	} else {
+		newUser = domain.NewUser(userData.ID, userData.Login, userData.Email)
+	}
+
+	newUser.IsAdmin = isAdmin
+
 	if err := s.userRepo.Create(ctx, newUser); err != nil {
 		return nil, err
 	}

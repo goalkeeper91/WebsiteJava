@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -16,7 +17,9 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 
+	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/handler"
+	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/repository/postgres"
 	"demo/backend-go/internal/security"
 	"demo/backend-go/internal/service"
@@ -44,7 +47,36 @@ func main() {
 
 	userRepo := postgres.NewUserRepository(db)
 	tokenRepo := postgres.NewAuthTokenRepository(db, crypto)
+	channelRepo := postgres.NewTwitchChannelRepository(db)
+	commandRepo := postgres.NewChatCommandRepository(db)
+	activityRepo := postgres.NewStreamActivityRepository(db)
+	contactRepo := postgres.NewContactRequestRepository(db)
 
+	activityService := service.NewActivityService(activityRepo)
+
+	activityEventHandler := service.NewActivityEventHandler(activityService)
+
+	var redisService *redis.RedisService
+	redisHost := getEnv("REDIS_HOST", "localhost")
+	redisPort := getEnv("REDIS_PORT", "6379")
+	redisPassword := getEnv("REDIS_PASSWORD", "")
+	redisDB := getEnvAsInt("REDIS_DB", 0)
+
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+	redisService, err = redis.NewRedisService(redisAddr, redisPassword, redisDB, activityEventHandler)
+	if err != nil {
+		log.Printf("⚠️ Warnung: Redis-Verbindung fehlgeschlagen: %v", err)
+		log.Printf("⚠️ Bot-Kommunikation wird nicht verfügbar sein")
+		redisService = nil
+	} else {
+		defer redisService.Close()
+		log.Println("✅ Redis Service erfolgreich verbunden")
+	}
+
+	channelService := service.NewTwitchChannelService(channelRepo, redisService)
+	commandService := service.NewChatCommandService(commandRepo, channelRepo, redisService)
+
+	// OAuth Konfiguration
 	oauthConfig := &oauth2.Config{
 		ClientID:     cfg.Twitch.ClientID,
 		ClientSecret: cfg.Twitch.ClientSecret,
@@ -56,7 +88,16 @@ func main() {
 		},
 	}
 
-	authService := service.NewAuthService(userRepo, tokenRepo, oauthConfig, cfg.Frontend.URL)
+	authService := &AuthServiceWithChannelSync{
+		authService:    service.NewAuthService(
+		    userRepo,
+		    tokenRepo,
+		    oauthConfig,
+		    cfg.Frontend.URL,
+		    cfg.Twitch.AdminTwitchID,
+		),
+		channelService: channelService,
+	}
 
 	sessionStore := sessions.NewCookieStore([]byte(cfg.Session.Secret))
 	sessionStore.Options = &sessions.Options{
@@ -67,7 +108,20 @@ func main() {
 		SameSite: parseSameSite(cfg.Session.SameSite),
 	}
 
+    botStatusHandler := handler.NewBotStatusHandler(
+        userRepo,
+        tokenRepo,
+        sessionStore,
+        redisService,
+        cfg.Session.Name,
+    )
+
+    botStatsHandler := handler.NewBotStatsHandler(redisService)
+
 	authHandler := handler.NewAuthHandler(authService, sessionStore, cfg.Session.Name, cfg.Frontend.URL)
+	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name)
+	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name)
+	contactHandler := handler.NewContactHandler(contactRepo)
 
 	router := mux.NewRouter()
 
@@ -78,6 +132,11 @@ func main() {
 	router.HandleFunc("/health", handler.HealthCheck).Methods("GET")
 
 	authHandler.RegisterRoutes(router)
+	commandHandler.RegisterRoutes(router)
+	activityHandler.RegisterRoutes(router)
+	contactHandler.RegisterRoutes(router)
+	botStatusHandler.RegisterRoutes(router)
+	botStatsHandler.RegisterRoutes(router)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
@@ -88,7 +147,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Server läuft auf http://localhost:%s", cfg.Server.Port)
+		log.Printf("🚀 Server läuft auf http://localhost:%s", cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server Fehler: %v", err)
 		}
@@ -107,7 +166,46 @@ func main() {
 		log.Fatalf("Server Shutdown Fehler: %v", err)
 	}
 
-	log.Println("Server erfolgreich heruntergefahren")
+	log.Println("✅ Server erfolgreich heruntergefahren")
+}
+
+type AuthServiceWithChannelSync struct {
+	authService    *service.AuthService
+	channelService *service.TwitchChannelService
+}
+
+func (s *AuthServiceWithChannelSync) GetAuthURL() (string, string, error) {
+	return s.authService.GetAuthURL()
+}
+
+func (s *AuthServiceWithChannelSync) HandleCallback(ctx context.Context, code string) (*domain.User, error) {
+	user, err := s.authService.HandleCallback(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.channelService.SyncChannel(ctx, user.TwitchID, user.Username); err != nil {
+		log.Printf("⚠️ Warnung: Channel Sync fehlgeschlagen: %v", err)
+	}
+
+	return user, nil
+}
+
+func (s *AuthServiceWithChannelSync) HandleBotCallback(ctx context.Context, code string) (*domain.User, error) {
+    user, err := s.authService.HandleBotCallback(ctx, code)
+    if err != nil {
+        return nil, err
+    }
+
+    return user, nil
+}
+
+func (s *AuthServiceWithChannelSync) GetUserByTwitchID(ctx context.Context, twitchID string) (*domain.User, error) {
+	return s.authService.GetUserByTwitchID(ctx, twitchID)
+}
+
+func (s *AuthServiceWithChannelSync) GetBotAuthURL() (string, string, error) {
+    return s.authService.GetBotAuthURL()
 }
 
 func initDatabase(cfg *config.DatabaseConfig) (*sql.DB, error) {
@@ -127,7 +225,7 @@ func initDatabase(cfg *config.DatabaseConfig) (*sql.DB, error) {
 		return nil, fmt.Errorf("fehler beim Verbinden zur Datenbank: %w", err)
 	}
 
-	log.Println("Datenbankverbindung erfolgreich hergestellt")
+	log.Println("✅ Datenbankverbindung erfolgreich hergestellt")
 	return db, nil
 }
 
@@ -143,7 +241,7 @@ func corsMiddleware(allowedOrigins []string) mux.MiddlewareFunc {
 				}
 			}
 
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -184,4 +282,20 @@ func parseSameSite(sameSite string) http.SameSite {
 	default:
 		return http.SameSiteLaxMode
 	}
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
+	}
+	return defaultValue
 }

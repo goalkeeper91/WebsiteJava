@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="008-add-is-bot-to-users" author="Marcel">
+        <addColumn tableName="users">
+            <column name="is_bot" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <createIndex indexName="idx_users_is_bot" tableName="users">
+            <column name="is_bot"/>
+        </createIndex>
+
+        <rollback>
+            <dropColumn tableName="users" columnName="is_bot"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Link } from 'react-router-dom';
 import { FaCode, FaCogs, FaStream, FaGithub } from "react-icons/fa";
 
-// Typ für Service-Einträge
 type Service = {
   title: string;
   description: string;
@@ -21,14 +20,14 @@ const ServicesPage = () => {
       description:
         "Von Prototyp bis fertiges Produkt – maßgeschneiderte Anwendungen für deine Anforderungen. Egal ob Web, Mobile oder Desktop.",
       icon: <FaCode size={40} className="text-indigo-400 mb-4" />,
-      image: null,
+      image: { src: "/images/faceit_reader.png", alt: "Twitch Bot Overview" },
     },
     {
       title: "Automatisierung & Workflows",
       description:
         "Ich entwickle Bots, Integrationen und Tools, die Prozesse automatisieren – für Twitch, Discord oder deine internen Abläufe.",
       icon: <FaCogs size={40} className="text-green-400 mb-4" />,
-      image: null,
+      image: { src: "/images/Twitch Bot Overview.png", alt: "Twitch Bot Overview" },
     },
     {
       title: "Streaming & Community Tech",

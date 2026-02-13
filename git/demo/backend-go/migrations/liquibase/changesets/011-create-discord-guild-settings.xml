@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="011-create-discord-guild-settings" author="Marcel">
+        <comment>Erstellt die discord_guild_settings Tabelle für userspezifische Server-Einstellungen</comment>
+
+        <createTable tableName="discord_guild_settings" remarks="User-specific settings for Discord guilds">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="guild_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_discord_guild_settings_guild"
+                             referencedTableName="discord_guilds"
+                             referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_discord_guild_settings_user"
+                             referencedTableName="users"
+                             referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+
+            <column name="notification_channel_id" type="BIGINT" remarks="Channel for general bot notifications"/>
+            <column name="command_channel_id" type="BIGINT" remarks="Channel for new Twitch command notifications"/>
+            <column name="activity_channel_id" type="BIGINT" remarks="Channel for stream activity notifications"/>
+
+            <column name="twitch_notifications_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="join_to_create_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="admin_role_id" type="BIGINT" remarks="Role required for admin bot commands"/>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="discord_guild_settings"
+                             columnNames="guild_id, user_id"
+                             constraintName="unique_guild_user_settings"/>
+
+        <createIndex indexName="idx_discord_guild_settings_guild_id" tableName="discord_guild_settings">
+            <column name="guild_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_discord_guild_settings_user_id" tableName="discord_guild_settings">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_discord_guild_settings_guild_user" tableName="discord_guild_settings">
+            <column name="guild_id"/>
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,4 +1,4 @@
-package service
+package redis
 
 import (
 	"context"
@@ -73,6 +73,21 @@ func NewRedisService(addr, password string, db int, handler EventHandler) (*Redi
 	return service, nil
 }
 
+func (r *RedisService) GetClient() *redis.Client {
+    return r.client
+}
+
+func (r *RedisService) SendBotControlSignal(command string) error {
+    signal := BotSignal{
+        Type: command,
+    }
+    return r.publish(signal)
+}
+
+func (r *RedisService) GetBotStatusData(ctx context.Context) (string, error) {
+    return r.client.Get(ctx, "bot:status").Result()
+}
+
 func (r *RedisService) SendJoinChannelSignal(twitchUserID string) error {
 	signal := BotSignal{
 		Type:         "JOIN_CHANNEL",
@@ -100,7 +115,11 @@ func (r *RedisService) publish(signal BotSignal) error {
 		return fmt.Errorf("fehler beim publishen: %w", err)
 	}
 
-	log.Printf("📤 Signal gesendet: type=%s, user=%s", signal.Type, signal.TwitchUserID)
+	if signal.TwitchUserID != "" {
+		log.Printf("📤 Signal gesendet: type=%s, user=%s", signal.Type, signal.TwitchUserID)
+	} else {
+		log.Printf("📤 Signal gesendet: type=%s", signal.Type)
+	}
 	return nil
 }
 

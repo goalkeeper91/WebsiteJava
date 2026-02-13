@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchCommands, deleteCommand, updateCommand } from "../../features/commands/api";
+import { getCommands, deleteCommand, updateCommand } from "../../features/commands/api";
 import type { ChatCommand } from "../../features/commands/types";
 import CreateCommandModal from "../modals/dashboard/CreateCommandModal";
 import EditCommandModal from "../modals/dashboard/EditCommandModal";
@@ -21,7 +21,7 @@ export default function CommandsDashboard() {
   async function loadCommands() {
     setLoading(true);
     try {
-      const data = await fetchCommands(page, 10);
+      const data = await getCommands(page, 10);
       console.log("Loaded commands:", data);
 
       setCommands(data.content || []);

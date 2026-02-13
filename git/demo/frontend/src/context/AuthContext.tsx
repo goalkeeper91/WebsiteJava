@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const res = await fetch(`/api/auth/me`, {
+      const res = await fetch(`/auth/me`, {
         credentials: "include",
       });
 
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await res.json();
       setUsername(data.username || data.login);
-      setIsAdmin(data.isAdmin || false);
+      setIsAdmin(data.is_admin || data.isAdmin || false);
       setLoginError(null);
     } catch (err) {
       console.error("Login check failed:", err);

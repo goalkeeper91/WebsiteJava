@@ -3,7 +3,6 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
-import AllVideos from './pages/AllVideos';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
@@ -29,7 +28,6 @@ const App = () => {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path='/about' element={<About />} />
-              <Route path='/allVideos' element={<AllVideos />} />
               <Route path='/admin' element={
                     <ProtectedRoute>
                         <AdminDashboard />

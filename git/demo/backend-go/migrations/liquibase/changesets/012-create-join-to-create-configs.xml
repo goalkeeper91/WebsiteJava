@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="V004-create-join-to-create-configs" author="system">
+        <comment>Erstellt die join_to_create_configs Tabelle für temporäre Voice-Channels</comment>
+
+        <createTable tableName="join_to_create_configs" remarks="Join-to-Create voice channel configurations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="guild_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_join_to_create_guild"
+                             referencedTableName="discord_guilds"
+                             referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_join_to_create_user"
+                             referencedTableName="users"
+                             referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+
+            <column name="join_channel_id" type="BIGINT" remarks="Voice channel that triggers temp channel creation">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="category_id" type="BIGINT" remarks="Category where temp channels are created">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="channel_name_prefix" type="VARCHAR(100)" defaultValue="Room">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_limit" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="private_channel" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <sql remarks="Ensure user_limit is non-negative">
+            ALTER TABLE join_to_create_configs
+            ADD CONSTRAINT check_user_limit_non_negative CHECK (user_limit >= 0);
+        </sql>
+
+        <sql remarks="Ensure channel_name_prefix is not empty">
+            ALTER TABLE join_to_create_configs
+            ADD CONSTRAINT check_channel_name_prefix_not_empty CHECK (channel_name_prefix &lt;&gt; '');
+        </sql>
+
+        <createIndex indexName="idx_join_to_create_guild_id" tableName="join_to_create_configs">
+            <column name="guild_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_join_to_create_user_id" tableName="join_to_create_configs">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_join_to_create_join_channel_id" tableName="join_to_create_configs">
+            <column name="join_channel_id"/>
+        </createIndex>
+
+        <sql remarks="Partial index for enabled configs">
+            CREATE INDEX idx_join_to_create_enabled
+            ON join_to_create_configs(enabled)
+            WHERE enabled = true;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="006-create-stream-activities-table" author="Marcel">
+        <createTable tableName="stream_activities">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="twitch_user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewers" type="INTEGER"/>
+            <column name="bits" type="INTEGER"/>
+            <column name="tier" type="VARCHAR(10)"/>
+            <column name="message" type="TEXT"/>
+            <column name="timestamp" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="stream_activities"
+                baseColumnNames="twitch_user_id"
+                constraintName="fk_stream_activities_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_activities_user_time" tableName="stream_activities">
+            <column name="twitch_user_id"/>
+            <column name="timestamp" descending="true"/>
+        </createIndex>
+
+        <createIndex indexName="idx_activities_type" tableName="stream_activities">
+            <column name="twitch_user_id"/>
+            <column name="type"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="stream_activities"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

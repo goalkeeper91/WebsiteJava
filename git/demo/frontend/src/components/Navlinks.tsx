@@ -28,7 +28,6 @@ export const NavLinks: React.FC<NavLinksProps> = ({
       <Link to="/contact" className={linkClass}>Kontakt</Link>
       <Link to="/services" className={linkClass}>Lösungen</Link>
       <Link to="/about" className={linkClass}>About</Link>
-      <Link to="/allVideos" className={linkClass}>Alle Videos</Link>
 
       {/* Admin Link */}
       {isAdmin && (
@@ -49,7 +48,7 @@ export const NavLinks: React.FC<NavLinksProps> = ({
           Logout ({username})
         </button>
       ) : (
-        <a href="/auth/twitch" className={`${linkClass} text-green-300`}>
+        <a href="/auth/login" className={`${linkClass} text-green-300`}>
           Login
         </a>
       )}

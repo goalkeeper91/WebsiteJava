@@ -35,9 +35,10 @@ type DatabaseConfig struct {
 }
 
 type TwitchConfig struct {
-	ClientID     string
-	ClientSecret string
-	RedirectURL  string
+	ClientID      string
+	ClientSecret  string
+	RedirectURL   string
+	AdminTwitchID string
 }
 
 type SecurityConfig struct {
@@ -82,6 +83,7 @@ func Load() (*Config, error) {
 			ClientID:     getEnv("TWITCH_CLIENT_ID", ""),
 			ClientSecret: getEnv("TWITCH_CLIENT_SECRET", ""),
 			RedirectURL:  getEnv("TWITCH_REDIRECT_URL", ""),
+			AdminTwitchID: getEnv("ADMIN_TWITCH_ID", ""),
 		},
 		Security: SecurityConfig{
 			AppSecretKey: getEnv("GO_APP_SECRET_KEY", ""),

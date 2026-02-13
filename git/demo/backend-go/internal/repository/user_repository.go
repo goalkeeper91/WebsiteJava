@@ -17,4 +17,8 @@ type UserRepository interface {
 	Delete(ctx context.Context, twitchID string) error
 
 	Exists(ctx context.Context, twitchID string) (bool, error)
+
+    GetBotUsers(ctx context.Context) ([]*domain.User, error)
+
+	GetFirstBotUser(ctx context.Context) (*domain.User, error)
 }

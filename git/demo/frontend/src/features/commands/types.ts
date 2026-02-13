@@ -1,16 +1,33 @@
+// features/commands/types.ts
+
 export interface ChatCommand {
   id: number;
+  channel_id: string;
   trigger: string;
   response: string;
   cooldown: number;
   enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
+export interface CreateCommandRequest {
+  trigger: string;
+  response: string;
+  cooldown: number;
+}
+
+export interface UpdateCommandRequest {
+  trigger?: string;
+  response?: string;
+  cooldown?: number;
+  enabled?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }

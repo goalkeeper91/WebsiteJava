@@ -1,62 +1,105 @@
-import type { ChatCommand, PageResponse } from "./types";
+// features/commands/api.ts
+import type { ChatCommand, CreateCommandRequest, UpdateCommandRequest } from './types';
 
-export async function fetchCommands(
-  page = 0,
-  size = 10
-): Promise<PageResponse<ChatCommand>> {
-  const res = await fetch(
-    `/api/dashboard/commands?page=${page}&size=${size}`,
-    { credentials: "include" }
-  );
+const BASE_URL = '/api/dashboard/commands';
+
+export async function getCommands(
+  page = 1,
+  pageSize = 20,
+  search?: string,
+  enabled?: boolean
+): Promise<{ data: ChatCommand[]; total: number; page: number; pageSize: number; totalPages: number }> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+
+  if (search) params.append('search', search);
+  if (enabled !== undefined) params.append('enabled', enabled.toString());
+
+  const res = await fetch(`${BASE_URL}?${params}`, {
+    credentials: 'include',
+  });
 
   if (!res.ok) {
-    throw new Error("Fehler beim Laden der Commands");
+    throw new Error('Fehler beim Laden der Commands');
   }
 
   return res.json();
 }
 
-export async function createCommand(payload: {
-  trigger: string;
-  response: string;
-  cooldown: number;
-}) {
-  const res = await fetch(`/api/dashboard/commands`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+export async function getCommand(id: number): Promise<ChatCommand> {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    credentials: 'include',
   });
 
-  if (!res.ok) throw new Error("Command konnte nicht erstellt werden");
-  return res.json();
-}
-
-export async function updateCommand(
-  id: number | string,
-  payload: {
-    trigger?: string;
-    response?: string;
-    cooldown?: number;
-    enabled?: boolean;
+  if (!res.ok) {
+    throw new Error('Command nicht gefunden');
   }
-) {
-  const res = await fetch(`/api/dashboard/commands/${id}`, {
-    method: "PUT",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
 
-  if (!res.ok) throw new Error("Command konnte nicht aktualisiert werden");
   return res.json();
 }
 
-export async function deleteCommand(id: number | string) {
-  const res = await fetch(`/api/dashboard/commands/${id}`, {
-    method: "DELETE",
-    credentials: "include",
+export async function createCommand(data: CreateCommandRequest): Promise<ChatCommand> {
+  const res = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Command konnte nicht gelöscht werden");
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Fehler beim Erstellen');
+  }
+
+  return res.json();
+}
+
+export async function updateCommand(id: number, data: UpdateCommandRequest): Promise<ChatCommand> {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Fehler beim Aktualisieren');
+  }
+
+  return res.json();
+}
+
+export async function deleteCommand(id: number): Promise<void> {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    throw new Error('Fehler beim Löschen');
+  }
+}
+
+export async function toggleCommand(id: number, enabled: boolean): Promise<ChatCommand> {
+  const res = await fetch(`${BASE_URL}/${id}/toggle`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ enabled }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Fehler beim Aktivieren/Deaktivieren');
+  }
+
+  return res.json();
 }
