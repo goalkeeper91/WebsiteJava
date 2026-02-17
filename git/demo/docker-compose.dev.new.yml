@@ -82,6 +82,8 @@ services:
         condition: service_healthy
       liquibase:
         condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       # Server
       PORT: 8080
@@ -102,16 +104,6 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
       REDIS_DB: 0
-
-      # Twitch OAuth
-      TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
-      TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
-      TWITCH_REDIRECT_URL: ${TWITCH_REDIRECT_URL:-http://localhost/auth/callback}
-      ADMIN_TWITCH_ID: ${ADMIN_TWITCH_ID}
-
-      # Security
-      GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
-      SESSION_SECRET: ${SESSION_SECRET}
 
       # Session
       SESSION_NAME: twitch_auth_session

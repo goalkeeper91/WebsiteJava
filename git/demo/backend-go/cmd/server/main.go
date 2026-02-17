@@ -45,6 +45,11 @@ func main() {
 		log.Fatalf("Fehler beim Initialisieren der Verschlüsselung: %v", err)
 	}
 
+	// ============================================================
+	// REPOSITORIES
+	// ============================================================
+
+	// Twitch
 	userRepo := postgres.NewUserRepository(db)
 	tokenRepo := postgres.NewAuthTokenRepository(db, crypto)
 	channelRepo := postgres.NewTwitchChannelRepository(db)
@@ -52,18 +57,38 @@ func main() {
 	activityRepo := postgres.NewStreamActivityRepository(db)
 	contactRepo := postgres.NewContactRequestRepository(db)
 
-	activityService := service.NewActivityService(activityRepo)
+	// Discord
+	discordConnRepo := postgres.NewDiscordConnectionRepository(db, crypto)
+	discordGuildRepo := postgres.NewDiscordGuildRepository(db)
+	discordSettingsRepo := postgres.NewDiscordGuildSettingsRepository(db)
+	jtcRepo := postgres.NewJoinToCreateRepository(db)
 
+	// SaaS / n8n
+	subscriptionTierRepo := postgres.NewSubscriptionTierRepository(db)
+	userSubscriptionRepo := postgres.NewUserSubscriptionRepository(db)
+	n8nIntegrationRepo := postgres.NewN8NIntegrationRepository(db)
+	workflowTemplateRepo := postgres.NewWorkflowTemplateRepository(db)
+	voteRepo := postgres.NewVoteRepository(db)
+	analyticsRepo := postgres.NewUsageAnalyticsRepository(db)
+
+	// ============================================================
+	// REDIS
+	// ============================================================
+
+	activityService := service.NewActivityService(activityRepo)
 	activityEventHandler := service.NewActivityEventHandler(activityService)
 
 	var redisService *redis.RedisService
-	redisHost := getEnv("REDIS_HOST", "localhost")
-	redisPort := getEnv("REDIS_PORT", "6379")
-	redisPassword := getEnv("REDIS_PASSWORD", "")
-	redisDB := getEnvAsInt("REDIS_DB", 0)
-
-	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
-	redisService, err = redis.NewRedisService(redisAddr, redisPassword, redisDB, activityEventHandler)
+	redisAddr := fmt.Sprintf("%s:%s",
+		getEnv("REDIS_HOST", "localhost"),
+		getEnv("REDIS_PORT", "6379"),
+	)
+	redisService, err = redis.NewRedisService(
+		redisAddr,
+		getEnv("REDIS_PASSWORD", ""),
+		getEnvAsInt("REDIS_DB", 0),
+		activityEventHandler,
+	)
 	if err != nil {
 		log.Printf("⚠️ Warnung: Redis-Verbindung fehlgeschlagen: %v", err)
 		log.Printf("⚠️ Bot-Kommunikation wird nicht verfügbar sein")
@@ -73,10 +98,104 @@ func main() {
 		log.Println("✅ Redis Service erfolgreich verbunden")
 	}
 
-	channelService := service.NewTwitchChannelService(channelRepo, redisService)
-	commandService := service.NewChatCommandService(commandRepo, channelRepo, redisService)
+	// ============================================================
+	// SERVICES
+	// ============================================================
 
-	// OAuth Konfiguration
+	// Twitch core
+	channelService := service.NewTwitchChannelService(channelRepo, redisService)
+
+	// SaaS layer (subscription first – andere Services hängen davon ab)
+	subscriptionService := service.NewSubscriptionService(
+		userSubscriptionRepo,
+		subscriptionTierRepo,
+		analyticsRepo,
+	)
+
+	n8nService := service.NewN8NService(
+		n8nIntegrationRepo,
+		subscriptionService,
+	)
+
+	commandService := service.NewChatCommandService(
+		commandRepo,
+		channelRepo,
+		redisService,
+		subscriptionService,
+		n8nService,
+	)
+
+	voteService := service.NewVoteService(
+		voteRepo,
+		n8nService,
+		subscriptionService,
+		analyticsRepo,
+	)
+
+	workflowTemplateService := service.NewWorkflowTemplateService(
+		workflowTemplateRepo,
+		subscriptionService,
+	)
+
+	analyticsService := service.NewAnalyticsService(
+		analyticsRepo,
+		subscriptionService,
+	)
+	_ = analyticsService // Available for future use / injection
+
+	// Token refresh background service
+	tokenRefreshService := service.NewTokenRefreshService(
+		userRepo,
+		tokenRepo,
+		nil, // authService wird unten gesetzt
+		1*time.Hour,
+	)
+
+	// Discord
+	discordClientID := getEnv("DISCORD_CLIENT_ID", "")
+	discordClientSecret := getEnv("DISCORD_CLIENT_SECRET", "")
+	discordRedirectURL := getEnv("DISCORD_REDIRECT_URL", "http://localhost:3000/discord/callback")
+	discordPermissions := getEnv("DISCORD_PERMISSIONS", "8")
+
+	if discordClientID == "" {
+		log.Printf("⚠️ Warnung: DISCORD_CLIENT_ID nicht gesetzt - Discord Features deaktiviert")
+	}
+
+	discordAuthService := service.NewDiscordAuthService(
+		discordConnRepo,
+		discordClientID,
+		discordClientSecret,
+		discordRedirectURL,
+	)
+
+	discordGuildService := service.NewDiscordGuildService(
+		discordGuildRepo,
+		discordSettingsRepo,
+		redisService,
+	)
+
+	discordSettingsService := service.NewDiscordSettingsService(
+		discordSettingsRepo,
+		discordGuildRepo,
+	)
+
+	discordNotificationService := service.NewDiscordNotificationService(
+		discordSettingsRepo,
+		discordGuildRepo,
+		redisService,
+	)
+
+	jtcService := service.NewJoinToCreateService(
+		jtcRepo,
+		discordGuildRepo,
+		discordSettingsRepo,
+		redisService,
+	)
+
+	// ============================================================
+	// AUTH SERVICE (braucht channelService → kommt nach services)
+	// ============================================================
+
 	oauthConfig := &oauth2.Config{
 		ClientID:     cfg.Twitch.ClientID,
 		ClientSecret: cfg.Twitch.ClientSecret,
@@ -88,16 +207,26 @@ func main() {
 		},
 	}
 
+	baseAuthService := service.NewAuthService(
+		userRepo,
+		tokenRepo,
+		oauthConfig,
+		cfg.Frontend.URL,
+		cfg.Twitch.AdminTwitchID,
+	)
+
+	// Inject authService into tokenRefreshService
+	tokenRefreshService.SetAuthService(baseAuthService)
+
+	// Wrapper: synct Channel nach Login
 	authService := &AuthServiceWithChannelSync{
-		authService:    service.NewAuthService(
-		    userRepo,
-		    tokenRepo,
-		    oauthConfig,
-		    cfg.Frontend.URL,
-		    cfg.Twitch.AdminTwitchID,
-		),
+		authService:    baseAuthService,
 		channelService: channelService,
 	}
+
+	// ============================================================
+	// SESSION STORE
+	// ============================================================
 
 	sessionStore := sessions.NewCookieStore([]byte(cfg.Session.Secret))
 	sessionStore.Options = &sessions.Options{
@@ -108,35 +237,85 @@ func main() {
 		SameSite: parseSameSite(cfg.Session.SameSite),
 	}
 
-    botStatusHandler := handler.NewBotStatusHandler(
-        userRepo,
-        tokenRepo,
-        sessionStore,
-        redisService,
-        cfg.Session.Name,
-    )
+	// ============================================================
+	// HANDLERS
+	// ============================================================
 
-    botStatsHandler := handler.NewBotStatsHandler(redisService)
-
+	// Twitch
 	authHandler := handler.NewAuthHandler(authService, sessionStore, cfg.Session.Name, cfg.Frontend.URL)
 	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name)
 	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name)
 	contactHandler := handler.NewContactHandler(contactRepo)
+	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
+	botStatsHandler := handler.NewBotStatsHandler(redisService)
+
+	// SaaS / n8n
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, sessionStore, cfg.Session.Name)
+	n8nHandler := handler.NewN8NHandler(n8nService, sessionStore, cfg.Session.Name)
+	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name)
+	workflowTemplateHandler := handler.NewWorkflowTemplateHandler(workflowTemplateService, sessionStore, cfg.Session.Name)
+
+	// Discord
+	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, sessionStore, cfg.Session.Name, redisService)
+	discordGuildHandler := handler.NewDiscordGuildHandler(discordGuildService, sessionStore, cfg.Session.Name, discordClientID, discordPermissions)
+	discordSettingsHandler := handler.NewDiscordSettingsHandler(discordSettingsService, discordNotificationService, sessionStore, cfg.Session.Name)
+	jtcHandler := handler.NewJoinToCreateHandler(jtcService, sessionStore, cfg.Session.Name)
+	discordBotStatusHandler := handler.NewDiscordBotStatusHandler(discordGuildService)
+
+	// ============================================================
+	// ROUTER
+	// ============================================================
 
 	router := mux.NewRouter()
-
 	router.Use(corsMiddleware(cfg.Frontend.AllowedOrigins))
-
 	router.Use(loggingMiddleware)
 
 	router.HandleFunc("/health", handler.HealthCheck).Methods("GET")
 
+	// Twitch routes
 	authHandler.RegisterRoutes(router)
 	commandHandler.RegisterRoutes(router)
 	activityHandler.RegisterRoutes(router)
 	contactHandler.RegisterRoutes(router)
 	botStatusHandler.RegisterRoutes(router)
 	botStatsHandler.RegisterRoutes(router)
+
+	// SaaS / n8n routes
+	subscriptionHandler.RegisterRoutes(router)
+	n8nHandler.RegisterRoutes(router)
+	voteHandler.RegisterRoutes(router)
+	workflowTemplateHandler.RegisterRoutes(router)
+
+	// Discord routes
+	discordAuthHandler.RegisterRoutes(router)
+	discordGuildHandler.RegisterRoutes(router)
+	discordSettingsHandler.RegisterRoutes(router)
+	jtcHandler.RegisterRoutes(router)
+	discordBotStatusHandler.RegisterRoutes(router)
+
+	// ============================================================
+	// BACKGROUND SERVICES
+	// ============================================================
+
+	// Discord bot event listener
+	discordBotEventListener := service.NewDiscordBotEventListener(redisService, discordGuildRepo)
+	go func() {
+		ctx := context.Background()
+		log.Println("🚀 Discord Bot Event Listener gestartet...")
+		if err := discordBotEventListener.Start(ctx); err != nil {
+			log.Printf("Discord Bot Event Listener Fehler: %v", err)
+		}
+	}()
+
+	// Token refresh service
+	go tokenRefreshService.Start()
+	defer tokenRefreshService.Stop()
+
+	log.Println("✅ Background Services gestartet")
+
+	// ============================================================
+	// HTTP SERVER
+	// ============================================================
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
@@ -169,6 +348,10 @@ func main() {
 	log.Println("✅ Server erfolgreich heruntergefahren")
 }
 
+// ============================================================
+// AUTH WRAPPER (Channel Sync nach Login)
+// ============================================================
+
 type AuthServiceWithChannelSync struct {
 	authService    *service.AuthService
 	channelService *service.TwitchChannelService
@@ -192,12 +375,7 @@ func (s *AuthServiceWithChannelSync) HandleCallback(ctx context.Context, code st
 }
 
 func (s *AuthServiceWithChannelSync) HandleBotCallback(ctx context.Context, code string) (*domain.User, error) {
-    user, err := s.authService.HandleBotCallback(ctx, code)
-    if err != nil {
-        return nil, err
-    }
-
-    return user, nil
+	return s.authService.HandleBotCallback(ctx, code)
 }
 
 func (s *AuthServiceWithChannelSync) GetUserByTwitchID(ctx context.Context, twitchID string) (*domain.User, error) {
@@ -205,8 +383,12 @@ func (s *AuthServiceWithChannelSync) GetUserByTwitchID(ctx context.Context, twit
 }
 
 func (s *AuthServiceWithChannelSync) GetBotAuthURL() (string, string, error) {
-    return s.authService.GetBotAuthURL()
+	return s.authService.GetBotAuthURL()
 }
+
+// ============================================================
+// DATABASE
+// ============================================================
 
 func initDatabase(cfg *config.DatabaseConfig) (*sql.DB, error) {
 	db, err := sql.Open("postgres", cfg.GetDSN())
@@ -229,11 +411,14 @@ func initDatabase(cfg *config.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
+// ============================================================
+// MIDDLEWARE
+// ============================================================
+
 func corsMiddleware(allowedOrigins []string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
-
 			for _, allowedOrigin := range allowedOrigins {
 				if origin == allowedOrigin {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
@@ -258,18 +443,14 @@ func corsMiddleware(allowedOrigins []string) mux.MiddlewareFunc {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
 		next.ServeHTTP(w, r)
-
-		log.Printf(
-			"%s %s %s %s",
-			r.Method,
-			r.RequestURI,
-			r.RemoteAddr,
-			time.Since(start),
-		)
+		log.Printf("%s %s %s %s", r.Method, r.RequestURI, r.RemoteAddr, time.Since(start))
 	})
 }
+
+// ============================================================
+// HELPERS
+// ============================================================
 
 func parseSameSite(sameSite string) http.SameSite {
 	switch sameSite {

@@ -108,3 +108,7 @@ func (s *TokenRefreshService) RefreshTokenNow(ctx context.Context, twitchUserID 
 	log.Printf("✅ Token erfolgreich erneuert für User: %s", twitchUserID)
 	return nil
 }
+
+func (s *TokenRefreshService) SetAuthService(authService *AuthService) {
+    s.authService = authService
+}

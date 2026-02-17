@@ -1,0 +1,315 @@
+package handler
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gorilla/sessions"
+	"github.com/gorilla/mux"
+
+	"demo/backend-go/internal/infrastructure/redis"
+	"demo/backend-go/internal/service"
+)
+
+type DiscordAuthHandler struct {
+	authService  *service.DiscordAuthService
+	sessionStore sessions.Store
+	sessionName  string
+	redisService *redis.RedisService
+}
+
+func NewDiscordAuthHandler(
+	authService *service.DiscordAuthService,
+	sessionStore sessions.Store,
+	sessionName string,
+	redisService *redis.RedisService,
+) *DiscordAuthHandler {
+	return &DiscordAuthHandler{
+		authService:  authService,
+		sessionStore: sessionStore,
+		sessionName:  sessionName,
+		redisService: redisService,
+	}
+}
+
+func (h *DiscordAuthHandler) RegisterRoutes(router *mux.Router) {
+	router.HandleFunc("/api/discord/auth/url", h.GetAuthURL)
+	router.HandleFunc("/api/discord/auth/callback", h.HandleCallback)
+	router.HandleFunc("/api/discord/auth/disconnect", h.Disconnect)
+	router.HandleFunc("/api/discord/auth/status", h.GetStatus)
+}
+
+// GetAuthURL generates Discord OAuth URL
+func (h *DiscordAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get user ID from session
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		log.Printf("Failed to get session: %v", err)
+		http.Error(w, "Unauthorized - Please login first", http.StatusUnauthorized)
+		return
+	}
+
+	// CRITICAL FIX: Handle both string and int64 types
+	var userID int64
+	userIDRaw, exists := session.Values["user_id"]
+	if !exists {
+		log.Printf("No user_id in session")
+		http.Error(w, "Unauthorized - Please login first", http.StatusUnauthorized)
+		return
+	}
+
+	// Try different type conversions
+	switch v := userIDRaw.(type) {
+	case int64:
+		userID = v
+	case int:
+		userID = int64(v)
+	case string:
+		parsed, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			log.Printf("Failed to parse user_id string: %v", err)
+			http.Error(w, "Unauthorized - Invalid user_id format", http.StatusUnauthorized)
+			return
+		}
+		userID = parsed
+	case float64:
+		userID = int64(v)
+	default:
+		log.Printf("Unknown user_id type: %T", userIDRaw)
+		http.Error(w, "Unauthorized - Invalid user_id type", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("Processing auth URL for user %d", userID)
+
+	authURL, state, err := h.authService.GetAuthURL()
+	if err != nil {
+		log.Printf("Failed to generate auth URL: %v", err)
+		http.Error(w, "Failed to generate auth URL", http.StatusInternalServerError)
+		return
+	}
+
+	// Store state -> userID mapping in Redis (expires in 10 minutes)
+	err = h.storeState(state, userID, 10*time.Minute)
+	if err != nil {
+		log.Printf("Failed to store state: %v", err)
+		http.Error(w, "Failed to store state", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Stored state %s for user %d", state, userID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"authUrl": authURL,
+		"state":   state,
+	})
+}
+
+// HandleCallback processes OAuth callback
+func (h *DiscordAuthHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get state from URL
+	state := r.URL.Query().Get("state")
+	if state == "" {
+		log.Printf("Missing state parameter")
+		http.Error(w, "Missing state parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Get authorization code
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		log.Printf("Missing code parameter")
+		http.Error(w, "Missing code parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Get userID from state
+	userIDFromState, err := h.getUserFromState(state)
+	if err != nil {
+		log.Printf("Invalid or expired state: %s, error: %v", state, err)
+		http.Error(w, "Invalid or expired state parameter", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Processing Discord callback for user %d", userIDFromState)
+
+	// Handle callback
+	err = h.authService.HandleCallback(r.Context(), code, userIDFromState)
+	if err != nil {
+		log.Printf("Failed to handle callback: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Clean up state
+	h.deleteState(state)
+	log.Printf("Successfully connected Discord for user %d", userIDFromState)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{
+		"success": true,
+	})
+}
+
+// Disconnect removes Discord connection
+func (h *DiscordAuthHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get user ID from session
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, ok := session.Values["user_id"].(int64)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Disconnect
+	err = h.authService.Disconnect(r.Context(), userID)
+	if err != nil {
+		log.Printf("Failed to disconnect: %v", err)
+		http.Error(w, "Failed to disconnect", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{
+		"success": true,
+	})
+}
+
+// GetStatus checks if user has Discord connected
+func (h *DiscordAuthHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get user ID from session
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		// Not logged in - return not connected
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"connected": false,
+		})
+		return
+	}
+
+	userID, ok := session.Values["user_id"].(int64)
+	if !ok {
+		// Not logged in - return not connected
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"connected": false,
+		})
+		return
+	}
+
+	// Check connection
+	connection, err := h.authService.GetConnection(r.Context(), userID)
+	if err != nil {
+		log.Printf("Failed to get connection: %v", err)
+		http.Error(w, "Failed to get connection status", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"connected": connection != nil,
+	}
+
+	if connection != nil {
+		response["discordUsername"] = connection.DiscordUsername
+		response["discordDiscriminator"] = connection.DiscordDiscriminator
+		response["discordUserId"] = connection.DiscordUserID
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// Helper functions for state management
+
+func (h *DiscordAuthHandler) storeState(state string, userID int64, ttl time.Duration) error {
+	if h.redisService == nil {
+		return fmt.Errorf("redis service not available")
+	}
+
+	client := h.redisService.GetClient()
+	if client == nil {
+		return fmt.Errorf("redis client not available")
+	}
+
+	key := fmt.Sprintf("discord:oauth:state:%s", state)
+	value := fmt.Sprintf("%d", userID)
+
+	err := client.Set(context.Background(), key, value, ttl).Err()
+	if err != nil {
+		return fmt.Errorf("failed to store state in redis: %w", err)
+	}
+
+	return nil
+}
+
+func (h *DiscordAuthHandler) getUserFromState(state string) (int64, error) {
+	if h.redisService == nil {
+		return 0, fmt.Errorf("redis service not available")
+	}
+
+	client := h.redisService.GetClient()
+	if client == nil {
+		return 0, fmt.Errorf("redis client not available")
+	}
+
+	key := fmt.Sprintf("discord:oauth:state:%s", state)
+
+	value, err := client.Get(context.Background(), key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("state not found or expired: %w", err)
+	}
+
+	var userID int64
+	_, err = fmt.Sscanf(value, "%d", &userID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid user ID in state: %w", err)
+	}
+
+	return userID, nil
+}
+
+func (h *DiscordAuthHandler) deleteState(state string) {
+	if h.redisService == nil {
+		return
+	}
+
+	client := h.redisService.GetClient()
+	if client == nil {
+		return
+	}
+
+	key := fmt.Sprintf("discord:oauth:state:%s", state)
+	client.Del(context.Background(), key)
+}

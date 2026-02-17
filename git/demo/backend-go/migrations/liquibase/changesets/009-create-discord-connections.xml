@@ -5,21 +5,19 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
 
-    <changeSet id="V001-create-discord-connections" author="your_name">
+    <changeSet id="009-create-discord-connections" author="Marcel">
         <comment>Create discord_connections table and associated indexes</comment>
 
         <createTable tableName="discord_connections" remarks="Discord OAuth connections for users">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false"
-                             unique="true"
-                             uniqueConstraintName="unique_user_discord"
-                             foreignKeyName="fk_discord_connections_user"
-                             referencedTableName="users"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
+            <column name="user_id" type="VARCHAR(255)"> <constraints nullable="false"
+                 unique="true"
+                 uniqueConstraintName="unique_user_discord"
+                 foreignKeyName="fk_discord_connections_user"
+                 referencedTableName="users"
+                 referencedColumnNames="twitch_id" deleteCascade="true"/>
             </column>
             <column name="discord_user_id" type="BIGINT">
                 <constraints nullable="false"

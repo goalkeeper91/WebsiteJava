@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
+import DiscordCallback from './components/socials/DiscordCallback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
@@ -37,6 +38,11 @@ const App = () => {
               <Route path='/dashboard' element={
                   <ProtectedRoute>
                       <Dashboard />
+                  </ProtectedRoute>
+              } />
+              <Route path='/discord/callback' element={
+                  <ProtectedRoute>
+                       <DiscordCallback />
                   </ProtectedRoute>
               } />
               <Route path="/legal/impressum" element={<Impressum />} />

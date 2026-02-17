@@ -31,20 +31,30 @@ func NewChatCommandHandler(
 	}
 }
 
-// RegisterRoutes registriert alle Command-Routen
 func (h *ChatCommandHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/dashboard/commands", h.GetCommands).Methods("GET")
 	router.HandleFunc("/api/dashboard/commands/{id}", h.GetCommand).Methods("GET")
 	router.HandleFunc("/api/dashboard/commands", h.CreateCommand).Methods("POST")
+	router.HandleFunc("/api/dashboard/commands/advanced", h.CreateAdvancedCommand).Methods("POST")
 	router.HandleFunc("/api/dashboard/commands/{id}", h.UpdateCommand).Methods("PUT")
 	router.HandleFunc("/api/dashboard/commands/{id}", h.DeleteCommand).Methods("DELETE")
 	router.HandleFunc("/api/dashboard/commands/{id}/toggle", h.ToggleCommand).Methods("PATCH")
 }
 
+// ============================================================
+// REQUEST TYPES
+// ============================================================
+
 type CreateCommandRequest struct {
 	Trigger  string `json:"trigger"`
 	Response string `json:"response"`
 	Cooldown int    `json:"cooldown"`
+}
+
+type CreateAdvancedCommandRequest struct {
+	Trigger    string `json:"trigger"`
+	WorkflowID string `json:"workflow_id"`
+	Cooldown   int    `json:"cooldown"`
 }
 
 type UpdateCommandRequest struct {
@@ -58,13 +68,9 @@ type ToggleCommandRequest struct {
 	Enabled bool `json:"enabled"`
 }
 
-type PaginatedResponse struct {
-	Data       interface{} `json:"data"`
-	Total      int64       `json:"total"`
-	Page       int         `json:"page"`
-	PageSize   int         `json:"page_size"`
-	TotalPages int         `json:"total_pages"`
-}
+// ============================================================
+// HANDLERS
+// ============================================================
 
 func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request) {
 	user := h.requireUser(w, r)
@@ -74,6 +80,7 @@ func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request)
 
 	search := r.URL.Query().Get("search")
 	enabledStr := r.URL.Query().Get("enabled")
+	commandType := r.URL.Query().Get("type") // "simple" or "advanced"
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
 
@@ -91,12 +98,15 @@ func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request)
 	var total int64
 	var err error
 
-	if search != "" {
+	switch {
+	case search != "":
 		commands, total, err = h.commandService.SearchCommands(ctx, user.ID, search, pageSize, offset)
-	} else if enabledStr != "" {
+	case enabledStr != "":
 		enabled := enabledStr == "true"
 		commands, total, err = h.commandService.GetCommandsByStatus(ctx, user.ID, enabled, pageSize, offset)
-	} else {
+	case commandType == "simple" || commandType == "advanced":
+		commands, total, err = h.commandService.GetCommandsByType(ctx, user.ID, domain.CommandType(commandType), pageSize, offset)
+	default:
 		commands, total, err = h.commandService.GetCommands(ctx, user.ID, pageSize, offset)
 	}
 
@@ -110,15 +120,13 @@ func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request)
 		totalPages++
 	}
 
-	response := PaginatedResponse{
+	h.respondJSON(w, http.StatusOK, PaginatedResponse{
 		Data:       commands,
 		Total:      total,
 		Page:       page,
 		PageSize:   pageSize,
 		TotalPages: totalPages,
-	}
-
-	h.respondJSON(w, http.StatusOK, response)
+	})
 }
 
 func (h *ChatCommandHandler) GetCommand(w http.ResponseWriter, r *http.Request) {
@@ -143,6 +151,7 @@ func (h *ChatCommandHandler) GetCommand(w http.ResponseWriter, r *http.Request) 
 	h.respondJSON(w, http.StatusOK, command)
 }
 
+// CreateCommand creates a simple text command (free tier)
 func (h *ChatCommandHandler) CreateCommand(w http.ResponseWriter, r *http.Request) {
 	user := h.requireUser(w, r)
 	if user == nil {
@@ -160,6 +169,39 @@ func (h *ChatCommandHandler) CreateCommand(w http.ResponseWriter, r *http.Reques
 		user.ID,
 		req.Trigger,
 		req.Response,
+		req.Cooldown,
+	)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, command)
+}
+
+// CreateAdvancedCommand creates an n8n-powered command (pro/premium)
+func (h *ChatCommandHandler) CreateAdvancedCommand(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+
+	var req CreateAdvancedCommandRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
+		return
+	}
+
+	if req.WorkflowID == "" {
+		http.Error(w, "workflow_id ist erforderlich", http.StatusBadRequest)
+		return
+	}
+
+	command, err := h.commandService.CreateAdvancedCommand(
+		r.Context(),
+		user.ID,
+		req.Trigger,
+		req.WorkflowID,
 		req.Cooldown,
 	)
 	if err != nil {
@@ -255,6 +297,10 @@ func (h *ChatCommandHandler) ToggleCommand(w http.ResponseWriter, r *http.Reques
 	h.respondJSON(w, http.StatusOK, command)
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
+
 func (h *ChatCommandHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
 	session, err := h.sessionStore.Get(r, h.sessionName)
 	if err != nil {
@@ -286,8 +332,14 @@ func (h *ChatCommandHandler) handleError(w http.ResponseWriter, err error) {
 		http.Error(w, "Trigger bereits vergeben", http.StatusConflict)
 	case domain.ErrChannelNotRegistered:
 		http.Error(w, "Channel nicht registriert. Bitte erneut einloggen.", http.StatusBadRequest)
+	case domain.ErrCommandLimitReached:
+		http.Error(w, "Command-Limit deines Abos erreicht", http.StatusForbidden)
+	case domain.ErrFeatureNotAvailable:
+		http.Error(w, "Advanced Commands erfordern ein Pro oder Premium Abo", http.StatusForbidden)
+	case domain.ErrN8NIntegrationNotReady:
+		http.Error(w, "n8n Integration ist nicht konfiguriert", http.StatusBadRequest)
 	default:
-		log.Printf("Fehler: %v", err)
+		log.Printf("Command Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
 	}
 }

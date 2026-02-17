@@ -15,6 +15,7 @@ type Config struct {
 	Twitch   TwitchConfig
 	Security SecurityConfig
 	Session  SessionConfig
+	Discord  DiscordConfig
 	Frontend FrontendConfig
 }
 
@@ -59,6 +60,16 @@ type FrontendConfig struct {
 	AllowedOrigins []string
 }
 
+type DiscordConfig struct {
+	ClientID     string
+	ClientSecret string
+	BotToken     string
+	RedirectURL  string
+	Permissions  string
+	AdminGuildID string
+	AdminContactChannel string
+}
+
 // Load lädt die Konfiguration aus Umgebungsvariablen
 func Load() (*Config, error) {
 	// Versuche .env Datei zu laden (optional in Production)
@@ -100,6 +111,15 @@ func Load() (*Config, error) {
 			URL:            getEnv("FRONTEND_URL", "http://localhost:3000"),
 			AllowedOrigins: getEnvAsSlice("ALLOWED_ORIGINS", ",", []string{"http://localhost:3000"}),
 		},
+        Discord: DiscordConfig{
+    		ClientID:            getEnv("DISCORD_CLIENT_ID", ""),
+    		ClientSecret:        getEnv("DISCORD_CLIENT_SECRET", ""),
+    		BotToken:            getEnv("DISCORD_BOT_TOKEN", ""),
+    		RedirectURL:         getEnv("DISCORD_REDIRECT_URL", "http://localhost:3000/discord/callback"),
+    		Permissions:         getEnv("DISCORD_PERMISSIONS", "8"),
+    		AdminGuildID:        getEnv("DISCORD_ADMIN_GUILD_ID", ""),
+    		AdminContactChannel: getEnv("DISCORD_ADMIN_CONTACT_CHANNEL", ""),
+    	},
 	}
 
 	if err := cfg.Validate(); err != nil {

@@ -20,8 +20,9 @@ func NewChatCommandRepository(db *sql.DB) repository.ChatCommandRepository {
 
 func (r *chatCommandRepository) Create(ctx context.Context, command *domain.ChatCommand) error {
 	query := `
-		INSERT INTO twitch_chat_commands (channel_id, trigger, response, cooldown, enabled, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO twitch_chat_commands
+		(channel_id, trigger, response, cooldown, enabled, command_type, n8n_workflow_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
 	`
 
@@ -33,6 +34,8 @@ func (r *chatCommandRepository) Create(ctx context.Context, command *domain.Chat
 		command.Response,
 		command.Cooldown,
 		command.Enabled,
+		command.CommandType,
+		command.N8NWorkflowID,
 		command.CreatedAt,
 		command.UpdatedAt,
 	).Scan(&command.ID)
@@ -46,7 +49,9 @@ func (r *chatCommandRepository) Create(ctx context.Context, command *domain.Chat
 
 func (r *chatCommandRepository) GetByID(ctx context.Context, id int64, channelID string) (*domain.ChatCommand, error) {
 	query := `
-		SELECT id, channel_id, trigger, response, cooldown, enabled, created_at, updated_at
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
 		FROM twitch_chat_commands
 		WHERE id = $1 AND channel_id = $2
 	`
@@ -59,6 +64,10 @@ func (r *chatCommandRepository) GetByID(ctx context.Context, id int64, channelID
 		&command.Response,
 		&command.Cooldown,
 		&command.Enabled,
+		&command.CommandType,
+		&command.N8NWorkflowID,
+		&command.UsageCount,
+		&command.LastUsedAt,
 		&command.CreatedAt,
 		&command.UpdatedAt,
 	)
@@ -75,9 +84,11 @@ func (r *chatCommandRepository) GetByID(ctx context.Context, id int64, channelID
 
 func (r *chatCommandRepository) GetByTrigger(ctx context.Context, channelID, trigger string) (*domain.ChatCommand, error) {
 	query := `
-		SELECT id, channel_id, trigger, response, cooldown, enabled, created_at, updated_at
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
 		FROM twitch_chat_commands
-		WHERE channel_id = $1 AND LOWER(trigger) = LOWER($2)
+		WHERE channel_id = $1 AND LOWER(trigger) = LOWER($2) AND enabled = true
 	`
 
 	command := &domain.ChatCommand{}
@@ -88,6 +99,10 @@ func (r *chatCommandRepository) GetByTrigger(ctx context.Context, channelID, tri
 		&command.Response,
 		&command.Cooldown,
 		&command.Enabled,
+		&command.CommandType,
+		&command.N8NWorkflowID,
+		&command.UsageCount,
+		&command.LastUsedAt,
 		&command.CreatedAt,
 		&command.UpdatedAt,
 	)
@@ -109,67 +124,40 @@ func (r *chatCommandRepository) GetAll(ctx context.Context, channelID string, li
 		"SELECT COUNT(*) FROM twitch_chat_commands WHERE channel_id = $1",
 		channelID,
 	).Scan(&total)
-
 	if err != nil {
 		return nil, 0, fmt.Errorf("fehler beim Zählen der Commands: %w", err)
 	}
 
-	// Commands abfragen
 	query := `
-		SELECT id, channel_id, trigger, response, cooldown, enabled, created_at, updated_at
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
 		FROM twitch_chat_commands
 		WHERE channel_id = $1
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, channelID, limit, offset)
-	if err != nil {
-		return nil, 0, fmt.Errorf("fehler beim Laden der Commands: %w", err)
-	}
-	defer rows.Close()
-
-	commands := make([]*domain.ChatCommand, 0)
-	for rows.Next() {
-		command := &domain.ChatCommand{}
-		err := rows.Scan(
-			&command.ID,
-			&command.ChannelID,
-			&command.Trigger,
-			&command.Response,
-			&command.Cooldown,
-			&command.Enabled,
-			&command.CreatedAt,
-			&command.UpdatedAt,
-		)
-		if err != nil {
-			return nil, 0, fmt.Errorf("fehler beim Scannen des Commands: %w", err)
-		}
-		commands = append(commands, command)
-	}
-
-	return commands, total, nil
+	return r.queryCommands(ctx, query, channelID, limit, offset)
 }
 
 func (r *chatCommandRepository) Search(ctx context.Context, channelID, search string, limit, offset int) ([]*domain.ChatCommand, int64, error) {
 	searchPattern := "%" + strings.ToLower(search) + "%"
 
-	// Gesamtanzahl
 	var total int64
 	err := r.db.QueryRowContext(
 		ctx,
 		"SELECT COUNT(*) FROM twitch_chat_commands WHERE channel_id = $1 AND LOWER(trigger) LIKE $2",
-		channelID,
-		searchPattern,
+		channelID, searchPattern,
 	).Scan(&total)
-
 	if err != nil {
 		return nil, 0, fmt.Errorf("fehler beim Zählen: %w", err)
 	}
 
-	// Commands suchen
 	query := `
-		SELECT id, channel_id, trigger, response, cooldown, enabled, created_at, updated_at
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
 		FROM twitch_chat_commands
 		WHERE channel_id = $1 AND LOWER(trigger) LIKE $2
 		ORDER BY created_at DESC
@@ -182,45 +170,25 @@ func (r *chatCommandRepository) Search(ctx context.Context, channelID, search st
 	}
 	defer rows.Close()
 
-	commands := make([]*domain.ChatCommand, 0)
-	for rows.Next() {
-		command := &domain.ChatCommand{}
-		err := rows.Scan(
-			&command.ID,
-			&command.ChannelID,
-			&command.Trigger,
-			&command.Response,
-			&command.Cooldown,
-			&command.Enabled,
-			&command.CreatedAt,
-			&command.UpdatedAt,
-		)
-		if err != nil {
-			return nil, 0, fmt.Errorf("fehler beim Scannen: %w", err)
-		}
-		commands = append(commands, command)
-	}
-
-	return commands, total, nil
+	commands, err := scanCommands(rows)
+	return commands, total, err
 }
 
 func (r *chatCommandRepository) GetByStatus(ctx context.Context, channelID string, enabled bool, limit, offset int) ([]*domain.ChatCommand, int64, error) {
-	// Gesamtanzahl
 	var total int64
 	err := r.db.QueryRowContext(
 		ctx,
 		"SELECT COUNT(*) FROM twitch_chat_commands WHERE channel_id = $1 AND enabled = $2",
-		channelID,
-		enabled,
+		channelID, enabled,
 	).Scan(&total)
-
 	if err != nil {
 		return nil, 0, fmt.Errorf("fehler beim Zählen: %w", err)
 	}
 
-	// Commands laden
 	query := `
-		SELECT id, channel_id, trigger, response, cooldown, enabled, created_at, updated_at
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
 		FROM twitch_chat_commands
 		WHERE channel_id = $1 AND enabled = $2
 		ORDER BY created_at DESC
@@ -233,33 +201,66 @@ func (r *chatCommandRepository) GetByStatus(ctx context.Context, channelID strin
 	}
 	defer rows.Close()
 
-	commands := make([]*domain.ChatCommand, 0)
-	for rows.Next() {
-		command := &domain.ChatCommand{}
-		err := rows.Scan(
-			&command.ID,
-			&command.ChannelID,
-			&command.Trigger,
-			&command.Response,
-			&command.Cooldown,
-			&command.Enabled,
-			&command.CreatedAt,
-			&command.UpdatedAt,
-		)
-		if err != nil {
-			return nil, 0, fmt.Errorf("fehler beim Scannen: %w", err)
-		}
-		commands = append(commands, command)
+	commands, err := scanCommands(rows)
+	return commands, total, err
+}
+
+func (r *chatCommandRepository) GetByType(ctx context.Context, channelID string, commandType domain.CommandType, limit, offset int) ([]*domain.ChatCommand, int64, error) {
+	var total int64
+	err := r.db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) FROM twitch_chat_commands WHERE channel_id = $1 AND command_type = $2",
+		channelID, commandType,
+	).Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("fehler beim Zählen: %w", err)
 	}
 
-	return commands, total, nil
+	query := `
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
+		FROM twitch_chat_commands
+		WHERE channel_id = $1 AND command_type = $2
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, channelID, commandType, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("fehler beim Laden nach Typ: %w", err)
+	}
+	defer rows.Close()
+
+	commands, err := scanCommands(rows)
+	return commands, total, err
+}
+
+func (r *chatCommandRepository) GetAdvancedCommands(ctx context.Context, channelID string) ([]*domain.ChatCommand, error) {
+	query := `
+		SELECT id, channel_id, trigger, response, cooldown, enabled,
+		       command_type, n8n_workflow_id, usage_count, last_used_at,
+		       created_at, updated_at
+		FROM twitch_chat_commands
+		WHERE channel_id = $1 AND command_type = 'advanced' AND enabled = true
+		ORDER BY trigger ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, channelID)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden der Advanced Commands: %w", err)
+	}
+	defer rows.Close()
+
+	return scanCommands(rows)
 }
 
 func (r *chatCommandRepository) Update(ctx context.Context, command *domain.ChatCommand) error {
 	query := `
 		UPDATE twitch_chat_commands
-		SET trigger = $2, response = $3, cooldown = $4, enabled = $5, updated_at = $6
-		WHERE id = $1 AND channel_id = $7
+		SET trigger = $2, response = $3, cooldown = $4, enabled = $5,
+		    command_type = $6, n8n_workflow_id = $7, updated_at = $8
+		WHERE id = $1 AND channel_id = $9
 	`
 
 	result, err := r.db.ExecContext(
@@ -270,10 +271,11 @@ func (r *chatCommandRepository) Update(ctx context.Context, command *domain.Chat
 		command.Response,
 		command.Cooldown,
 		command.Enabled,
+		command.CommandType,
+		command.N8NWorkflowID,
 		command.UpdatedAt,
 		command.ChannelID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("fehler beim Update: %w", err)
 	}
@@ -282,7 +284,6 @@ func (r *chatCommandRepository) Update(ctx context.Context, command *domain.Chat
 	if err != nil {
 		return fmt.Errorf("fehler beim Abrufen betroffener Zeilen: %w", err)
 	}
-
 	if rowsAffected == 0 {
 		return domain.ErrCommandNotFound
 	}
@@ -291,9 +292,8 @@ func (r *chatCommandRepository) Update(ctx context.Context, command *domain.Chat
 }
 
 func (r *chatCommandRepository) Delete(ctx context.Context, id int64, channelID string) error {
-	query := `DELETE FROM twitch_chat_commands WHERE id = $1 AND channel_id = $2`
-
-	result, err := r.db.ExecContext(ctx, query, id, channelID)
+	result, err := r.db.ExecContext(ctx,
+		`DELETE FROM twitch_chat_commands WHERE id = $1 AND channel_id = $2`, id, channelID)
 	if err != nil {
 		return fmt.Errorf("fehler beim Löschen: %w", err)
 	}
@@ -302,7 +302,6 @@ func (r *chatCommandRepository) Delete(ctx context.Context, id int64, channelID 
 	if err != nil {
 		return fmt.Errorf("fehler beim Abrufen betroffener Zeilen: %w", err)
 	}
-
 	if rowsAffected == 0 {
 		return domain.ErrCommandNotFound
 	}
@@ -311,13 +310,66 @@ func (r *chatCommandRepository) Delete(ctx context.Context, id int64, channelID 
 }
 
 func (r *chatCommandRepository) Exists(ctx context.Context, channelID, trigger string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM twitch_chat_commands WHERE channel_id = $1 AND LOWER(trigger) = LOWER($2))`
-
 	var exists bool
-	err := r.db.QueryRowContext(ctx, query, channelID, trigger).Scan(&exists)
+	err := r.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM twitch_chat_commands WHERE channel_id = $1 AND LOWER(trigger) = LOWER($2))`,
+		channelID, trigger,
+	).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("fehler beim Prüfen der Existenz: %w", err)
 	}
-
 	return exists, nil
+}
+
+func (r *chatCommandRepository) TrackUsage(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE twitch_chat_commands
+		SET usage_count = usage_count + 1, last_used_at = NOW()
+		WHERE id = $1
+	`, id)
+	if err != nil {
+		return fmt.Errorf("fehler beim Tracken der Nutzung: %w", err)
+	}
+	return nil
+}
+
+// =====================================
+// HELPERS
+// =====================================
+
+func (r *chatCommandRepository) queryCommands(ctx context.Context, query string, args ...interface{}) ([]*domain.ChatCommand, int64, error) {
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("fehler beim Laden der Commands: %w", err)
+	}
+	defer rows.Close()
+
+	commands, err := scanCommands(rows)
+	return commands, int64(len(commands)), err
+}
+
+func scanCommands(rows *sql.Rows) ([]*domain.ChatCommand, error) {
+	commands := make([]*domain.ChatCommand, 0)
+	for rows.Next() {
+		command := &domain.ChatCommand{}
+		err := rows.Scan(
+			&command.ID,
+			&command.ChannelID,
+			&command.Trigger,
+			&command.Response,
+			&command.Cooldown,
+			&command.Enabled,
+			&command.CommandType,
+			&command.N8NWorkflowID,
+			&command.UsageCount,
+			&command.LastUsedAt,
+			&command.CreatedAt,
+			&command.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("fehler beim Scannen des Commands: %w", err)
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
 }

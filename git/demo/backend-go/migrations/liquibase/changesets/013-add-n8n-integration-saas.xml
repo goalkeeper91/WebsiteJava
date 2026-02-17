@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="013-add-n8n-integration-saas" author="Marcel">
+
+        <!-- ============================================ -->
+        <!-- 1. EXTEND CHAT COMMANDS FOR HYBRID SYSTEM   -->
+        <!-- ============================================ -->
+
+        <addColumn tableName="twitch_chat_commands">
+            <!-- Command type: 'simple' (free) or 'advanced' (premium) -->
+            <column name="command_type" type="VARCHAR(20)" defaultValue="simple">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Reference to n8n workflow (for advanced commands) -->
+            <column name="n8n_workflow_id" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Usage stats for analytics -->
+            <column name="usage_count" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Last time this command was used -->
+            <column name="last_used_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Index for filtering by type -->
+        <createIndex indexName="idx_chat_commands_type" tableName="twitch_chat_commands">
+            <column name="command_type"/>
+        </createIndex>
+
+        <!-- ============================================ -->
+        <!-- 2. SUBSCRIPTION TIERS TABLE (SaaS)          -->
+        <!-- ============================================ -->
+
+        <createTable tableName="subscription_tiers">
+            <column name="id" type="VARCHAR(20)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_monthly" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_yearly" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_commands" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="max_workflows" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="max_votes_per_month" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="features" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Insert default tiers -->
+        <insert tableName="subscription_tiers">
+            <column name="id" value="free"/>
+            <column name="name" value="Free"/>
+            <column name="price_monthly" valueNumeric="0"/>
+            <column name="price_yearly" valueNumeric="0"/>
+            <column name="max_commands" valueNumeric="10"/>
+            <column name="max_workflows" valueNumeric="0"/>
+            <column name="max_votes_per_month" valueNumeric="0"/>
+            <column name="features" value='{"simple_commands": true, "advanced_commands": false, "discord_integration": false, "analytics": false}'/>
+        </insert>
+
+        <insert tableName="subscription_tiers">
+            <column name="id" value="pro"/>
+            <column name="name" value="Pro"/>
+            <column name="price_monthly" valueNumeric="5"/>
+            <column name="price_yearly" valueNumeric="50"/>
+            <column name="max_commands" valueNumeric="50"/>
+            <column name="max_workflows" valueNumeric="5"/>
+            <column name="max_votes_per_month" valueNumeric="1000"/>
+            <column name="features" value='{"simple_commands": true, "advanced_commands": true, "discord_integration": true, "analytics": true, "workflow_templates": true}'/>
+        </insert>
+
+        <insert tableName="subscription_tiers">
+            <column name="id" value="premium"/>
+            <column name="name" value="Premium"/>
+            <column name="price_monthly" valueNumeric="15"/>
+            <column name="price_yearly" valueNumeric="150"/>
+            <column name="max_commands" value="NULL"/>
+            <column name="max_workflows" value="NULL"/>
+            <column name="max_votes_per_month" value="NULL"/>
+            <column name="features" value='{"simple_commands": true, "advanced_commands": true, "discord_integration": true, "analytics": true, "workflow_templates": true, "custom_workflows": true, "api_access": true, "priority_support": true}'/>
+        </insert>
+
+        <!-- ============================================ -->
+        <!-- 3. USER SUBSCRIPTIONS TABLE (SaaS)          -->
+        <!-- ============================================ -->
+
+        <createTable tableName="user_subscriptions">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="tier_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billing_cycle" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="started_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="canceled_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="stripe_customer_id" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="stripe_subscription_id" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Foreign keys -->
+        <addForeignKeyConstraint
+                baseTableName="user_subscriptions"
+                baseColumnNames="user_id"
+                constraintName="fk_user_subscriptions_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="user_subscriptions"
+                baseColumnNames="tier_id"
+                constraintName="fk_user_subscriptions_tier"
+                referencedTableName="subscription_tiers"
+                referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <!-- Indexes -->
+        <createIndex indexName="idx_user_subscriptions_user" tableName="user_subscriptions">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_subscriptions_status" tableName="user_subscriptions">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_subscriptions_expires" tableName="user_subscriptions">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <!-- ============================================ -->
+        <!-- 4. N8N INTEGRATIONS (Per User)              -->
+        <!-- ============================================ -->
+
+        <createTable tableName="n8n_integrations">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="webhook_base_url" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="api_key" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <!-- Usage limits based on subscription -->
+            <column name="workflows_used" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="votes_this_month" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_reset_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="n8n_integrations"
+                baseColumnNames="user_id"
+                constraintName="fk_n8n_integrations_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_n8n_integrations_user" tableName="n8n_integrations">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- ============================================ -->
+        <!-- 5. WORKFLOW TEMPLATES (Marketplace)         -->
+        <!-- ============================================ -->
+
+        <createTable tableName="workflow_templates">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="n8n_workflow_json" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tier_required" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usage_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="workflow_templates"
+                baseColumnNames="tier_required"
+                constraintName="fk_workflow_templates_tier"
+                referencedTableName="subscription_tiers"
+                referencedColumnNames="id"
+                onDelete="RESTRICT"/>
+
+        <createIndex indexName="idx_workflow_templates_category" tableName="workflow_templates">
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex indexName="idx_workflow_templates_tier" tableName="workflow_templates">
+            <column name="tier_required"/>
+        </createIndex>
+
+        <!-- Insert default templates -->
+        <insert tableName="workflow_templates">
+            <column name="name" value="Hero Voting System"/>
+            <column name="description" value="Community votes on hero characters for game development"/>
+            <column name="category" value="voting"/>
+            <column name="n8n_workflow_json" value='{"nodes": [], "connections": {}}'/>
+            <column name="tier_required" value="pro"/>
+        </insert>
+
+        <insert tableName="workflow_templates">
+            <column name="name" value="Giveaway Manager"/>
+            <column name="description" value="Automated giveaway with random winner selection"/>
+            <column name="category" value="giveaway"/>
+            <column name="n8n_workflow_json" value='{"nodes": [], "connections": {}}'/>
+            <column name="tier_required" value="pro"/>
+        </insert>
+
+        <!-- ============================================ -->
+        <!-- 6. VOTE SESSIONS (Multi-Tenant)             -->
+        <!-- ============================================ -->
+
+        <createTable tableName="vote_sessions">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="winner" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="total_votes" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Voting options as JSON array -->
+            <column name="options" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <!-- Results as JSON object -->
+            <column name="results" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="vote_sessions"
+                baseColumnNames="user_id"
+                constraintName="fk_vote_sessions_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_vote_sessions_user" tableName="vote_sessions">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vote_sessions_status" tableName="vote_sessions">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vote_sessions_user_status" tableName="vote_sessions">
+            <column name="user_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <!-- ============================================ -->
+        <!-- 7. VOTES (Individual Votes)                 -->
+        <!-- ============================================ -->
+
+        <createTable tableName="votes">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="session_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="option" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="voted_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="votes"
+                baseColumnNames="session_id"
+                constraintName="fk_votes_session"
+                referencedTableName="vote_sessions"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <addUniqueConstraint
+                tableName="votes"
+                columnNames="session_id, user_id"
+                constraintName="uq_votes_session_user"/>
+
+        <createIndex indexName="idx_votes_session" tableName="votes">
+            <column name="session_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_votes_user" tableName="votes">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- ============================================ -->
+        <!-- 8. USAGE ANALYTICS (SaaS Metrics)           -->
+        <!-- ============================================ -->
+
+        <createTable tableName="usage_analytics">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metric_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metric_value" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recorded_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="usage_analytics"
+                baseColumnNames="user_id"
+                constraintName="fk_usage_analytics_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_usage_analytics_user" tableName="usage_analytics">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_usage_analytics_type" tableName="usage_analytics">
+            <column name="metric_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_usage_analytics_date" tableName="usage_analytics">
+            <column name="recorded_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

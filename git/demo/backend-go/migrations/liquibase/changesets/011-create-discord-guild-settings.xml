@@ -15,18 +15,18 @@
 
             <column name="guild_id" type="BIGINT">
                 <constraints nullable="false"
-                             foreignKeyName="fk_discord_guild_settings_guild"
-                             referencedTableName="discord_guilds"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
+                 foreignKeyName="fk_discord_guild_settings_guild"
+                 referencedTableName="discord_guilds"
+                 referencedColumnNames="id"
+                 deleteCascade="true"/>
             </column>
 
-            <column name="user_id" type="BIGINT">
+            <column name="user_id" type="VARCHAR(255)">
                 <constraints nullable="false"
-                             foreignKeyName="fk_discord_guild_settings_user"
-                             referencedTableName="users"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
+                 foreignKeyName="fk_discord_guild_settings_user"
+                 referencedTableName="users"
+                 referencedColumnNames="twitch_id"
+                 deleteCascade="true"/>
             </column>
 
             <column name="notification_channel_id" type="BIGINT" remarks="Channel for general bot notifications"/>

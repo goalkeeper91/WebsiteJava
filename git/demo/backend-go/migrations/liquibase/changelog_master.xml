@@ -17,5 +17,6 @@
     <include file="changesets/010-create-discord-guilds.xml" relativeToChangelogFile="true"/>
     <include file="changesets/011-create-discord-guild-settings.xml" relativeToChangelogFile="true"/>
     <include file="changesets/012-create-join-to-create-configs.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/013-add-n8n-integration-saas.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
