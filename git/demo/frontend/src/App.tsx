@@ -5,6 +5,11 @@ import Home from './pages/Home';
 import About from './pages/About';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
 import DiscordCallback from './components/socials/DiscordCallback';
+import N8NIntegrationSetup from './components/N8NIntegrationSetup';
+import SubscriptionDashboard from './components/SubscriptionDashboard';
+import VoteSessionManager from './components/VoteSessionManager';
+import WorkflowMarketplace from './components/WorkflowMarketplace';
+import DashboardOverview from './components/userDashboard/DashboardOverview';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
@@ -39,7 +44,14 @@ const App = () => {
                   <ProtectedRoute>
                       <Dashboard />
                   </ProtectedRoute>
-              } />
+              }>
+                <Route path='subscription' element={<SubscriptionDashboard />} />
+                <Route path='n8n' element={<N8NIntegrationSetup />} />
+                <Route path='votes' element={<VoteSessionManager />} />
+                <Route path='workflows' element={<WorkflowMarketplace />} />
+
+                <Route index element={<DashboardOverview />} />
+              </Route>
               <Route path='/discord/callback' element={
                   <ProtectedRoute>
                        <DiscordCallback />
