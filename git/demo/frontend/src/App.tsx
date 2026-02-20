@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
+import AdminRoute from './components/routes/AdminRoute';
 import DiscordCallback from './components/socials/DiscordCallback';
 import N8NIntegrationSetup from './components/N8NIntegrationSetup';
 import SubscriptionDashboard from './components/SubscriptionDashboard';
@@ -30,36 +31,55 @@ const App = () => {
         <main className='flex-grow w-screen pt-17'>
           <div className='w-full max-w-screen'>
             <Routes>
+              {/* Public Routes */}
               <Route path='/' element={<Home />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path='/about' element={<About />} />
-              <Route path='/admin' element={
-                    <ProtectedRoute>
-                        <AdminDashboard />
-                    </ProtectedRoute>
-                  }
+
+              {/* Legal */}
+              <Route path="/legal/impressum" element={<Impressum />} />
+              <Route path="/legal/datenschutz" element={<Datenschutz />} />
+              <Route path="/legal/agb" element={<Agb />} />
+
+              {/* Admin Routes - Protected for Admins only */}
+              <Route
+                path='/admin'
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
               />
-              <Route path='/dashboard' element={
+
+              {/* User Dashboard Routes - Protected for authenticated users */}
+              <Route
+                path='/dashboard'
+                element={
                   <ProtectedRoute>
-                      <Dashboard />
+                    <Dashboard />
                   </ProtectedRoute>
-              }>
+                }
+              >
+                <Route index element={<DashboardOverview />} />
                 <Route path='subscription' element={<SubscriptionDashboard />} />
                 <Route path='n8n' element={<N8NIntegrationSetup />} />
                 <Route path='votes' element={<VoteSessionManager />} />
                 <Route path='workflows' element={<WorkflowMarketplace />} />
-
-                <Route index element={<DashboardOverview />} />
               </Route>
-              <Route path='/discord/callback' element={
+
+              {/* Discord OAuth Callback */}
+              <Route
+                path='/discord/callback'
+                element={
                   <ProtectedRoute>
-                       <DiscordCallback />
+                    <DiscordCallback />
                   </ProtectedRoute>
-              } />
-              <Route path="/legal/impressum" element={<Impressum />} />
-              <Route path="/legal/datenschutz" element={<Datenschutz />} />
-              <Route path="/legal/agb" element={<Agb />} />
+                }
+              />
+
+              {/* Catch all - redirect to home */}
+              <Route path='*' element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </main>

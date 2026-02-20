@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/repository"
@@ -13,79 +12,122 @@ type SubscriptionService struct {
 	subscriptionRepo repository.UserSubscriptionRepository
 	tierRepo         repository.SubscriptionTierRepository
 	analyticsRepo    repository.UsageAnalyticsRepository
+	userRepo         repository.UserRepository // NEU: für Admin Check
 }
 
 func NewSubscriptionService(
 	subscriptionRepo repository.UserSubscriptionRepository,
 	tierRepo repository.SubscriptionTierRepository,
 	analyticsRepo repository.UsageAnalyticsRepository,
+	userRepo repository.UserRepository, // NEU
 ) *SubscriptionService {
 	return &SubscriptionService{
 		subscriptionRepo: subscriptionRepo,
 		tierRepo:         tierRepo,
 		analyticsRepo:    analyticsRepo,
+		userRepo:         userRepo,
 	}
 }
 
-// GetSubscription returns a user's subscription with tier details
+// isAdmin checks if a user is an admin (bypasses all subscription checks)
+func (s *SubscriptionService) isAdmin(ctx context.Context, userID string) bool {
+	user, err := s.userRepo.GetByTwitchID(ctx, userID) // ← Fixed: GetByTwitchID statt GetByID
+	if err != nil || user == nil {
+		return false
+	}
+	return user.IsAdmin
+}
+
+// GetSubscription returns a user's subscription (or creates free tier)
 func (s *SubscriptionService) GetSubscription(ctx context.Context, userID string) (*domain.UserSubscription, error) {
+	// Check if subscription exists
 	sub, err := s.subscriptionRepo.GetByUserIDWithTier(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("fehler beim Laden der Subscription: %w", err)
 	}
 
-	// Auto-create free tier if none exists
+	// If no subscription exists, create free tier
 	if sub == nil {
+		freeTier, err := s.tierRepo.GetByID(ctx, domain.TierFree)
+		if err != nil {
+			return nil, fmt.Errorf("fehler beim Laden des Free Tiers: %w", err)
+		}
+
 		sub, err = s.createFreeTier(ctx, userID)
 		if err != nil {
-			return nil, fmt.Errorf("fehler beim Erstellen des Free Tiers: %w", err)
+			return nil, err
 		}
+		sub.Tier = freeTier
 	}
 
 	return sub, nil
 }
 
-// GetTiers returns all active subscription tiers (for pricing page)
+// GetTiers returns all available subscription tiers
 func (s *SubscriptionService) GetTiers(ctx context.Context) ([]*domain.SubscriptionTier, error) {
-	return s.tierRepo.GetActive(ctx)
+	tiers, err := s.tierRepo.GetActive(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden der Tiers: %w", err)
+	}
+	return tiers, nil
 }
 
-// CanUseFeature checks if a user's subscription includes a specific feature
+// CanUseFeature checks if a user can use a specific feature
+// ADMIN BYPASS: Admins can use all features
 func (s *SubscriptionService) CanUseFeature(ctx context.Context, userID string, feature string) (bool, error) {
+	// ADMIN CHECK FIRST
+	if s.isAdmin(ctx, userID) {
+		return true, nil // Admins can use everything
+	}
+
 	sub, err := s.GetSubscription(ctx, userID)
 	if err != nil {
 		return false, err
 	}
 
 	if !sub.IsActive() {
-		return false, nil
-	}
-
-	if sub.Tier == nil {
-		tier, err := s.tierRepo.GetByID(ctx, sub.TierID)
-		if err != nil || tier == nil {
-			return false, nil
-		}
-		sub.Tier = tier
+		return false, domain.ErrSubscriptionExpired
 	}
 
 	return sub.Tier.HasFeature(feature), nil
 }
 
-// CanUseN8N checks if a user can use n8n features
+// CanUseN8N checks if user can use n8n integration
+// ADMIN BYPASS: Admins can always use n8n
 func (s *SubscriptionService) CanUseN8N(ctx context.Context, userID string) (bool, error) {
-	return s.CanUseFeature(ctx, userID, "advanced_commands")
+	// ADMIN CHECK FIRST
+	if s.isAdmin(ctx, userID) {
+		return true, nil
+	}
+
+	sub, err := s.GetSubscription(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+
+	if !sub.IsActive() {
+		return false, domain.ErrSubscriptionExpired
+	}
+
+	// n8n requires Pro or Premium
+	return sub.IsPro() || sub.IsPremium(), nil
 }
 
-// CheckCommandLimit checks if user has reached their command limit
+// CheckCommandLimit checks if user has reached command limit
+// ADMIN BYPASS: Admins have unlimited commands
 func (s *SubscriptionService) CheckCommandLimit(ctx context.Context, userID string, currentCount int) error {
+	// ADMIN CHECK FIRST
+	if s.isAdmin(ctx, userID) {
+		return nil // No limits for admins
+	}
+
 	sub, err := s.GetSubscription(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	if sub.Tier == nil {
-		return nil
+	if !sub.IsActive() {
+		return domain.ErrSubscriptionExpired
 	}
 
 	if sub.Tier.IsCommandLimitReached(currentCount) {
@@ -95,15 +137,21 @@ func (s *SubscriptionService) CheckCommandLimit(ctx context.Context, userID stri
 	return nil
 }
 
-// CheckWorkflowLimit checks if user has reached their workflow limit
+// CheckWorkflowLimit checks if user has reached workflow limit
+// ADMIN BYPASS: Admins have unlimited workflows
 func (s *SubscriptionService) CheckWorkflowLimit(ctx context.Context, userID string, currentCount int) error {
+	// ADMIN CHECK FIRST
+	if s.isAdmin(ctx, userID) {
+		return nil // No limits for admins
+	}
+
 	sub, err := s.GetSubscription(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	if sub.Tier == nil {
-		return nil
+	if !sub.IsActive() {
+		return domain.ErrSubscriptionExpired
 	}
 
 	if sub.Tier.IsWorkflowLimitReached(currentCount) {
@@ -113,15 +161,21 @@ func (s *SubscriptionService) CheckWorkflowLimit(ctx context.Context, userID str
 	return nil
 }
 
-// CheckVoteLimit checks if user has reached their monthly vote limit
+// CheckVoteLimit checks if user has reached vote limit
+// ADMIN BYPASS: Admins have unlimited votes
 func (s *SubscriptionService) CheckVoteLimit(ctx context.Context, userID string, currentCount int) error {
+	// ADMIN CHECK FIRST
+	if s.isAdmin(ctx, userID) {
+		return nil // No limits for admins
+	}
+
 	sub, err := s.GetSubscription(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	if sub.Tier == nil {
-		return nil
+	if !sub.IsActive() {
+		return domain.ErrSubscriptionExpired
 	}
 
 	if sub.Tier.IsVoteLimitReached(currentCount) {
@@ -132,61 +186,60 @@ func (s *SubscriptionService) CheckVoteLimit(ctx context.Context, userID string,
 }
 
 // Upgrade upgrades a user to a new tier
-func (s *SubscriptionService) Upgrade(ctx context.Context, userID string, tierID domain.TierID) (*domain.UserSubscription, error) {
-	// Verify tier exists
-	tier, err := s.tierRepo.GetByID(ctx, tierID)
-	if err != nil || tier == nil {
-		return nil, fmt.Errorf("tier nicht gefunden: %s", tierID)
+func (s *SubscriptionService) Upgrade(ctx context.Context, userID string, newTierID domain.TierID) (*domain.UserSubscription, error) {
+	// Validate new tier exists
+	_, err := s.tierRepo.GetByID(ctx, newTierID)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden des neuen Tiers: %w", err)
 	}
 
-	exists, err := s.subscriptionRepo.Exists(ctx, userID)
+	// Update tier
+	err = s.subscriptionRepo.Update(ctx, userID, domain.UserSubscriptionUpdateInput{
+		TierID: &newTierID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Upgrade: %w", err)
+	}
+
+	// Reload with tier details
+	sub, err := s.subscriptionRepo.GetByUserIDWithTier(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	if exists {
-		err = s.subscriptionRepo.Update(ctx, userID, domain.UserSubscriptionUpdateInput{
-			TierID: &tierID,
-			Status: statusPtr(domain.SubscriptionActive),
-		})
-	} else {
-		_, err = s.subscriptionRepo.Create(ctx, domain.UserSubscriptionCreateInput{
-			UserID: userID,
-			TierID: tierID,
-		})
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("fehler beim Upgrade der Subscription: %w", err)
-	}
-
-	log.Printf("✅ User %s upgraded to tier: %s", userID, tierID)
-	return s.subscriptionRepo.GetByUserIDWithTier(ctx, userID)
+	return sub, nil
 }
 
-// Cancel cancels a user's subscription (downgrades to free at period end)
+// Cancel cancels a user's subscription
 func (s *SubscriptionService) Cancel(ctx context.Context, userID string) error {
-	if err := s.subscriptionRepo.Cancel(ctx, userID); err != nil {
-		return fmt.Errorf("fehler beim Kündigen der Subscription: %w", err)
+	sub, err := s.GetSubscription(ctx, userID)
+	if err != nil {
+		return err
 	}
 
-	log.Printf("⚠️ Subscription gekündigt für User: %s", userID)
+	if !sub.IsActive() {
+		return fmt.Errorf("subscription ist bereits inaktiv")
+	}
+
+	// Call repository cancel method
+	err = s.subscriptionRepo.Cancel(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("fehler beim Kündigen: %w", err)
+	}
+
 	return nil
 }
 
-// createFreeTier auto-creates a free subscription for new users
+// createFreeTier creates a free tier subscription for a new user
 func (s *SubscriptionService) createFreeTier(ctx context.Context, userID string) (*domain.UserSubscription, error) {
-	_, err := s.subscriptionRepo.Create(ctx, domain.UserSubscriptionCreateInput{
+	// Create subscription
+	sub, err := s.subscriptionRepo.Create(ctx, domain.UserSubscriptionCreateInput{
 		UserID: userID,
 		TierID: domain.TierFree,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fehler beim Erstellen der Free Tier Subscription: %w", err)
 	}
 
-	return s.subscriptionRepo.GetByUserIDWithTier(ctx, userID)
-}
-
-func statusPtr(s domain.SubscriptionStatus) *domain.SubscriptionStatus {
-	return &s
+	return sub, nil
 }

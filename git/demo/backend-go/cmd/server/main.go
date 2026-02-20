@@ -110,6 +110,7 @@ func main() {
 		userSubscriptionRepo,
 		subscriptionTierRepo,
 		analyticsRepo,
+		userRepo,
 	)
 
 	n8nService := service.NewN8NService(

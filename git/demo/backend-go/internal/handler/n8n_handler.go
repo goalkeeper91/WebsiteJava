@@ -52,10 +52,10 @@ func (h *N8NHandler) GetIntegration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Never expose the API key in the response
+	// For Option A: webhookBaseUrl is also not exposed (centralized)
 	h.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"id":              integration.ID,
 		"enabled":         integration.Enabled,
-		"webhookBaseUrl":  integration.WebhookBaseURL,
 		"workflowsUsed":   integration.WorkflowsUsed,
 		"votesThisMonth":  integration.VotesThisMonth,
 		"lastResetAt":     integration.LastResetAt,
@@ -63,36 +63,23 @@ func (h *N8NHandler) GetIntegration(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Enable activates n8n integration for the user
+// Enable activates n8n integration for the user (no webhook URL needed - centralized)
 func (h *N8NHandler) Enable(w http.ResponseWriter, r *http.Request) {
 	user := h.requireUser(w, r)
 	if user == nil {
 		return
 	}
 
-	var req struct {
-		WebhookBaseURL string `json:"webhook_base_url"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
-		return
-	}
-
-	if req.WebhookBaseURL == "" {
-		http.Error(w, "webhook_base_url ist erforderlich", http.StatusBadRequest)
-		return
-	}
-
-	integration, err := h.n8nService.Enable(r.Context(), user.ID, req.WebhookBaseURL)
+	integration, err := h.n8nService.Enable(r.Context(), user.ID)
 	if err != nil {
 		h.handleError(w, err)
 		return
 	}
 
 	h.respondJSON(w, http.StatusOK, map[string]interface{}{
-		"enabled":        integration.Enabled,
-		"webhookBaseUrl": integration.WebhookBaseURL,
-		"isReady":        integration.IsReady(),
+		"enabled": integration.Enabled,
+		"isReady": integration.IsReady(),
+		"message": "n8n Integration aktiviert - du kannst jetzt Advanced Commands nutzen!",
 	})
 }
 
@@ -149,7 +136,7 @@ func (h *N8NHandler) handleError(w http.ResponseWriter, err error) {
 	case domain.ErrFeatureNotAvailable:
 		http.Error(w, "n8n Integration erfordert ein Pro oder Premium Abo", http.StatusForbidden)
 	case domain.ErrN8NIntegrationNotReady:
-		http.Error(w, "n8n Integration ist nicht konfiguriert oder deaktiviert", http.StatusBadRequest)
+		http.Error(w, "n8n Integration ist nicht aktiviert", http.StatusBadRequest)
 	case domain.ErrN8NWebhookFailed:
 		http.Error(w, "n8n Webhook nicht erreichbar", http.StatusBadGateway)
 	case domain.ErrN8NWorkflowNotFound:

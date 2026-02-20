@@ -1,9 +1,10 @@
 import { Outlet } from "react-router-dom";
+import DashboardSidebar from "../../components/dashboard/DashboardSidebar";
 
 const UserDashboard = () => {
   return (
     <div className="flex">
-      <nav>Sidebar mit Links zu /dashboard und /dashboard/n8n</nav>
+      <DashboardSidebar />
 
       <main className="flex-grow">
         <Outlet />

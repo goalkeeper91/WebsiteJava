@@ -22,8 +22,8 @@ type AuthServiceInterface interface {
 }
 
 const (
-	sessionUserKey  = "user_id"
-	sessionStateKey = "oauth_state"
+	sessionUserKey     = "user_id"
+	sessionStateKey    = "oauth_state"
 	sessionBotStateKey = "oauth_bot_state"
 )
 
@@ -115,6 +115,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Values[sessionUserKey] = user.TwitchID
+	session.Values["is_admin"] = user.IsAdmin
 	delete(session.Values, sessionStateKey)
 	session.Options.MaxAge = 86400
 
@@ -124,6 +125,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("✅ User %s erfolgreich eingeloggt (Admin: %v)", user.Username, user.IsAdmin)
 	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusTemporaryRedirect)
 }
 
@@ -255,8 +257,20 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get is_admin from session (or fallback to user.IsAdmin)
+	isAdmin, _ := session.Values["is_admin"].(bool)
+
+	response := map[string]interface{}{
+		"id":         user.TwitchID, // ← FIXED: use TwitchID instead of ID
+		"twitch_id":  user.TwitchID,
+		"username":   user.Username,
+		"email":      user.Email,
+		"is_admin":   isAdmin,
+		"created_at": user.CreatedAt,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(response)
 }
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {

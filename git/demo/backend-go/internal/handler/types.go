@@ -1,9 +1,11 @@
 package handler
 
+// UserSession represents a user from the session
 type UserSession struct {
 	ID       string `json:"id"`
 	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 type PaginatedResponse struct {

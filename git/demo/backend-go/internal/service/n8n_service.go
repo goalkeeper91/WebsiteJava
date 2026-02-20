@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"demo/backend-go/internal/domain"
@@ -37,15 +38,24 @@ type N8NService struct {
 	n8nRepo         repository.N8NIntegrationRepository
 	subscriptionSvc *SubscriptionService
 	httpClient      *http.Client
+	webhookBaseURL  string // Centralized n8n instance URL
 }
 
 func NewN8NService(
 	n8nRepo repository.N8NIntegrationRepository,
 	subscriptionSvc *SubscriptionService,
 ) *N8NService {
+	// Get centralized n8n webhook URL from environment
+	webhookBaseURL := os.Getenv("N8N_WEBHOOK_BASE_URL")
+	if webhookBaseURL == "" {
+		log.Println("⚠️ Warning: N8N_WEBHOOK_BASE_URL not set - n8n integration will not work")
+		webhookBaseURL = "http://localhost:5678/webhook"
+	}
+
 	return &N8NService{
 		n8nRepo:         n8nRepo,
 		subscriptionSvc: subscriptionSvc,
+		webhookBaseURL:  webhookBaseURL,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -73,7 +83,8 @@ func (s *N8NService) GetIntegration(ctx context.Context, userID string) (*domain
 }
 
 // Enable enables n8n for a user (requires pro/premium subscription)
-func (s *N8NService) Enable(ctx context.Context, userID string, webhookBaseURL string) (*domain.N8NIntegration, error) {
+// For Option A: automatically sets the centralized webhook URL
+func (s *N8NService) Enable(ctx context.Context, userID string) (*domain.N8NIntegration, error) {
 	// Check subscription
 	canUse, err := s.subscriptionSvc.CanUseN8N(ctx, userID)
 	if err != nil {
@@ -89,16 +100,23 @@ func (s *N8NService) Enable(ctx context.Context, userID string, webhookBaseURL s
 	}
 
 	enabled := true
+	// Set centralized webhook URL automatically
 	err = s.n8nRepo.Update(ctx, userID, domain.N8NIntegrationUpdateInput{
 		Enabled:        &enabled,
-		WebhookBaseURL: &webhookBaseURL,
+		WebhookBaseURL: &s.webhookBaseURL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fehler beim Aktivieren der n8n Integration: %w", err)
 	}
 
-	integration.Enable(webhookBaseURL)
-	log.Printf("✅ n8n Integration aktiviert für User: %s", userID)
+	log.Printf("✅ n8n Integration aktiviert für User: %s (using centralized n8n at %s)", userID, s.webhookBaseURL)
+
+	// Reload to get updated data
+	integration, err = s.n8nRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	return integration, nil
 }
 
@@ -146,7 +164,8 @@ func (s *N8NService) TriggerCommandWebhook(ctx context.Context, userID string, p
 		}
 	}
 
-	webhookURL := integration.GetWebhookURL("command-handler")
+	// Use centralized webhook URL with user-specific path
+	webhookURL := fmt.Sprintf("%s/%s/command-handler", s.webhookBaseURL, userID)
 	return s.callWebhook(ctx, webhookURL, payload)
 }
 
@@ -189,18 +208,19 @@ func (s *N8NService) callWebhook(ctx context.Context, webhookURL string, payload
 	return &result, nil
 }
 
-// TestWebhook tests if n8n is reachable for a user
+// TestWebhook tests if n8n is reachable (centralized health check)
 func (s *N8NService) TestWebhook(ctx context.Context, userID string) error {
 	integration, err := s.n8nRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
-	if integration == nil || !integration.IsReady() {
+	if integration == nil || !integration.Enabled {
 		return domain.ErrN8NIntegrationNotReady
 	}
 
-	testURL := integration.GetWebhookURL("health")
+	// Test centralized n8n health endpoint
+	testURL := fmt.Sprintf("%s/healthz", s.webhookBaseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 	if err != nil {
 		return fmt.Errorf("fehler beim Erstellen des Test-Requests: %w", err)
