@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"fmt"
+	"context"
 
 	"github.com/gorilla/mux"
 	"demo/backend-go/internal/infrastructure/redis"
@@ -76,38 +78,31 @@ func (h *BotAnnounceHandler) AnnounceMessage(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *BotAnnounceHandler) sendBotAnnounce(message string, channelID string) error {
-	// Use existing Redis publish infrastructure
-	signal := redis.BotSignal{
-		Type:         "BOT_ANNOUNCE",
-		TwitchUserID: channelID, // Reuse this field for channel_id
-	}
 
-	// Since BotSignal doesn't have Message field, we need to publish raw JSON
-	payload := map[string]interface{}{
-		"type":    "BOT_ANNOUNCE",
-		"message": message,
-	}
+    payload := map[string]interface{}{
+       "type":    "BOT_ANNOUNCE",
+       "message": message,
+    }
 
-	if channelID != "" {
-		payload["channel_id"] = channelID
-	}
+    if channelID != "" {
+       payload["channel_id"] = channelID
+    }
 
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
+    data, err := json.Marshal(payload)
+    if err != nil {
+       return err
+    }
 
-	client := h.redisService.GetClient()
-	if client == nil {
-		return fmt.Errorf("redis client not available")
-	}
+    client := h.redisService.GetClient()
+    if client == nil {
+       return fmt.Errorf("redis client not available")
+    }
 
-	// Publish to bot:events channel (same as other bot signals)
-	err = client.Publish(context.Background(), redis.BotEventsChannel, data).Err()
-	if err != nil {
-		return err
-	}
+    err = client.Publish(context.Background(), redis.BotEventsChannel, data).Err()
+    if err != nil {
+       return err
+    }
 
-	log.Printf("📤 Bot announce signal sent: %s", message)
-	return nil
+    log.Printf("📤 Bot announce signal sent: %s", message)
+    return nil
 }
