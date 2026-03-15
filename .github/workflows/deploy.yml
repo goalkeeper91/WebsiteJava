@@ -1,15 +1,16 @@
-name: Deploy on Tag
+name: Deploy Backend on Tag
 
 on:
   push:
     tags:
-      - 'v*'  # Triggers on tags like v1.0.0, v1.0.1 etc.
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    
     steps:
       - name: 📦 Checkout Repository
         uses: actions/checkout@v3
@@ -28,46 +29,92 @@ jobs:
       # 🏗️ Build Frontend
       - name: 🏗️ Build Frontend
         run: |
-          cd git/demo/frontend
+          cd frontend
           npm ci
           npm run build
 
-      # 🚀 Copy Backend + Config to Server
-      - name: 🖥️ Copy Backend & Config to Server
+      # 🚀 Deploy Go Backend
+      - name: 🖥️ Deploy Go Backend
         run: |
           rsync -av --delete \
-          --exclude 'target' \
-          --exclude 'application.properties' \
-          -e "ssh -o StrictHostKeyChecking=yes" \
-          ./git/demo/backend/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend/
+            --exclude '.env' \
+            --exclude '.env.production' \
+            --exclude 'vendor' \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./backend-go/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend-go/
 
-
-      # 🚀 Copy Frontend Build to Server
+      # 📂 Deploy Frontend Build
       - name: 📂 Deploy Frontend Build
         run: |
-          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "rm -rf /home/${{ secrets.SERVER_USER }}/app/frontend_dist/*"
           rsync -av --delete \
-          -e "ssh -o StrictHostKeyChecking=yes" \
-          ./git/demo/frontend/dist/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend/dist/
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./frontend/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend/dist/
 
+      # 🗄️ Deploy Migrations
+      - name: 📊 Deploy Migrations
+        run: |
+          rsync -av --delete \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./backend-go/migrations/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/migrations/
 
-      # 🐳 Deploy Backend & Restart Proxy
+      # 📋 Deploy Nginx Config
+      - name: 🌐 Deploy Nginx Config
+        run: |
+          rsync -av \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./nginx/nginx.prod.conf \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
+
+      # 🐳 Deploy Backend
       - name: 🐳 Deploy with Docker Compose
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /home/${{ secrets.SERVER_USER }}/app
             
-            # Radikales Aufräumen der alten Java-Builds auf dem Host
-            rm -rf backend/target
+            echo "🏗️ Building Go Backend..."
+            docker compose -f docker-compose.prod.yml build --no-cache backend-go
             
-            # Docker-Build ohne Cache erzwingen für maximale Sauberkeit
-            docker compose -f docker-compose.prod.yml build --no-cache backend
+            echo "🚀 Restarting Backend & Nginx..."
+            docker compose -f docker-compose.prod.yml up -d backend-go nginx
             
-            # Services neu starten
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            # Aufräumen
+            echo "🧹 Cleaning up..."
             docker image prune -f
+            
+            echo ""
+            echo "✅ Backend Deployment abgeschlossen!"
+            echo "📊 Service Status:"
+            docker compose -f docker-compose.prod.yml ps backend-go nginx
           EOF
+
+      # 🔍 Health Check
+      - name: 🏥 Health Check
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "⏳ Warte 15s auf Service Start..."
+            sleep 15
+            
+            echo "🔍 Backend Health Check..."
+            if curl -f http://localhost/health; then
+              echo ""
+              echo "✅ Backend ist healthy!"
+            else
+              echo ""
+              echo "❌ Health Check fehlgeschlagen!"
+              docker compose -f ~/app/docker-compose.prod.yml logs --tail=50 backend-go
+              exit 1
+            fi
+          EOF
+
+      - name: 🎉 Success
+        if: success()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Deployment erfolgreich!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Tag: ${{ github.ref_name }}"
+          echo "✅ Backend deployed"
+          echo "✅ Frontend deployed"
+          echo "✅ Migrations deployed"
