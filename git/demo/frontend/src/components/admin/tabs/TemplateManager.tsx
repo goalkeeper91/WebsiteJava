@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, Upload, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Package } from "lucide-react";
 
 interface Template {
   id: number;

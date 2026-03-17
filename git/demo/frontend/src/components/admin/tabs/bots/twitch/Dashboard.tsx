@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Zap,
   TrendingUp,
-  Settings,
   BarChart3
 } from "lucide-react";
 import BotAuthCard from "./BotAuthButton";

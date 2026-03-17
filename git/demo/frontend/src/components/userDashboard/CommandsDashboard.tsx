@@ -24,9 +24,9 @@ export default function CommandsDashboard() {
       const data = await getCommands(page, 10);
       console.log("Loaded commands:", data);
 
-      setCommands(data.content || []);
+      setCommands(data.data || []);
       setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
+      setTotalElements(data.total || 0);
     } catch (err) {
       console.error("Fehler beim Laden der Commands:", err);
       alert("Fehler beim Laden der Commands");

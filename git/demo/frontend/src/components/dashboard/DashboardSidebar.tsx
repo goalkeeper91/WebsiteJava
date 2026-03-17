@@ -1,12 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
-  MessageSquare,
   CreditCard,
   Zap,
   BarChart3,
   Package,
-  Hash,
   Settings,
   Shield
 } from "lucide-react";

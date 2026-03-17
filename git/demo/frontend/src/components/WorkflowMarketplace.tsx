@@ -23,7 +23,8 @@ interface WorkflowTemplateSummary {
 
 export default function WorkflowMarketplace() {
   const [templates, setTemplates] = useState<WorkflowTemplateSummary[]>([]);
-  const [availableTemplates, setAvailableTemplates] = useState<WorkflowTemplate[]>([]);
+  // ✅ FIX: Unused variable entfernt (wird in loadTemplates verwendet aber nicht gebraucht)
+  // const [availableTemplates, setAvailableTemplates] = useState<WorkflowTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplate | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,15 +60,13 @@ export default function WorkflowMarketplace() {
         setTemplates(publicData);
       }
 
+      // ✅ FIX: setAvailableTemplates entfernt, da nicht verwendet
       // Load available templates (full) for authenticated user
       const params = categoryFilter !== "all" ? `?category=${categoryFilter}` : "";
-      const availableRes = await fetch(`/api/workflows/templates/available${params}`, {
+      await fetch(`/api/workflows/templates/available${params}`, {
         credentials: "include",
       });
-      if (availableRes.ok) {
-        const availableData = await availableRes.json();
-        setAvailableTemplates(availableData);
-      }
+      // Wenn wir die Daten später brauchen, können wir sie wieder speichern
     } catch (err) {
       console.error("Failed to load templates:", err);
     } finally {
@@ -114,7 +113,8 @@ export default function WorkflowMarketplace() {
     );
   }
 
-  function getCategoryIcon(category: string) {
+  function getCategoryIcon(_category: string) {
+    // ✅ FIX: Parameter mit _ prefix = absichtlich nicht verwendet
     return "📦"; // Placeholder - könnte durch spezifische Icons ersetzt werden
   }
 
