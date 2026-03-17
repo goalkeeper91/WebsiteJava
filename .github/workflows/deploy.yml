@@ -1,15 +1,16 @@
-name: Deploy on Tag
+name: Deploy Backend (Safe for Existing Structure)
 
 on:
   push:
     tags:
-      - 'v*'  # Triggers on tags like v1.0.0, v1.0.1 etc.
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    
     steps:
       - name: 📦 Checkout Repository
         uses: actions/checkout@v3
@@ -25,49 +26,161 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      # 🏗️ Build Frontend
+      #########################################
+      # FRONTEND BUILD
+      #########################################
       - name: 🏗️ Build Frontend
         run: |
-          cd git/demo/frontend
+          cd frontend
           npm ci
           npm run build
+          
+          echo "✅ Frontend Build abgeschlossen"
+          ls -la dist/
 
-      # 🚀 Copy Backend + Config to Server
-      - name: 🖥️ Copy Backend & Config to Server
-        run: |
-          rsync -av --delete \
-          --exclude 'target' \
-          --exclude 'application.properties' \
-          -e "ssh -o StrictHostKeyChecking=yes" \
-          ./git/demo/backend/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend/
-
-
-      # 🚀 Copy Frontend Build to Server
-      - name: 📂 Deploy Frontend Build
-        run: |
-          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "rm -rf /home/${{ secrets.SERVER_USER }}/app/frontend_dist/*"
-          rsync -av --delete \
-          -e "ssh -o StrictHostKeyChecking=yes" \
-          ./git/demo/frontend/dist/ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend/dist/
-
-
-      # 🐳 Deploy Backend & Restart Proxy
-      - name: 🐳 Deploy with Docker Compose
+      #########################################
+      # BACKUP ALTE VERSION
+      #########################################
+      - name: 💾 Backup Old Backend
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd /home/${{ secrets.SERVER_USER }}/app
+            cd ~/app
             
-            # Radikales Aufräumen der alten Java-Builds auf dem Host
-            rm -rf backend/target
-            
-            # Docker-Build ohne Cache erzwingen für maximale Sauberkeit
-            docker compose -f docker-compose.prod.yml build --no-cache backend
-            
-            # Services neu starten
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            # Aufräumen
-            docker image prune -f
+            # Backup erstellen (falls backend existiert)
+            if [ -d "backend" ]; then
+              BACKUP_DIR=~/backups/backend_backup_$(date +%Y%m%d_%H%M%S)
+              mkdir -p $BACKUP_DIR
+              
+              echo "📦 Sichere altes Backend..."
+              cp -r backend $BACKUP_DIR/
+              
+              # Auch .env sichern
+              if [ -f .env ]; then
+                cp .env $BACKUP_DIR/.env
+              fi
+              
+              echo "✅ Backup erstellt: $BACKUP_DIR"
+            fi
           EOF
+
+      #########################################
+      # DEPLOY GO BACKEND (ERSETZT backend/)
+      #########################################
+      - name: 🖥️ Deploy Go Backend
+        run: |
+          # WICHTIG: Wir deployen zu backend-go/, NICHT backend/
+          # backend/ wird später manuell umbenannt
+          
+          rsync -av \
+            --exclude '.env' \
+            --exclude '.env.production' \
+            --exclude 'vendor' \
+            --exclude '.git' \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./backend-go/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend-go/
+          
+          echo "✅ Go Backend deployed zu ~/app/backend-go/"
+
+      #########################################
+      # DEPLOY FRONTEND BUILD
+      #########################################
+      - name: 📂 Deploy Frontend Build
+        run: |
+          # Erstelle frontend_dist falls nicht existiert
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend_dist"
+          
+          # Deploy Frontend Build zu frontend_dist/
+          rsync -av --delete \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./frontend/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend_dist/
+          
+          echo "✅ Frontend deployed zu ~/app/frontend_dist/"
+
+      #########################################
+      # DEPLOY MIGRATIONS
+      #########################################
+      - name: 📊 Deploy Migrations
+        run: |
+          # Erstelle migrations Ordner
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app/migrations"
+          
+          # Deploy Migrations
+          rsync -av --delete \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./backend-go/migrations/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/migrations/
+          
+          echo "✅ Migrations deployed zu ~/app/migrations/"
+
+      #########################################
+      # DEPLOY NGINX CONFIG
+      #########################################
+      - name: 🌐 Deploy Nginx Config
+        run: |
+          # Deploy nginx.prod.conf
+          rsync -av \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./nginx/nginx.prod.conf \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
+          
+          echo "✅ Nginx Config deployed"
+
+      #########################################
+      # DEPLOY DOCKER COMPOSE
+      #########################################
+      - name: 🐳 Deploy Docker Compose
+        run: |
+          # Deploy docker-compose.prod.yml
+          scp -o StrictHostKeyChecking=yes \
+            docker-compose.prod.yml \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+          
+          echo "✅ docker-compose.prod.yml deployed"
+
+      #########################################
+      # WARNUNG - MANUELLE SCHRITTE
+      #########################################
+      - name: ⚠️ Manuelle Schritte erforderlich
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "⚠️  DEPLOYMENT ABGESCHLOSSEN - MANUELLE SCHRITTE"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📦 Deployed:"
+          echo "  ✅ backend-go/        (Neues Go Backend)"
+          echo "  ✅ frontend_dist/     (Frontend Build)"
+          echo "  ✅ migrations/        (DB Migrations)"
+          echo "  ✅ nginx/nginx.prod.conf"
+          echo "  ✅ docker-compose.prod.yml"
+          echo ""
+          echo "⚠️  NICHT deployed (bleiben unverändert):"
+          echo "  ✅ .env               (Original bleibt!)"
+          echo "  ✅ backend/           (Altes Backend bleibt!)"
+          echo "  ✅ frontend/          (Bleibt!)"
+          echo "  ✅ logs/, certs/, postgres/, etc."
+          echo ""
+          echo "🔧 NÄCHSTE SCHRITTE (auf Server):"
+          echo ""
+          echo "  SSH auf Server und führe aus:"
+          echo "  cd ~/app"
+          echo "  ./migrate-initial-with-data.sh"
+          echo ""
+          echo "  Das Script wird:"
+          echo "  1. Alte Daten sichern"
+          echo "  2. backend/ entfernen (Backup erstellt)"
+          echo "  3. backend-go/ verwenden"
+          echo "  4. Neue Services starten"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      #########################################
+      # SUCCESS
+      #########################################
+      - name: ✅ Deployment Files Ready
+        run: |
+          echo "✅ Alle Files für Migration sind auf dem Server!"
+          echo "📋 Nächster Schritt: SSH auf Server und Migration starten"
