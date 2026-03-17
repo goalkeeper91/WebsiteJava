@@ -1,4 +1,4 @@
-name: Deploy Backend (Safe for Existing Structure)
+name: Deploy Backend (Monorepo Structure)
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
       #########################################
       - name: 🏗️ Build Frontend
         run: |
-          cd frontend
+          cd git/demo/frontend
           npm ci
           npm run build
           
@@ -64,20 +64,17 @@ jobs:
           EOF
 
       #########################################
-      # DEPLOY GO BACKEND (ERSETZT backend/)
+      # DEPLOY GO BACKEND
       #########################################
       - name: 🖥️ Deploy Go Backend
         run: |
-          # WICHTIG: Wir deployen zu backend-go/, NICHT backend/
-          # backend/ wird später manuell umbenannt
-          
           rsync -av \
             --exclude '.env' \
             --exclude '.env.production' \
             --exclude 'vendor' \
             --exclude '.git' \
             -e "ssh -o StrictHostKeyChecking=yes" \
-            ./backend-go/ \
+            ./git/demo/backend-go/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend-go/
           
           echo "✅ Go Backend deployed zu ~/app/backend-go/"
@@ -94,7 +91,7 @@ jobs:
           # Deploy Frontend Build zu frontend_dist/
           rsync -av --delete \
             -e "ssh -o StrictHostKeyChecking=yes" \
-            ./frontend/dist/ \
+            ./git/demo/frontend/dist/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend_dist/
           
           echo "✅ Frontend deployed zu ~/app/frontend_dist/"
@@ -111,7 +108,7 @@ jobs:
           # Deploy Migrations
           rsync -av --delete \
             -e "ssh -o StrictHostKeyChecking=yes" \
-            ./backend-go/migrations/ \
+            ./git/demo/backend-go/migrations/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/migrations/
           
           echo "✅ Migrations deployed zu ~/app/migrations/"
@@ -121,13 +118,16 @@ jobs:
       #########################################
       - name: 🌐 Deploy Nginx Config
         run: |
-          # Deploy nginx.prod.conf
-          rsync -av \
-            -e "ssh -o StrictHostKeyChecking=yes" \
-            ./nginx/nginx.prod.conf \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
-          
-          echo "✅ Nginx Config deployed"
+          # Prüfe ob nginx.prod.conf existiert
+          if [ -f "./git/demo/nginx/nginx.prod.conf" ]; then
+            rsync -av \
+              -e "ssh -o StrictHostKeyChecking=yes" \
+              ./git/demo/nginx/nginx.prod.conf \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
+            echo "✅ Nginx Config deployed"
+          else
+            echo "⚠️  nginx.prod.conf nicht gefunden, überspringe"
+          fi
 
       #########################################
       # DEPLOY DOCKER COMPOSE
@@ -136,10 +136,28 @@ jobs:
         run: |
           # Deploy docker-compose.prod.yml
           scp -o StrictHostKeyChecking=yes \
-            docker-compose.prod.yml \
+            ./git/demo/docker-compose.prod.yml \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
           
           echo "✅ docker-compose.prod.yml deployed"
+
+      #########################################
+      # DEPLOY MIGRATION SCRIPT
+      #########################################
+      - name: 📜 Deploy Migration Script
+        run: |
+          # Deploy migrate-initial-SAFE.sh
+          if [ -f "./git/demo/migrate-initial-SAFE.sh" ]; then
+            scp -o StrictHostKeyChecking=yes \
+              ./git/demo/migrate-initial-SAFE.sh \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/
+            
+            # Executable machen
+            ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+              "chmod +x /home/${{ secrets.SERVER_USER }}/app/migrate-initial-SAFE.sh"
+            
+            echo "✅ Migration Script deployed"
+          fi
 
       #########################################
       # WARNUNG - MANUELLE SCHRITTE
@@ -156,6 +174,7 @@ jobs:
           echo "  ✅ migrations/        (DB Migrations)"
           echo "  ✅ nginx/nginx.prod.conf"
           echo "  ✅ docker-compose.prod.yml"
+          echo "  ✅ migrate-initial-SAFE.sh"
           echo ""
           echo "⚠️  NICHT deployed (bleiben unverändert):"
           echo "  ✅ .env               (Original bleibt!)"
@@ -165,15 +184,21 @@ jobs:
           echo ""
           echo "🔧 NÄCHSTE SCHRITTE (auf Server):"
           echo ""
-          echo "  SSH auf Server und führe aus:"
-          echo "  cd ~/app"
-          echo "  ./migrate-initial-with-data.sh"
+          echo "  1. SSH auf Server:"
+          echo "     ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
           echo ""
-          echo "  Das Script wird:"
-          echo "  1. Alte Daten sichern"
-          echo "  2. backend/ entfernen (Backup erstellt)"
-          echo "  3. backend-go/ verwenden"
-          echo "  4. Neue Services starten"
+          echo "  2. Prüfe deployed Files:"
+          echo "     cd ~/app"
+          echo "     ls -la backend-go/"
+          echo "     ls -la frontend_dist/"
+          echo "     ls -la migrations/"
+          echo ""
+          echo "  3. .env erweitern (falls noch nicht gemacht):"
+          echo "     nano .env"
+          echo "     # Füge Bot Vars hinzu (siehe Guide)"
+          echo ""
+          echo "  4. Migration starten:"
+          echo "     ./migrate-initial-SAFE.sh"
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
