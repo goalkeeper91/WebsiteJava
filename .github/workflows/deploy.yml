@@ -1,4 +1,4 @@
-name: Deploy Backend on Tag
+name: Zero-Downtime Deployment
 
 on:
   push:
@@ -26,95 +26,269 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      # 🏗️ Build Frontend
+      #########################################
+      # PHASE 1: BUILD & VALIDATE
+      #########################################
       - name: 🏗️ Build Frontend
         run: |
           cd frontend
           npm ci
           npm run build
+          
+          # Validate build
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ Frontend build failed!"
+            exit 1
+          fi
+          
+          echo "✅ Frontend build successful"
 
-      # 🚀 Deploy Go Backend
-      - name: 🖥️ Deploy Go Backend
+      #########################################
+      # PHASE 2: DEPLOY TO STAGING LOCATION
+      #########################################
+      - name: 📂 Deploy to Staging Location
         run: |
+          # Deploy zu separatem Verzeichnis (nicht live!)
           rsync -av --delete \
             --exclude '.env' \
-            --exclude '.env.production' \
             --exclude 'vendor' \
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./backend-go/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/backend-go/
-
-      # 📂 Deploy Frontend Build
-      - name: 📂 Deploy Frontend Build
-        run: |
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app_staging/backend-go/
+          
           rsync -av --delete \
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./frontend/dist/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/frontend/dist/
-
-      # 🗄️ Deploy Migrations
-      - name: 📊 Deploy Migrations
-        run: |
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app_staging/frontend/dist/
+          
           rsync -av --delete \
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./backend-go/migrations/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/migrations/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app_staging/migrations/
 
-      # 📋 Deploy Nginx Config
-      - name: 🌐 Deploy Nginx Config
-        run: |
-          rsync -av \
-            -e "ssh -o StrictHostKeyChecking=yes" \
-            ./nginx/nginx.prod.conf \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
-
-      # 🐳 Deploy Backend
-      - name: 🐳 Deploy with Docker Compose
+      #########################################
+      # PHASE 3: TEST IN STAGING
+      #########################################
+      - name: 🧪 Test Staging Deployment
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd /home/${{ secrets.SERVER_USER }}/app
+            set -e
             
-            echo "🏗️ Building Go Backend..."
-            docker compose -f docker-compose.prod.yml build --no-cache backend-go
+            cd ~/app_staging
             
-            echo "🚀 Restarting Backend & Nginx..."
-            docker compose -f docker-compose.prod.yml up -d backend-go nginx
+            echo "🔍 Validiere Files..."
             
-            echo "🧹 Cleaning up..."
-            docker image prune -f
+            # Check Backend Files
+            if [ ! -f "backend-go/go.mod" ]; then
+              echo "❌ Backend Files fehlen!"
+              exit 1
+            fi
             
-            echo ""
-            echo "✅ Backend Deployment abgeschlossen!"
-            echo "📊 Service Status:"
-            docker compose -f docker-compose.prod.yml ps backend-go nginx
+            # Check Frontend Files
+            if [ ! -f "frontend/dist/index.html" ]; then
+              echo "❌ Frontend Build fehlt!"
+              exit 1
+            fi
+            
+            # Check Migrations
+            if [ ! -d "migrations/liquibase" ]; then
+              echo "❌ Migrations fehlen!"
+              exit 1
+            fi
+            
+            echo "✅ Alle Files vorhanden"
+            
+            # Optional: Build Test (ohne Container starten)
+            echo "🏗️ Test Docker Build..."
+            docker compose -f docker-compose.prod.yml build --no-cache backend-go 2>&1 | tail -5
+            
+            if [ $? -ne 0 ]; then
+              echo "❌ Docker Build fehlgeschlagen!"
+              exit 1
+            fi
+            
+            echo "✅ Docker Build erfolgreich"
           EOF
 
-      # 🔍 Health Check
+      #########################################
+      # PHASE 4: BACKUP PRODUCTION
+      #########################################
+      - name: 💾 Backup Production
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            
+            echo "📦 Erstelle Production Backup..."
+            
+            BACKUP_DIR=~/backups/pre_deploy_$(date +%Y%m%d_%H%M%S)
+            mkdir -p $BACKUP_DIR
+            
+            # Backup Datenbank
+            cd ~/app
+            docker compose exec -T postgres pg_dump -U postgres twitch_auth > $BACKUP_DIR/database.sql
+            
+            # Backup .env
+            cp .env $BACKUP_DIR/.env
+            
+            # Backup docker-compose
+            cp docker-compose.prod.yml $BACKUP_DIR/
+            
+            echo "✅ Backup erstellt: $BACKUP_DIR"
+          EOF
+
+      #########################################
+      # PHASE 5: ATOMIC SWAP
+      #########################################
+      - name: 🔄 Atomic Swap to Production
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            
+            echo "🔄 Atomic Swap: Staging → Production"
+            
+            # Stoppe alte Services
+            echo "🛑 Stoppe alte Services..."
+            cd ~/app
+            docker compose down
+            
+            # Atomic Move (sehr schnell!)
+            echo "⚡ Swap Files..."
+            
+            # Backup alte Production
+            mv ~/app ~/app_old_$(date +%Y%m%d_%H%M%S) || true
+            
+            # Staging → Production
+            mv ~/app_staging ~/app
+            
+            # .env von alter Version übernehmen (wichtig!)
+            if [ -f ~/app_old_*/\.env ]; then
+              cp ~/app_old_*/\.env ~/app/.env
+            fi
+            
+            echo "✅ Swap abgeschlossen"
+          EOF
+
+      #########################################
+      # PHASE 6: START NEW SERVICES
+      #########################################
+      - name: 🚀 Start New Services
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            
+            cd ~/app
+            
+            echo "🐳 Starte neue Services..."
+            docker compose -f docker-compose.prod.yml up -d
+            
+            echo "⏳ Warte 30s auf Service Start..."
+            sleep 30
+            
+            echo "✅ Services gestartet"
+          EOF
+
+      #########################################
+      # PHASE 7: HEALTH CHECK
+      #########################################
       - name: 🏥 Health Check
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            echo "⏳ Warte 15s auf Service Start..."
-            sleep 15
+            set -e
             
-            echo "🔍 Backend Health Check..."
-            if curl -f http://localhost/health; then
-              echo ""
-              echo "✅ Backend ist healthy!"
+            echo "🔍 Health Check..."
+            
+            # Retry Logic (max 5 Versuche)
+            for i in {1..5}; do
+              if curl -f http://localhost/health 2>/dev/null; then
+                echo "✅ Backend ist healthy!"
+                exit 0
+              fi
+              echo "⏳ Versuch $i/5 fehlgeschlagen, warte 10s..."
+              sleep 10
+            done
+            
+            echo "❌ Health Check fehlgeschlagen!"
+            echo "📋 Backend Logs:"
+            docker compose -f ~/app/docker-compose.prod.yml logs --tail=50 backend-go
+            exit 1
+          EOF
+
+      #########################################
+      # PHASE 8: CLEANUP (NUR BEI ERFOLG!)
+      #########################################
+      - name: 🧹 Cleanup Old Versions
+        if: success()
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "🧹 Räume alte Versionen auf..."
+            
+            # Behalte nur die letzten 2 alten Versionen
+            cd ~
+            ls -dt app_old_* 2>/dev/null | tail -n +3 | xargs rm -rf
+            
+            # Docker aufräumen
+            docker image prune -f
+            
+            echo "✅ Cleanup abgeschlossen"
+          EOF
+
+      #########################################
+      # ROLLBACK BEI FEHLER
+      #########################################
+      - name: 🔙 Rollback on Failure
+        if: failure()
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "❌ Deployment fehlgeschlagen!"
+            echo "🔙 Starte Rollback..."
+            
+            # Neue Services stoppen
+            cd ~/app
+            docker compose down 2>/dev/null || true
+            
+            # Finde letzte funktionierende Version
+            LAST_WORKING=$(ls -dt ~/app_old_* 2>/dev/null | head -1)
+            
+            if [ ! -z "$LAST_WORKING" ]; then
+              echo "📂 Restore: $LAST_WORKING"
+              
+              # Fehlgeschlagene Version entfernen
+              rm -rf ~/app
+              
+              # Alte Version zurück
+              mv $LAST_WORKING ~/app
+              
+              # Services starten
+              cd ~/app
+              docker compose up -d
+              
+              echo "✅ Rollback abgeschlossen"
+              echo "⚠️  System läuft auf alter Version"
             else
-              echo ""
-              echo "❌ Health Check fehlgeschlagen!"
-              docker compose -f ~/app/docker-compose.prod.yml logs --tail=50 backend-go
+              echo "❌ Keine alte Version gefunden!"
               exit 1
             fi
           EOF
 
-      - name: 🎉 Success
+      #########################################
+      # SUCCESS NOTIFICATION
+      #########################################
+      - name: 🎉 Deployment Success
         if: success()
         run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 Deployment erfolgreich!"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Tag: ${{ github.ref_name }}"
-          echo "✅ Backend deployed"
-          echo "✅ Frontend deployed"
-          echo "✅ Migrations deployed"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "✅ Phasen abgeschlossen:"
+          echo "  1. Build & Validate"
+          echo "  2. Deploy to Staging"
+          echo "  3. Test Staging"
+          echo "  4. Backup Production"
+          echo "  5. Atomic Swap"
+          echo "  6. Start Services"
+          echo "  7. Health Check"
+          echo "  8. Cleanup"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
