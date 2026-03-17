@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"fmt"
-	"context"
 
 	"github.com/gorilla/mux"
 	"demo/backend-go/internal/infrastructure/redis"
@@ -61,11 +59,11 @@ func (h *BotAnnounceHandler) AnnounceMessage(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Send via existing Redis infrastructure
-	if err := h.sendBotAnnounce(req.Message, req.ChannelID); err != nil {
-		log.Printf("❌ Failed to send announcement: %v", err)
-		http.Error(w, "Failed to send announcement", http.StatusInternalServerError)
-		return
-	}
+	if err := h.redisService.SendBotAnnounce(req.Message, req.ChannelID); err != nil {
+       log.Printf("❌ Failed to send announcement: %v", err)
+       http.Error(w, "Failed to send announcement", http.StatusInternalServerError)
+       return
+    }
 
 	log.Printf("✅ Bot announcement queued: %s", req.Message)
 
@@ -75,34 +73,4 @@ func (h *BotAnnounceHandler) AnnounceMessage(w http.ResponseWriter, r *http.Requ
 		"success": true,
 		"message": "Announcement sent to bot",
 	})
-}
-
-func (h *BotAnnounceHandler) sendBotAnnounce(message string, channelID string) error {
-
-    payload := map[string]interface{}{
-       "type":    "BOT_ANNOUNCE",
-       "message": message,
-    }
-
-    if channelID != "" {
-       payload["channel_id"] = channelID
-    }
-
-    data, err := json.Marshal(payload)
-    if err != nil {
-       return err
-    }
-
-    client := h.redisService.GetClient()
-    if client == nil {
-       return fmt.Errorf("redis client not available")
-    }
-
-    err = client.Publish(context.Background(), redis.BotEventsChannel, data).Err()
-    if err != nil {
-       return err
-    }
-
-    log.Printf("📤 Bot announce signal sent: %s", message)
-    return nil
 }

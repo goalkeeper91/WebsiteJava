@@ -104,6 +104,21 @@ func (r *RedisService) SendRefreshCommandsSignal(twitchUserID string) error {
 	return r.publish(signal)
 }
 
+func (r *RedisService) SendBotAnnounce(message string, twitchUserID string) error {
+    payload := map[string]interface{}{
+        "type":           "BOT_ANNOUNCE",
+        "message":        message,
+        "twitch_user_id": twitchUserID,
+    }
+
+    data, err := json.Marshal(payload)
+    if err != nil {
+        return err
+    }
+
+    return r.client.Publish(context.Background(), BotEventsChannel, data).Err()
+}
+
 func (r *RedisService) publish(signal BotSignal) error {
 	data, err := json.Marshal(signal)
 	if err != nil {

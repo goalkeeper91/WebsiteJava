@@ -255,6 +255,7 @@ func main() {
 	n8nHandler := handler.NewN8NHandler(n8nService, sessionStore, cfg.Session.Name)
 	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name)
 	workflowTemplateHandler := handler.NewWorkflowTemplateHandler(workflowTemplateService, sessionStore, cfg.Session.Name)
+	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, sessionStore, cfg.Session.Name, redisService)
@@ -286,6 +287,7 @@ func main() {
 	n8nHandler.RegisterRoutes(router)
 	voteHandler.RegisterRoutes(router)
 	workflowTemplateHandler.RegisterRoutes(router)
+	botAnnounceHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
