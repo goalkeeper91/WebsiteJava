@@ -45,7 +45,7 @@ const DiscordCallback: React.FC = () => {
       try {
         // Send callback to backend
         const res = await fetch(
-          `/api/discord/auth/callback?code=${encodeURIComponent(code as string)}&state=${encodeURIComponent(state)}`,
+          `/api/discord/auth/callback?code=${encodeURIComponent(code || '')}&state=${encodeURIComponent(state)}`,
           {
             method: "GET",
             credentials: "include",

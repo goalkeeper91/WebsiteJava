@@ -16,7 +16,7 @@ export default function N8NEditorIntegration() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const res = await fetch(`${n8nUrl}/healthz`, {
+      await fetch(`${n8nUrl}/healthz`, {
         signal: controller.signal,
         mode: 'no-cors' // n8n might not have CORS enabled
       });
