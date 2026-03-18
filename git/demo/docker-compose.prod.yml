@@ -130,41 +130,14 @@ services:
       start_period: 40s
 
   # =========================
-  # Python Twitch Bot
+  # Subathon Timer
   # =========================
-  twitch-bot:
-    build:
-      context: ./twitch-bot
-      dockerfile: Dockerfile
-    container_name: goalkeeper_twitch_bot_prod
+  subathon-timer:
+    image: subathon-timer-subathon-timer
+    container_name: goalkeeper_subathon_timer_prod
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      # Database
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB:-twitch_auth}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
-      # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_CHANNEL: bot:events
-
-      # Twitch
-      TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
-      TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
-      TWITCH_BOT_ID: ${TWITCH_BOT_ID}
-      TWITCH_OWNER_ID: ${TWITCH_OWNER_ID}
-      TWITCH_PREFIX: "!"
-
-      # Security
-      GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
+    expose:
+      - "3000"
     networks:
       - app-network
 
@@ -183,8 +156,9 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./frontend_dist:/usr/share/nginx/html:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./certbot-www:/var/www/certbot:ro
     networks:
       - app-network
     healthcheck:
@@ -192,6 +166,21 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # =========================
+  # Adminer (Datenbank UI)
+  # =========================
+  adminer:
+    image: adminer:latest
+    container_name: goalkeeper_adminer_prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8080"
+    networks:
+      - app-network
 
 # =========================
 # Volumes
