@@ -3,7 +3,9 @@ import { ExternalLink, RefreshCw, AlertCircle, CheckCircle } from "lucide-react"
 
 export default function N8NEditorIntegration() {
   const [n8nStatus, setN8nStatus] = useState<"checking" | "online" | "offline">("checking");
-  const n8nUrl = "http://localhost:5678";
+  const n8nUrl = import.meta.env.PROD
+    ? "https://n8n.goalkeeper91.de"
+    : "http://localhost:5678";
 
   useEffect(() => {
     checkN8NStatus();
@@ -18,7 +20,7 @@ export default function N8NEditorIntegration() {
 
       await fetch(`${n8nUrl}/healthz`, {
         signal: controller.signal,
-        mode: 'no-cors' // n8n might not have CORS enabled
+        mode: import.meta.env.PROD ? 'cors' : 'no-cors',
       });
 
       clearTimeout(timeoutId);

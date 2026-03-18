@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # =========================
   # PostgreSQL Datenbank
@@ -254,6 +252,8 @@ volumes:
   postgres_data_prod:
     driver: local
   redis_data_prod:
+    driver: local
+  n8n_data:
     driver: local
 
 # =========================
