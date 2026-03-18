@@ -105,6 +105,7 @@ services:
       TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
       TWITCH_REDIRECT_URL: ${TWITCH_REDIRECT_URL}
       TWITCH_ADMIN_TWITCH_ID: ${TWITCH_ADMIN_TWITCH_ID}
+      ADMIN_TWITCH_ID: ${TWITCH_ADMIN_TWITCH_ID}
 
       # Security
       GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
@@ -155,7 +156,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/timer.conf:/etc/nginx/conf.d/timer.conf:ro
+      - ./nginx/n8n.conf:/etc/nginx/conf.d/n8n.conf:ro
       - ./frontend_dist:/usr/share/nginx/html:ro
       - ./certs:/etc/nginx/certs:ro
       - ./certbot-www:/var/www/certbot:ro
@@ -181,6 +184,68 @@ services:
       - "8080"
     networks:
       - app-network
+
+  # =========================
+  # n8n Workflow Automation
+  # =========================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: goalkeeper_n8n_prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database (n8n verwendet eigene Tabellen in gleicher DB)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME:-n8n}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_SCHEMA: n8n
+
+      # n8n Configuration
+      N8N_HOST: n8n.goalkeeper91.de
+      N8N_PORT: 5678
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://n8n.goalkeeper91.de/
+
+      # Security
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_AUTH_PASSWORD}
+
+      # Encryption
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+
+      # Editor
+      N8N_EDITOR_BASE_URL: https://n8n.goalkeeper91.de/
+
+      # Timezone
+      GENERIC_TIMEZONE: Europe/Berlin
+      TZ: Europe/Berlin
+
+      # Execution
+      EXECUTIONS_PROCESS: main
+      EXECUTIONS_MODE: regular
+
+      # Logs
+      N8N_LOG_LEVEL: info
+      N8N_LOG_OUTPUT: console
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/backup:/backup
+    expose:
+      - "5678"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 # =========================
 # Volumes
