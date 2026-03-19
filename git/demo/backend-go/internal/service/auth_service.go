@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -143,13 +144,27 @@ func (s *AuthService) handleCallback(ctx context.Context, code string, isBot boo
 		return nil, fmt.Errorf("fehler beim Speichern des Users: %w", err)
 	}
 
+	// ✅ FIX: Scopes aus Token extrahieren, oder Config Scopes als Fallback
+	scope := extractScope(token)
+	if scope == "" {
+		if isBot {
+			scope = strings.Join(BotScopes, " ")
+			log.Printf("⚠️  Token hat keine Scopes, verwende BotScopes: %s", scope)
+		} else {
+			scope = strings.Join(UserScopes, " ")
+			log.Printf("⚠️  Token hat keine Scopes, verwende UserScopes: %s", scope)
+		}
+	} else {
+		log.Printf("✅ Scopes aus Token: %s", scope)
+	}
+
 	authToken := domain.NewAuthToken(
 		userData.ID,
 		userData.Login,
 		token.AccessToken,
 		token.RefreshToken,
 		token.TokenType,
-		extractScope(token),
+		scope,  // ← Jetzt garantiert nicht leer!
 		int64(token.Expiry.Sub(time.Now()).Seconds()),
 	)
 
