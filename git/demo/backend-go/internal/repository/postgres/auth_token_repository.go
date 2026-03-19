@@ -192,6 +192,7 @@ func (r *authTokenRepository) Upsert(ctx context.Context, token *domain.AuthToke
 			access_token = EXCLUDED.access_token,
 			refresh_token = EXCLUDED.refresh_token,
 			expires_in = EXCLUDED.expires_in,
+			scope = EXCLUDED.scope,
 			updated_at = EXCLUDED.updated_at
 		RETURNING id
 	`
