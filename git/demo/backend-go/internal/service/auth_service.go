@@ -31,6 +31,14 @@ type TwitchUserResponse struct {
 var (
 	UserScopes = []string{
 		"user:read:email",
+		"moderator:read:chat_messages",
+		"user:read:email",
+        "moderator:read:chat_messages",   // Erledigt: Chat lesen via EventSub
+        "channel:read:subscriptions",    // Wichtig: Um auf neue Subs zu reagieren
+        "channel:read:redemptions",      // Wichtig: Für Kanalpunkte-Belohnungen
+        "channel:read:predictions",      // Optional: Falls der Bot Predictions anzeigt
+        "moderator:read:followers",      // Wichtig: Um auf neue Follower zu reagieren
+        "channel:moderate",
 	}
 
 	BotScopes = []string{
