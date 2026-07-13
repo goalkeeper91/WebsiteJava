@@ -1,0 +1,17 @@
+# This repo's working tree root sits at D:\Entwicklung, which is also where
+# many unrelated, separate projects happen to live on disk (AI Development,
+# KI-Projekt, PunishersGer with its own .git, etc.). None of that has ever
+# actually been committed here (see git log) - only ever accidentally staged
+# from running git commands from the wrong directory. Deny-by-default,
+# allow-list only the paths that actually belong to this repo, so those
+# other projects can never be swept into a commit again.
+/*
+!/.github
+!/git
+!/README.md
+!/.gitignore
+
+# git/ itself holds several other unrelated projects alongside demo/ -
+# only demo/ is actually this repo's content.
+/git/*
+!/git/demo
