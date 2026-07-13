@@ -118,16 +118,21 @@ jobs:
       #########################################
       - name: 🌐 Deploy Nginx Config
         run: |
-          # Prüfe ob nginx.prod.conf existiert
-          if [ -f "./git/demo/nginx/nginx.prod.conf" ]; then
-            rsync -av \
-              -e "ssh -o StrictHostKeyChecking=yes" \
-              ./git/demo/nginx/nginx.prod.conf \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
-            echo "✅ Nginx Config deployed"
-          else
-            echo "⚠️  nginx.prod.conf nicht gefunden, überspringe"
-          fi
+          # Deployed bisher gezielt "nginx.prod.conf" - eine Datei, die es im
+          # Repo gar nicht (mehr) gibt, der Schritt war also faktisch ein
+          # No-Op. Jetzt wird der komplette nginx/-Ordner synchronisiert
+          # (conf.d-Fragmente + Dockerfile für den periodischen Cert-Reload,
+          # siehe nginx/Dockerfile). Bewusst ohne --delete, um nichts zu
+          # löschen, das eventuell manuell auf dem Server liegt.
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app/nginx"
+
+          rsync -av \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./git/demo/nginx/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
+
+          echo "✅ Nginx Config (inkl. Dockerfile) deployed"
 
       #########################################
       # DEPLOY DOCKER COMPOSE
@@ -160,6 +165,22 @@ jobs:
           fi
 
       #########################################
+      # APPLY DOCKER COMPOSE (BUILD + RESTART)
+      #########################################
+      - name: 🚀 Apply Docker Compose (Build + Restart)
+        run: |
+          # Bisher endete die Pipeline damit, Dateien auf den Server zu legen -
+          # niemand hat sie tatsächlich angewendet, das war ein manueller
+          # Schritt. Jetzt baut/started dieser Schritt die Container direkt:
+          # backend-go, das Serving von frontend_dist über nginx, und nginx
+          # selbst (jetzt mit eigenem Dockerfile für den periodischen
+          # Cert-Reload, siehe nginx/Dockerfile) neu.
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "cd ~/app && docker compose -f docker-compose.prod.yml up -d --build"
+
+          echo "✅ Container gebaut und neu gestartet"
+
+      #########################################
       # WARNUNG - MANUELLE SCHRITTE
       #########################################
       - name: ⚠️ Manuelle Schritte erforderlich
@@ -168,11 +189,11 @@ jobs:
           echo "⚠️  DEPLOYMENT ABGESCHLOSSEN - MANUELLE SCHRITTE"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          echo "📦 Deployed:"
+          echo "📦 Deployed UND angewendet (docker compose up -d --build):"
           echo "  ✅ backend-go/        (Neues Go Backend)"
           echo "  ✅ frontend_dist/     (Frontend Build)"
-          echo "  ✅ migrations/        (DB Migrations)"
-          echo "  ✅ nginx/nginx.prod.conf"
+          echo "  ✅ migrations/        (DB Migrations, noch nicht ausgeführt)"
+          echo "  ✅ nginx/             (conf.d-Fragmente + Dockerfile)"
           echo "  ✅ docker-compose.prod.yml"
           echo "  ✅ migrate-initial-SAFE.sh"
           echo ""
@@ -182,23 +203,12 @@ jobs:
           echo "  ✅ frontend/          (Bleibt!)"
           echo "  ✅ logs/, certs/, postgres/, etc."
           echo ""
-          echo "🔧 NÄCHSTE SCHRITTE (auf Server):"
+          echo "🔧 EINZIGER VERBLEIBENDER MANUELLER SCHRITT (auf Server):"
           echo ""
-          echo "  1. SSH auf Server:"
+          echo "  Migration starten (bewusst nicht automatisiert - DB-Änderungen"
+          echo "  sollen ein manueller, bewusster Schritt bleiben):"
           echo "     ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
-          echo ""
-          echo "  2. Prüfe deployed Files:"
-          echo "     cd ~/app"
-          echo "     ls -la backend-go/"
-          echo "     ls -la frontend_dist/"
-          echo "     ls -la migrations/"
-          echo ""
-          echo "  3. .env erweitern (falls noch nicht gemacht):"
-          echo "     nano .env"
-          echo "     # Füge Bot Vars hinzu (siehe Guide)"
-          echo ""
-          echo "  4. Migration starten:"
-          echo "     ./migrate-initial-SAFE.sh"
+          echo "     cd ~/app && ./migrate-initial-SAFE.sh"
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
