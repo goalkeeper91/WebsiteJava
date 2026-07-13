@@ -44,8 +44,8 @@ jobs:
       - name: 💾 Backup Old Backend
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd ~/app
-            
+            cd /home/${{ secrets.SERVER_USER }}/app
+
             # Backup erstellen (falls backend existiert)
             if [ -d "backend" ]; then
               BACKUP_DIR=~/backups/backend_backup_$(date +%Y%m%d_%H%M%S)
@@ -176,7 +176,7 @@ jobs:
           # selbst (jetzt mit eigenem Dockerfile für den periodischen
           # Cert-Reload, siehe nginx/Dockerfile) neu.
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "cd ~/app && docker compose -f docker-compose.prod.yml up -d --build"
+            "cd /home/${{ secrets.SERVER_USER }}/app && docker compose -f docker-compose.prod.yml up -d --build"
 
           echo "✅ Container gebaut und neu gestartet"
 
@@ -208,7 +208,7 @@ jobs:
           echo "  Migration starten (bewusst nicht automatisiert - DB-Änderungen"
           echo "  sollen ein manueller, bewusster Schritt bleiben):"
           echo "     ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
-          echo "     cd ~/app && ./migrate-initial-SAFE.sh"
+          echo "     cd /home/${{ secrets.SERVER_USER }}/app && ./migrate-initial-SAFE.sh"
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
