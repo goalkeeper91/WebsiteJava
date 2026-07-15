@@ -159,6 +159,7 @@ services:
       - ./nginx/timer.conf:/etc/nginx/conf.d/timer.conf:ro
       - ./nginx/n8n.conf:/etc/nginx/conf.d/n8n.conf:ro
       - ./nginx/punishersgermany.conf:/etc/nginx/conf.d/punishersgermany.conf:ro
+      - ./nginx/vault.punishersgermany.conf:/etc/nginx/conf.d/vault.punishersgermany.conf:ro
       - ./frontend_dist:/usr/share/nginx/html:ro
       - ./certs:/etc/nginx/certs:ro
       - ./certbot-www:/var/www/certbot:ro
