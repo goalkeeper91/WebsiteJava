@@ -77,6 +77,8 @@ services:
         condition: service_healthy
       liquibase:
         condition: service_completed_successfully
+      ollama:
+        condition: service_started
     environment:
       # Server
       PORT: 8080
@@ -118,6 +120,10 @@ services:
       # Frontend
       FRONTEND_URL: ${FRONTEND_URL}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+
+      # Ollama (Phase D: selbstgehostete KI-Caption)
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: llama3.2:3b
     expose:
       - "8080"
     networks:
@@ -128,6 +134,68 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # =========================
+  # Ollama (Phase D: selbstgehostete KI-Caption, keine externen API-Kosten)
+  # =========================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: goalkeeper_ollama_prod
+    restart: unless-stopped
+    volumes:
+      - ollama_data_prod:/root/.ollama
+    expose:
+      - "11434"
+    networks:
+      - app-network
+
+  # =========================
+  # Clip-Detector (Phase B: Audio/Video-Heuristiken, v1 nur Allowlist-Kanäle)
+  # =========================
+  clip-detector:
+    build:
+      context: ./backend-go
+      dockerfile: docker/Dockerfile.detector
+    container_name: goalkeeper_clip_detector_prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      liquibase:
+        condition: service_completed_successfully
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-twitch_auth}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_SSLMODE: disable
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+
+      # Twitch (App Access Token für Live-Status-Checks)
+      TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
+      TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
+      TWITCH_REDIRECT_URL: ${TWITCH_REDIRECT_URL}
+
+      # Config.Load() validiert diese Felder mit, auch wenn der Detector sie
+      # selbst nicht braucht (gleiches config-Package wie backend-go) —
+      # dieselben Werte wie oben wiederverwenden.
+      GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+      BOT_INTERNAL_SECRET: ${BOT_INTERNAL_SECRET}
+
+      # Sicherheitsgate v1: nur diese Twitch User-IDs (numerisch, wie users.twitch_id)
+      # werden beobachtet. Siehe Phase-B-Plan zur ToS-Einordnung von streamlink.
+      DETECTOR_ALLOWED_USERS: ${DETECTOR_ALLOWED_USERS:-}
+    networks:
+      - app-network
 
   # =========================
   # Subathon Timer
@@ -258,6 +326,8 @@ volumes:
   redis_data_prod:
     driver: local
   n8n_data:
+    driver: local
+  ollama_data_prod:
     driver: local
 
 # =========================
