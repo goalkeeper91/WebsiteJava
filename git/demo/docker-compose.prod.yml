@@ -108,6 +108,7 @@ services:
       # Security
       GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
+      BOT_INTERNAL_SECRET: ${BOT_INTERNAL_SECRET}
       SESSION_NAME: twitch_auth_session
       SESSION_MAX_AGE: 86400
       SESSION_SECURE: "true"
