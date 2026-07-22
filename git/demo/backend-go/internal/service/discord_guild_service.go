@@ -28,7 +28,7 @@ func NewDiscordGuildService(
 	}
 }
 
-func (s *DiscordGuildService) GetUserGuilds(ctx context.Context, userID int64) ([]domain.DiscordGuildWithSettings, error) {
+func (s *DiscordGuildService) GetUserGuilds(ctx context.Context, userID string) ([]domain.DiscordGuildWithSettings, error) {
 	guilds, err := s.guildRepo.GetByOwner(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user guilds: %w", err)
@@ -50,7 +50,7 @@ func (s *DiscordGuildService) GetUserGuilds(ctx context.Context, userID int64) (
 	return result, nil
 }
 
-func (s *DiscordGuildService) GetGuild(ctx context.Context, guildID int64, userID int64) (*domain.DiscordGuild, error) {
+func (s *DiscordGuildService) GetGuild(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuild, error) {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check guild ownership: %w", err)
@@ -72,7 +72,7 @@ func (s *DiscordGuildService) GetGuild(ctx context.Context, guildID int64, userI
 	return guild, nil
 }
 
-func (s *DiscordGuildService) GetGuildDetails(ctx context.Context, guildID int64, userID int64) (*domain.DiscordGuildDetails, error) {
+func (s *DiscordGuildService) GetGuildDetails(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuildDetails, error) {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check guild ownership: %w", err)
@@ -111,7 +111,7 @@ func (s *DiscordGuildService) GetGuildDetails(ctx context.Context, guildID int64
 	}, nil
 }
 
-func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, userID int64) error {
+func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, userID string) error {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return fmt.Errorf("failed to check guild ownership: %w", err)
@@ -129,7 +129,7 @@ func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, user
 	return s.publishToDiscordBot(message)
 }
 
-func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, userID int64) error {
+func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, userID string) error {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return fmt.Errorf("failed to check guild ownership: %w", err)
@@ -159,7 +159,7 @@ func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, user
 }
 
 func (s *DiscordGuildService) HandleGuildJoined(ctx context.Context, guildID int64, guildName string, iconURL *string, memberCount *int, ownerDiscordID *int64) error {
-	var ownerUserID *int64
+	var ownerUserID *string
 	// TODO: Implement lookup from discord_connections if ownerDiscordID is provided
 
 	input := domain.DiscordGuildCreateInput{

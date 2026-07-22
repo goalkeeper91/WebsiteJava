@@ -10,17 +10,22 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	redisInfra "demo/backend-go/internal/infrastructure/redis"
 	"github.com/redis/go-redis/v9"
 )
 
 type BotStatsHandler struct {
 	redisService *redisInfra.RedisService
+	sessionStore *sessions.CookieStore
+	sessionName  string
 }
 
-func NewBotStatsHandler(redisService *redisInfra.RedisService) *BotStatsHandler {
+func NewBotStatsHandler(redisService *redisInfra.RedisService, sessionStore *sessions.CookieStore, sessionName string) *BotStatsHandler {
 	return &BotStatsHandler{
 		redisService: redisService,
+		sessionStore: sessionStore,
+		sessionName:  sessionName,
 	}
 }
 
@@ -140,6 +145,11 @@ func (h *BotStatsHandler) getBotStatisticsFromRedis(ctx context.Context) (*BotSt
 func (h *BotStatsHandler) ResetDailyStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	if !h.isAdmin(r) {
+		http.Error(w, "Nicht authorisiert", http.StatusForbidden)
+		return
+	}
+
 	if h.redisService == nil {
 		http.Error(w, "Service nicht verfügbar", http.StatusServiceUnavailable)
 		return
@@ -168,6 +178,21 @@ func (h *BotStatsHandler) ResetDailyStats(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+}
+
+func (h *BotStatsHandler) isAdmin(r *http.Request) bool {
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		return false
+	}
+
+	userID, ok := session.Values["user_id"].(string)
+	if !ok || userID == "" {
+		return false
+	}
+
+	isAdmin, _ := session.Values["is_admin"].(bool)
+	return isAdmin
 }
 
 func parseInt(s string) int {

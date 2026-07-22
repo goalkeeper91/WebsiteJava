@@ -186,15 +186,37 @@ func (h *BotStatusHandler) isAdmin(r *http.Request, ctx context.Context) bool {
 }
 
 func (h *BotStatusHandler) StartBot(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAdminForControl(w, r) {
+		return
+	}
 	h.publishBotCommand(w, r, "START_BOT")
 }
 
 func (h *BotStatusHandler) StopBot(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAdminForControl(w, r) {
+		return
+	}
 	h.publishBotCommand(w, r, "STOP_BOT")
 }
 
 func (h *BotStatusHandler) RestartBot(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAdminForControl(w, r) {
+		return
+	}
 	h.publishBotCommand(w, r, "RESTART_BOT")
+}
+
+// requireAdminForControl gates the bot start/stop/restart controls to logged-in admins.
+func (h *BotStatusHandler) requireAdminForControl(w http.ResponseWriter, r *http.Request) bool {
+	if !h.isAuthenticated(r) {
+		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
+		return false
+	}
+	if !h.isAdmin(r, r.Context()) {
+		http.Error(w, "Nicht authorisiert", http.StatusForbidden)
+		return false
+	}
+	return true
 }
 
 func (h *BotStatusHandler) RefreshBotToken(w http.ResponseWriter, r *http.Request) {

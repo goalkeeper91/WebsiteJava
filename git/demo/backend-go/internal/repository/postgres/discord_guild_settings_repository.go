@@ -68,7 +68,7 @@ func (r *DiscordGuildSettingsRepository) Create(ctx context.Context, input domai
 	return &settings, nil
 }
 
-func (r *DiscordGuildSettingsRepository) GetByGuildAndUser(ctx context.Context, guildID int64, userID int64) (*domain.DiscordGuildSettings, error) {
+func (r *DiscordGuildSettingsRepository) GetByGuildAndUser(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuildSettings, error) {
 	query := `
 		SELECT id, guild_id, user_id, notification_channel_id, command_channel_id,
 		       activity_channel_id, twitch_notifications_enabled, join_to_create_enabled,
@@ -143,7 +143,7 @@ func (r *DiscordGuildSettingsRepository) GetByGuild(ctx context.Context, guildID
 	return settingsList, nil
 }
 
-func (r *DiscordGuildSettingsRepository) GetByUser(ctx context.Context, userID int64) ([]domain.DiscordGuildSettings, error) {
+func (r *DiscordGuildSettingsRepository) GetByUser(ctx context.Context, userID string) ([]domain.DiscordGuildSettings, error) {
 	query := `
 		SELECT s.id, s.guild_id, s.user_id, s.notification_channel_id, s.command_channel_id,
 		       s.activity_channel_id, s.twitch_notifications_enabled, s.join_to_create_enabled,
@@ -185,7 +185,7 @@ func (r *DiscordGuildSettingsRepository) GetByUser(ctx context.Context, userID i
 	return settingsList, nil
 }
 
-func (r *DiscordGuildSettingsRepository) Update(ctx context.Context, guildID int64, userID int64, input domain.DiscordGuildSettingsUpdateInput) error {
+func (r *DiscordGuildSettingsRepository) Update(ctx context.Context, guildID int64, userID string, input domain.DiscordGuildSettingsUpdateInput) error {
 	query := `
 		UPDATE discord_guild_settings
 		SET notification_channel_id = COALESCE($3, notification_channel_id),
@@ -220,7 +220,7 @@ func (r *DiscordGuildSettingsRepository) Update(ctx context.Context, guildID int
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("settings not found for guild %d and user %d", guildID, userID)
+		return fmt.Errorf("settings not found for guild %d and user %s", guildID, userID)
 	}
 
 	return nil
@@ -238,7 +238,7 @@ func (r *DiscordGuildSettingsRepository) Delete(ctx context.Context, id int64) e
 }
 
 // DeleteByGuildAndUser deletes settings for a specific guild and user
-func (r *DiscordGuildSettingsRepository) DeleteByGuildAndUser(ctx context.Context, guildID int64, userID int64) error {
+func (r *DiscordGuildSettingsRepository) DeleteByGuildAndUser(ctx context.Context, guildID int64, userID string) error {
 	query := `DELETE FROM discord_guild_settings WHERE guild_id = $1 AND user_id = $2`
 
 	_, err := r.db.ExecContext(ctx, query, guildID, userID)
@@ -249,7 +249,7 @@ func (r *DiscordGuildSettingsRepository) DeleteByGuildAndUser(ctx context.Contex
 	return nil
 }
 
-func (r *DiscordGuildSettingsRepository) UserCanAccessGuild(ctx context.Context, userID int64, guildID int64) (bool, error) {
+func (r *DiscordGuildSettingsRepository) UserCanAccessGuild(ctx context.Context, userID string, guildID int64) (bool, error) {
 	query := `
 		SELECT EXISTS(
 			SELECT 1 FROM discord_guild_settings
@@ -266,7 +266,7 @@ func (r *DiscordGuildSettingsRepository) UserCanAccessGuild(ctx context.Context,
 	return exists, nil
 }
 
-func (r *DiscordGuildSettingsRepository) GetNotificationChannel(ctx context.Context, userID int64, guildID int64) (*int64, error) {
+func (r *DiscordGuildSettingsRepository) GetNotificationChannel(ctx context.Context, userID string, guildID int64) (*int64, error) {
 	query := `
 		SELECT notification_channel_id
 		FROM discord_guild_settings
@@ -286,7 +286,7 @@ func (r *DiscordGuildSettingsRepository) GetNotificationChannel(ctx context.Cont
 	return channelID, nil
 }
 
-func (r *DiscordGuildSettingsRepository) GetCommandChannel(ctx context.Context, userID int64, guildID int64) (*int64, error) {
+func (r *DiscordGuildSettingsRepository) GetCommandChannel(ctx context.Context, userID string, guildID int64) (*int64, error) {
 	query := `
 		SELECT command_channel_id
 		FROM discord_guild_settings

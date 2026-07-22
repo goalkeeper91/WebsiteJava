@@ -55,7 +55,7 @@ func (s *DiscordAuthService) GetAuthURL() (string, string, error) {
 	return authURL, state, nil
 }
 
-func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, userID int64) error {
+func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, userID string) error {
 	token, err := s.exchangeCodeForToken(code)
 	if err != nil {
 		return fmt.Errorf("failed to exchange code: %w", err)
@@ -112,11 +112,11 @@ func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, us
 	return nil
 }
 
-func (s *DiscordAuthService) GetConnection(ctx context.Context, userID int64) (*domain.DiscordConnection, error) {
+func (s *DiscordAuthService) GetConnection(ctx context.Context, userID string) (*domain.DiscordConnection, error) {
 	return s.connectionRepo.GetByUserID(ctx, userID)
 }
 
-func (s *DiscordAuthService) RefreshToken(ctx context.Context, userID int64) error {
+func (s *DiscordAuthService) RefreshToken(ctx context.Context, userID string) error {
 	connection, err := s.connectionRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get connection: %w", err)
@@ -145,11 +145,11 @@ func (s *DiscordAuthService) RefreshToken(ctx context.Context, userID int64) err
 	return nil
 }
 
-func (s *DiscordAuthService) Disconnect(ctx context.Context, userID int64) error {
+func (s *DiscordAuthService) Disconnect(ctx context.Context, userID string) error {
 	return s.connectionRepo.Delete(ctx, userID)
 }
 
-func (s *DiscordAuthService) IsConnected(ctx context.Context, userID int64) (bool, error) {
+func (s *DiscordAuthService) IsConnected(ctx context.Context, userID string) (bool, error) {
 	connection, err := s.connectionRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return false, err

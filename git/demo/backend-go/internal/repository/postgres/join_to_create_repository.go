@@ -134,7 +134,7 @@ func (r *JoinToCreateRepository) GetByGuild(ctx context.Context, guildID int64) 
 	return configs, nil
 }
 
-func (r *JoinToCreateRepository) GetByUser(ctx context.Context, userID int64) ([]domain.JoinToCreateConfig, error) {
+func (r *JoinToCreateRepository) GetByUser(ctx context.Context, userID string) ([]domain.JoinToCreateConfig, error) {
 	query := `
 		SELECT c.id, c.guild_id, c.user_id, c.join_channel_id, c.category_id,
 		       c.channel_name_prefix, c.user_limit, c.private_channel, c.enabled,
@@ -304,7 +304,7 @@ func (r *JoinToCreateRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *JoinToCreateRepository) UserOwnsConfig(ctx context.Context, userID int64, configID int64) (bool, error) {
+func (r *JoinToCreateRepository) UserOwnsConfig(ctx context.Context, userID string, configID int64) (bool, error) {
 	query := `
 		SELECT EXISTS(
 			SELECT 1 FROM join_to_create_configs

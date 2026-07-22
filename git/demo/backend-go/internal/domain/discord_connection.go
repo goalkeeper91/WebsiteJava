@@ -4,7 +4,7 @@ import "time"
 
 type DiscordConnection struct {
 	ID                   int64     `json:"id" db:"id"`
-	UserID               int64     `json:"userId" db:"user_id"`
+	UserID               string    `json:"userId" db:"user_id"`
 	DiscordUserID        int64     `json:"discordUserId" db:"discord_user_id"`
 	DiscordUsername      string    `json:"discordUsername" db:"discord_username"`
 	DiscordDiscriminator string    `json:"discordDiscriminator" db:"discord_discriminator"`
@@ -16,7 +16,7 @@ type DiscordConnection struct {
 }
 
 type DiscordConnectionCreateInput struct {
-	UserID               int64
+	UserID               string
 	DiscordUserID        int64
 	DiscordUsername      string
 	DiscordDiscriminator string

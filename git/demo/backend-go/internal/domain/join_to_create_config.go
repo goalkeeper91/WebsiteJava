@@ -5,7 +5,7 @@ import "time"
 type JoinToCreateConfig struct {
 	ID                int64     `json:"id" db:"id"`
 	GuildID           int64     `json:"guildId" db:"guild_id"`
-	UserID            int64     `json:"userId" db:"user_id"`
+	UserID            string    `json:"userId" db:"user_id"`
 	JoinChannelID     int64     `json:"joinChannelId" db:"join_channel_id"`
 	CategoryID        int64     `json:"categoryId" db:"category_id"`
 	ChannelNamePrefix string    `json:"channelNamePrefix" db:"channel_name_prefix"`
@@ -18,7 +18,7 @@ type JoinToCreateConfig struct {
 
 type JoinToCreateConfigCreateInput struct {
 	GuildID           int64
-	UserID            int64
+	UserID            string
 	JoinChannelID     int64
 	CategoryID        int64
 	ChannelNamePrefix string

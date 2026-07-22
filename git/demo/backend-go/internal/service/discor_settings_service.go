@@ -23,7 +23,7 @@ func NewDiscordSettingsService(
 	}
 }
 
-func (s *DiscordSettingsService) GetSettings(ctx context.Context, guildID int64, userID int64) (*domain.DiscordGuildSettings, error) {
+func (s *DiscordSettingsService) GetSettings(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuildSettings, error) {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check guild ownership: %w", err)
@@ -48,7 +48,7 @@ func (s *DiscordSettingsService) GetSettings(ctx context.Context, guildID int64,
 	return settings, nil
 }
 
-func (s *DiscordSettingsService) UpdateSettings(ctx context.Context, guildID int64, userID int64, input domain.DiscordGuildSettingsUpdateInput) (*domain.DiscordGuildSettings, error) {
+func (s *DiscordSettingsService) UpdateSettings(ctx context.Context, guildID int64, userID string, input domain.DiscordGuildSettingsUpdateInput) (*domain.DiscordGuildSettings, error) {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check guild ownership: %w", err)
@@ -86,7 +86,7 @@ func (s *DiscordSettingsService) UpdateSettings(ctx context.Context, guildID int
 	return s.settingsRepo.GetByGuildAndUser(ctx, guildID, userID)
 }
 
-func (s *DiscordSettingsService) CreateDefaultSettings(ctx context.Context, guildID int64, userID int64) (*domain.DiscordGuildSettings, error) {
+func (s *DiscordSettingsService) CreateDefaultSettings(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuildSettings, error) {
 	input := domain.DiscordGuildSettingsCreateInput{
 		GuildID:                    guildID,
 		UserID:                     userID,
@@ -101,7 +101,7 @@ func (s *DiscordSettingsService) CreateDefaultSettings(ctx context.Context, guil
 	return s.settingsRepo.Create(ctx, input)
 }
 
-func (s *DiscordSettingsService) DeleteSettings(ctx context.Context, guildID int64, userID int64) error {
+func (s *DiscordSettingsService) DeleteSettings(ctx context.Context, guildID int64, userID string) error {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return fmt.Errorf("failed to check guild ownership: %w", err)
@@ -114,11 +114,11 @@ func (s *DiscordSettingsService) DeleteSettings(ctx context.Context, guildID int
 	return s.settingsRepo.DeleteByGuildAndUser(ctx, guildID, userID)
 }
 
-func (s *DiscordSettingsService) GetNotificationChannel(ctx context.Context, userID int64, guildID int64) (*int64, error) {
+func (s *DiscordSettingsService) GetNotificationChannel(ctx context.Context, userID string, guildID int64) (*int64, error) {
 	return s.settingsRepo.GetNotificationChannel(ctx, userID, guildID)
 }
 
-func (s *DiscordSettingsService) GetCommandChannel(ctx context.Context, userID int64, guildID int64) (*int64, error) {
+func (s *DiscordSettingsService) GetCommandChannel(ctx context.Context, userID string, guildID int64) (*int64, error) {
 	return s.settingsRepo.GetCommandChannel(ctx, userID, guildID)
 }
 

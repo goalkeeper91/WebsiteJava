@@ -85,7 +85,7 @@ func (h *JoinToCreateHandler) ListConfigs(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -112,7 +112,7 @@ func (h *JoinToCreateHandler) GetConfig(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -122,7 +122,7 @@ func (h *JoinToCreateHandler) GetConfig(w http.ResponseWriter, r *http.Request, 
 	config, err := h.jtcService.GetConfig(r.Context(), configID, userID)
 	if err != nil {
 		log.Printf("Failed to get config: %v", err)
-		http.Error(w, err.Error(), http.StatusForbidden)
+		http.Error(w, "Zugriff nicht möglich", http.StatusForbidden)
 		return
 	}
 
@@ -139,7 +139,7 @@ func (h *JoinToCreateHandler) CreateConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -156,7 +156,7 @@ func (h *JoinToCreateHandler) CreateConfig(w http.ResponseWriter, r *http.Reques
 	config, err := h.jtcService.CreateConfig(r.Context(), input, userID)
 	if err != nil {
 		log.Printf("Failed to create config: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (h *JoinToCreateHandler) UpdateConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -191,7 +191,7 @@ func (h *JoinToCreateHandler) UpdateConfig(w http.ResponseWriter, r *http.Reques
 	config, err := h.jtcService.UpdateConfig(r.Context(), configID, userID, input)
 	if err != nil {
 		log.Printf("Failed to update config: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
 		return
 	}
 
@@ -208,7 +208,7 @@ func (h *JoinToCreateHandler) DeleteConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -218,7 +218,7 @@ func (h *JoinToCreateHandler) DeleteConfig(w http.ResponseWriter, r *http.Reques
 	err = h.jtcService.DeleteConfig(r.Context(), configID, userID)
 	if err != nil {
 		log.Printf("Failed to delete config: %v", err)
-		http.Error(w, err.Error(), http.StatusForbidden)
+		http.Error(w, "Zugriff nicht möglich", http.StatusForbidden)
 		return
 	}
 

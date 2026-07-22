@@ -43,7 +43,8 @@ type TwitchConfig struct {
 }
 
 type SecurityConfig struct {
-	AppSecretKey string
+	AppSecretKey     string
+	BotInternalSecret string
 }
 
 type SessionConfig struct {
@@ -97,7 +98,8 @@ func Load() (*Config, error) {
 			AdminTwitchID: getEnv("ADMIN_TWITCH_ID", ""),
 		},
 		Security: SecurityConfig{
-			AppSecretKey: getEnv("GO_APP_SECRET_KEY", ""),
+			AppSecretKey:      getEnv("GO_APP_SECRET_KEY", ""),
+			BotInternalSecret: getEnv("BOT_INTERNAL_SECRET", ""),
 		},
 		Session: SessionConfig{
 			Name:     getEnv("SESSION_NAME", "twitch_auth_session"),
@@ -145,6 +147,9 @@ func (c *Config) Validate() error {
 	}
 	if len(c.Session.Secret) < 32 {
 		return fmt.Errorf("SESSION_SECRET muss mindestens 32 Zeichen lang sein")
+	}
+	if len(c.Security.BotInternalSecret) < 32 {
+		return fmt.Errorf("BOT_INTERNAL_SECRET muss mindestens 32 Zeichen lang sein")
 	}
 	return nil
 }

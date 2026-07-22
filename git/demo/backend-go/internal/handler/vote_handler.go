@@ -14,20 +14,23 @@ import (
 )
 
 type VoteHandler struct {
-	voteService  *service.VoteService
-	sessionStore *sessions.CookieStore
-	sessionName  string
+	voteService    *service.VoteService
+	sessionStore   *sessions.CookieStore
+	sessionName    string
+	internalSecret string
 }
 
 func NewVoteHandler(
 	voteService *service.VoteService,
 	sessionStore *sessions.CookieStore,
 	sessionName string,
+	internalSecret string,
 ) *VoteHandler {
 	return &VoteHandler{
-		voteService:  voteService,
-		sessionStore: sessionStore,
-		sessionName:  sessionName,
+		voteService:    voteService,
+		sessionStore:   sessionStore,
+		sessionName:    sessionName,
+		internalSecret: internalSecret,
 	}
 }
 
@@ -170,7 +173,14 @@ func (h *VoteHandler) CloseSession(w http.ResponseWriter, r *http.Request) {
 // VOTING ENDPOINTS (participants)
 // ============================================================
 
+// CastVote is called server-to-server by the Twitch bot (which knows the real IRC
+// tags for subscriber status), authenticated via a shared secret rather than a
+// browser session, since voters aren't logged into the dashboard.
 func (h *VoteHandler) CastVote(w http.ResponseWriter, r *http.Request) {
+	if !requireInternalSecret(w, r, h.internalSecret) {
+		return
+	}
+
 	vars := mux.Vars(r)
 	sessionID, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {

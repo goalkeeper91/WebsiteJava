@@ -92,7 +92,7 @@ func (h *DiscordSettingsHandler) GetSettings(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -102,7 +102,7 @@ func (h *DiscordSettingsHandler) GetSettings(w http.ResponseWriter, r *http.Requ
 	settings, err := h.settingsService.GetSettings(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to get settings: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Anfrage fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *DiscordSettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -136,7 +136,7 @@ func (h *DiscordSettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.R
 	settings, err := h.settingsService.UpdateSettings(r.Context(), guildID, userID, input)
 	if err != nil {
 		log.Printf("Failed to update settings: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Anfrage fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *DiscordSettingsHandler) DeleteSettings(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -163,7 +163,7 @@ func (h *DiscordSettingsHandler) DeleteSettings(w http.ResponseWriter, r *http.R
 	err = h.settingsService.DeleteSettings(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to delete settings: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Anfrage fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 
@@ -182,7 +182,7 @@ func (h *DiscordSettingsHandler) SendTestNotification(w http.ResponseWriter, r *
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -206,7 +206,7 @@ func (h *DiscordSettingsHandler) SendTestNotification(w http.ResponseWriter, r *
 	err = h.notificationService.SendTestNotification(r.Context(), userID, guildID, input.ChannelID)
 	if err != nil {
 		log.Printf("Failed to send test notification: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Anfrage fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 

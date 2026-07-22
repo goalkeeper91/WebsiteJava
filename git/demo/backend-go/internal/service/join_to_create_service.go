@@ -31,11 +31,11 @@ func NewJoinToCreateService(
 	}
 }
 
-func (s *JoinToCreateService) ListConfigs(ctx context.Context, userID int64) ([]domain.JoinToCreateConfig, error) {
+func (s *JoinToCreateService) ListConfigs(ctx context.Context, userID string) ([]domain.JoinToCreateConfig, error) {
 	return s.jtcRepo.GetByUser(ctx, userID)
 }
 
-func (s *JoinToCreateService) GetConfig(ctx context.Context, configID int64, userID int64) (*domain.JoinToCreateConfig, error) {
+func (s *JoinToCreateService) GetConfig(ctx context.Context, configID int64, userID string) (*domain.JoinToCreateConfig, error) {
 	owns, err := s.jtcRepo.UserOwnsConfig(ctx, userID, configID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check config ownership: %w", err)
@@ -57,7 +57,7 @@ func (s *JoinToCreateService) GetConfig(ctx context.Context, configID int64, use
 	return config, nil
 }
 
-func (s *JoinToCreateService) CreateConfig(ctx context.Context, input domain.JoinToCreateConfigCreateInput, userID int64) (*domain.JoinToCreateConfig, error) {
+func (s *JoinToCreateService) CreateConfig(ctx context.Context, input domain.JoinToCreateConfigCreateInput, userID string) (*domain.JoinToCreateConfig, error) {
 	if err := s.validateConfigInput(input); err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (s *JoinToCreateService) CreateConfig(ctx context.Context, input domain.Joi
 	return config, nil
 }
 
-func (s *JoinToCreateService) UpdateConfig(ctx context.Context, configID int64, userID int64, input domain.JoinToCreateConfigUpdateInput) (*domain.JoinToCreateConfig, error) {
+func (s *JoinToCreateService) UpdateConfig(ctx context.Context, configID int64, userID string, input domain.JoinToCreateConfigUpdateInput) (*domain.JoinToCreateConfig, error) {
 	owns, err := s.jtcRepo.UserOwnsConfig(ctx, userID, configID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check config ownership: %w", err)
@@ -127,7 +127,7 @@ func (s *JoinToCreateService) UpdateConfig(ctx context.Context, configID int64, 
 	return s.jtcRepo.GetByID(ctx, configID)
 }
 
-func (s *JoinToCreateService) DeleteConfig(ctx context.Context, configID int64, userID int64) error {
+func (s *JoinToCreateService) DeleteConfig(ctx context.Context, configID int64, userID string) error {
 	owns, err := s.jtcRepo.UserOwnsConfig(ctx, userID, configID)
 	if err != nil {
 		return fmt.Errorf("failed to check config ownership: %w", err)
@@ -159,7 +159,7 @@ func (s *JoinToCreateService) DeleteConfig(ctx context.Context, configID int64, 
 	return nil
 }
 
-func (s *JoinToCreateService) GetGuildConfigs(ctx context.Context, guildID int64, userID int64) ([]domain.JoinToCreateConfig, error) {
+func (s *JoinToCreateService) GetGuildConfigs(ctx context.Context, guildID int64, userID string) ([]domain.JoinToCreateConfig, error) {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check guild ownership: %w", err)

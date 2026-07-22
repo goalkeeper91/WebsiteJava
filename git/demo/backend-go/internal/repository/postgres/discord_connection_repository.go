@@ -66,7 +66,7 @@ func (r *DiscordConnectionRepository) Create(ctx context.Context, input domain.D
 	return &conn, nil
 }
 
-func (r *DiscordConnectionRepository) GetByUserID(ctx context.Context, userID int64) (*domain.DiscordConnection, error) {
+func (r *DiscordConnectionRepository) GetByUserID(ctx context.Context, userID string) (*domain.DiscordConnection, error) {
 	query := `
 		SELECT id, user_id, discord_user_id, discord_username, discord_discriminator,
 		       access_token, refresh_token, token_expires_at, created_at, updated_at
@@ -155,7 +155,7 @@ func (r *DiscordConnectionRepository) GetByDiscordUserID(ctx context.Context, di
 	return &conn, nil
 }
 
-func (r *DiscordConnectionRepository) Update(ctx context.Context, userID int64, input domain.DiscordConnectionUpdateInput) error {
+func (r *DiscordConnectionRepository) Update(ctx context.Context, userID string, input domain.DiscordConnectionUpdateInput) error {
 	query := `
 		UPDATE discord_connections
 		SET discord_username = COALESCE($2, discord_username),
@@ -202,7 +202,7 @@ func (r *DiscordConnectionRepository) Update(ctx context.Context, userID int64, 
 	return nil
 }
 
-func (r *DiscordConnectionRepository) Delete(ctx context.Context, userID int64) error {
+func (r *DiscordConnectionRepository) Delete(ctx context.Context, userID string) error {
 	query := `DELETE FROM discord_connections WHERE user_id = $1`
 
 	_, err := r.db.ExecContext(ctx, query, userID)

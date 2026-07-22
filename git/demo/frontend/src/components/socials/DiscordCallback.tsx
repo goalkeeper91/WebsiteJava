@@ -18,7 +18,7 @@ const DiscordCallback: React.FC = () => {
       if (error) {
         setStatus("error");
         setMessage(`Discord OAuth error: ${error}`);
-        setTimeout(() => navigate("/dashboard/discord"), 3000);
+        setTimeout(() => navigate("/dashboard"), 3000);
         return;
       }
 
@@ -26,7 +26,7 @@ const DiscordCallback: React.FC = () => {
       if (!code) {
         setStatus("error");
         setMessage("Missing authorization code");
-        setTimeout(() => navigate("/dashboard/discord"), 3000);
+        setTimeout(() => navigate("/dashboard"), 3000);
         return;
       }
 
@@ -35,7 +35,7 @@ const DiscordCallback: React.FC = () => {
       if (state !== savedState) {
         setStatus("error");
         setMessage("Invalid state parameter. Possible CSRF attack.");
-        setTimeout(() => navigate("/dashboard/discord"), 3000);
+        setTimeout(() => navigate("/dashboard"), 3000);
         return;
       }
 
@@ -55,18 +55,18 @@ const DiscordCallback: React.FC = () => {
         if (res.ok) {
           setStatus("success");
           setMessage("Discord connected successfully!");
-          setTimeout(() => navigate("/dashboard/discord"), 2000);
+          setTimeout(() => navigate("/dashboard"), 2000);
         } else {
           const errorText = await res.text();
           setStatus("error");
           setMessage(errorText || "Failed to connect Discord");
-          setTimeout(() => navigate("/dashboard/discord"), 3000);
+          setTimeout(() => navigate("/dashboard"), 3000);
         }
       } catch (err) {
         console.error("Callback error:", err);
         setStatus("error");
         setMessage("Failed to connect Discord. Please try again.");
-        setTimeout(() => navigate("/dashboard/discord"), 3000);
+        setTimeout(() => navigate("/dashboard"), 3000);
       }
     };
 

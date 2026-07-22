@@ -10,12 +10,14 @@ import (
 )
 
 type BotAnnounceHandler struct {
-	redisService *redis.RedisService
+	redisService   *redis.RedisService
+	internalSecret string
 }
 
-func NewBotAnnounceHandler(redisService *redis.RedisService) *BotAnnounceHandler {
+func NewBotAnnounceHandler(redisService *redis.RedisService, internalSecret string) *BotAnnounceHandler {
 	return &BotAnnounceHandler{
-		redisService: redisService,
+		redisService:   redisService,
+		internalSecret: internalSecret,
 	}
 }
 
@@ -28,15 +30,16 @@ type AnnounceRequest struct {
 	ChannelID string `json:"channel_id,omitempty"` // Optional: specific Twitch channel
 }
 
-// AnnounceMessage sends a message to Twitch chat via the bot
+// AnnounceMessage sends a message to Twitch chat via the bot.
+// Called server-to-server by n8n/the bot, authenticated via a shared secret header
+// instead of a browser session.
 func (h *BotAnnounceHandler) AnnounceMessage(w http.ResponseWriter, r *http.Request) {
-	// CORS for n8n
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if !requireInternalSecret(w, r, h.internalSecret) {
 		return
 	}
 

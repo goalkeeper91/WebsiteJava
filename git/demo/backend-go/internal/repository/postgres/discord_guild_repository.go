@@ -101,7 +101,7 @@ func (r *DiscordGuildRepository) GetByID(ctx context.Context, guildID int64) (*d
 	return &guild, nil
 }
 
-func (r *DiscordGuildRepository) GetByOwner(ctx context.Context, userID int64) ([]domain.DiscordGuild, error) {
+func (r *DiscordGuildRepository) GetByOwner(ctx context.Context, userID string) ([]domain.DiscordGuild, error) {
 	query := `
 		SELECT id, owner_user_id, name, icon_url, member_count,
 		       bot_added_at, bot_removed_at, is_active, created_at, updated_at
@@ -276,7 +276,7 @@ func (r *DiscordGuildRepository) Delete(ctx context.Context, guildID int64) erro
 	return nil
 }
 
-func (r *DiscordGuildRepository) UserOwnsGuild(ctx context.Context, userID int64, guildID int64) (bool, error) {
+func (r *DiscordGuildRepository) UserOwnsGuild(ctx context.Context, userID string, guildID int64) (bool, error) {
 	query := `
 		SELECT EXISTS(
 			SELECT 1 FROM discord_guilds

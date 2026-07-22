@@ -3,9 +3,9 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, authChecked } = useAuth();
 
-  if (loading) {
+  if (loading || !authChecked) {
     return (
       <div className="flex items-center justify-center h-full text-gray-300">
         Lade Authentifizierung...

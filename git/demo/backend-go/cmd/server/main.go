@@ -248,14 +248,14 @@ func main() {
 	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name)
 	contactHandler := handler.NewContactHandler(contactRepo)
 	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
-	botStatsHandler := handler.NewBotStatsHandler(redisService)
+	botStatsHandler := handler.NewBotStatsHandler(redisService, sessionStore, cfg.Session.Name)
 
 	// SaaS / n8n
 	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, sessionStore, cfg.Session.Name)
 	n8nHandler := handler.NewN8NHandler(n8nService, sessionStore, cfg.Session.Name)
-	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name)
+	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 	workflowTemplateHandler := handler.NewWorkflowTemplateHandler(workflowTemplateService, sessionStore, cfg.Session.Name)
-	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService)
+	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService, cfg.Security.BotInternalSecret)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, sessionStore, cfg.Session.Name, redisService)

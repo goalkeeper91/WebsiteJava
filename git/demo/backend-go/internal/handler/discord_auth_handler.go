@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -59,38 +58,14 @@ func (h *DiscordAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// CRITICAL FIX: Handle both string and int64 types
-	var userID int64
-	userIDRaw, exists := session.Values["user_id"]
-	if !exists {
+	userID, ok := session.Values["user_id"].(string)
+	if !ok || userID == "" {
 		log.Printf("No user_id in session")
 		http.Error(w, "Unauthorized - Please login first", http.StatusUnauthorized)
 		return
 	}
 
-	// Try different type conversions
-	switch v := userIDRaw.(type) {
-	case int64:
-		userID = v
-	case int:
-		userID = int64(v)
-	case string:
-		parsed, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			log.Printf("Failed to parse user_id string: %v", err)
-			http.Error(w, "Unauthorized - Invalid user_id format", http.StatusUnauthorized)
-			return
-		}
-		userID = parsed
-	case float64:
-		userID = int64(v)
-	default:
-		log.Printf("Unknown user_id type: %T", userIDRaw)
-		http.Error(w, "Unauthorized - Invalid user_id type", http.StatusUnauthorized)
-		return
-	}
-
-	log.Printf("Processing auth URL for user %d", userID)
+	log.Printf("Processing auth URL for user %s", userID)
 
 	authURL, state, err := h.authService.GetAuthURL()
 	if err != nil {
@@ -107,7 +82,7 @@ func (h *DiscordAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	log.Printf("Stored state %s for user %d", state, userID)
+	log.Printf("Stored state %s for user %s", state, userID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -147,19 +122,19 @@ func (h *DiscordAuthHandler) HandleCallback(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	log.Printf("Processing Discord callback for user %d", userIDFromState)
+	log.Printf("Processing Discord callback for user %s", userIDFromState)
 
 	// Handle callback
 	err = h.authService.HandleCallback(r.Context(), code, userIDFromState)
 	if err != nil {
 		log.Printf("Failed to handle callback: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Discord-Verbindung fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 
 	// Clean up state
 	h.deleteState(state)
-	log.Printf("Successfully connected Discord for user %d", userIDFromState)
+	log.Printf("Successfully connected Discord for user %s", userIDFromState)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{
@@ -181,8 +156,8 @@ func (h *DiscordAuthHandler) Disconnect(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
-	if !ok {
+	userID, ok := session.Values["user_id"].(string)
+	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -219,8 +194,8 @@ func (h *DiscordAuthHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
-	if !ok {
+	userID, ok := session.Values["user_id"].(string)
+	if !ok || userID == "" {
 		// Not logged in - return not connected
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -253,7 +228,7 @@ func (h *DiscordAuthHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 
 // Helper functions for state management
 
-func (h *DiscordAuthHandler) storeState(state string, userID int64, ttl time.Duration) error {
+func (h *DiscordAuthHandler) storeState(state string, userID string, ttl time.Duration) error {
 	if h.redisService == nil {
 		return fmt.Errorf("redis service not available")
 	}
@@ -264,9 +239,8 @@ func (h *DiscordAuthHandler) storeState(state string, userID int64, ttl time.Dur
 	}
 
 	key := fmt.Sprintf("discord:oauth:state:%s", state)
-	value := fmt.Sprintf("%d", userID)
 
-	err := client.Set(context.Background(), key, value, ttl).Err()
+	err := client.Set(context.Background(), key, userID, ttl).Err()
 	if err != nil {
 		return fmt.Errorf("failed to store state in redis: %w", err)
 	}
@@ -274,30 +248,28 @@ func (h *DiscordAuthHandler) storeState(state string, userID int64, ttl time.Dur
 	return nil
 }
 
-func (h *DiscordAuthHandler) getUserFromState(state string) (int64, error) {
+func (h *DiscordAuthHandler) getUserFromState(state string) (string, error) {
 	if h.redisService == nil {
-		return 0, fmt.Errorf("redis service not available")
+		return "", fmt.Errorf("redis service not available")
 	}
 
 	client := h.redisService.GetClient()
 	if client == nil {
-		return 0, fmt.Errorf("redis client not available")
+		return "", fmt.Errorf("redis client not available")
 	}
 
 	key := fmt.Sprintf("discord:oauth:state:%s", state)
 
 	value, err := client.Get(context.Background(), key).Result()
 	if err != nil {
-		return 0, fmt.Errorf("state not found or expired: %w", err)
+		return "", fmt.Errorf("state not found or expired: %w", err)
 	}
 
-	var userID int64
-	_, err = fmt.Sscanf(value, "%d", &userID)
-	if err != nil {
-		return 0, fmt.Errorf("invalid user ID in state: %w", err)
+	if value == "" {
+		return "", fmt.Errorf("invalid user ID in state")
 	}
 
-	return userID, nil
+	return value, nil
 }
 
 func (h *DiscordAuthHandler) deleteState(state string) {

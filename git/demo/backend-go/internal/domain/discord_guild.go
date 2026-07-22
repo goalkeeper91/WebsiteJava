@@ -4,7 +4,7 @@ import "time"
 
 type DiscordGuild struct {
 	ID            int64      `json:"id" db:"id"`                       // Discord Guild ID (Snowflake)
-	OwnerUserID   *int64     `json:"ownerUserId" db:"owner_user_id"`   // User who added the bot
+	OwnerUserID   *string    `json:"ownerUserId" db:"owner_user_id"`   // User (TwitchID) who added the bot
 	Name          string     `json:"name" db:"name"`
 	IconURL       *string    `json:"iconUrl" db:"icon_url"`
 	MemberCount   *int       `json:"memberCount" db:"member_count"`
@@ -17,7 +17,7 @@ type DiscordGuild struct {
 
 type DiscordGuildCreateInput struct {
 	ID          int64
-	OwnerUserID *int64
+	OwnerUserID *string
 	Name        string
 	IconURL     *string
 	MemberCount *int

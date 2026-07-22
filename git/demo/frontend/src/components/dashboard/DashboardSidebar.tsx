@@ -8,12 +8,12 @@ import {
   Settings,
   Shield
 } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/AuthContext";
 import AdminBadge from "../admin/AdminBadge";
 
 export default function DashboardSidebar() {
   const location = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { username, isAdmin } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/dashboard" && location.pathname === "/dashboard") {
@@ -36,10 +36,10 @@ export default function DashboardSidebar() {
       <div className="mb-6 p-3 bg-gray-900 rounded-lg">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-sm font-bold">
-            {user?.username?.charAt(0).toUpperCase() || "U"}
+            {username?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold truncate">{user?.username || "User"}</p>
+            <p className="font-semibold truncate">{username || "User"}</p>
           </div>
         </div>
         {isAdmin && (

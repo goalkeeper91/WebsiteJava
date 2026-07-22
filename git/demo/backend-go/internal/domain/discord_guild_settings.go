@@ -5,7 +5,7 @@ import "time"
 type DiscordGuildSettings struct {
 	ID                         int64     `json:"id" db:"id"`
 	GuildID                    int64     `json:"guildId" db:"guild_id"`
-	UserID                     int64     `json:"userId" db:"user_id"`
+	UserID                     string    `json:"userId" db:"user_id"`
 
 	NotificationChannelID      *int64    `json:"notificationChannelId" db:"notification_channel_id"`
 	CommandChannelID           *int64    `json:"commandChannelId" db:"command_channel_id"`
@@ -22,7 +22,7 @@ type DiscordGuildSettings struct {
 
 type DiscordGuildSettingsCreateInput struct {
 	GuildID                    int64
-	UserID                     int64
+	UserID                     string
 	NotificationChannelID      *int64
 	CommandChannelID           *int64
 	ActivityChannelID          *int64

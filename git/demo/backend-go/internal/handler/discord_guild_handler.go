@@ -75,7 +75,7 @@ func (h *DiscordGuildHandler) ListGuilds(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode([]interface{}{})
@@ -145,7 +145,7 @@ func (h *DiscordGuildHandler) GetGuild(w http.ResponseWriter, r *http.Request, g
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -154,7 +154,7 @@ func (h *DiscordGuildHandler) GetGuild(w http.ResponseWriter, r *http.Request, g
 	guild, err := h.guildService.GetGuild(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to get guild: %v", err)
-		http.Error(w, err.Error(), http.StatusForbidden)
+		http.Error(w, "Zugriff auf diesen Server nicht möglich", http.StatusForbidden)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (h *DiscordGuildHandler) GetGuildDetails(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -178,7 +178,7 @@ func (h *DiscordGuildHandler) GetGuildDetails(w http.ResponseWriter, r *http.Req
 	details, err := h.guildService.GetGuildDetails(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to get guild details: %v", err)
-		http.Error(w, err.Error(), http.StatusForbidden)
+		http.Error(w, "Zugriff auf diesen Server nicht möglich", http.StatusForbidden)
 		return
 	}
 
@@ -193,7 +193,7 @@ func (h *DiscordGuildHandler) SyncGuild(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -202,7 +202,7 @@ func (h *DiscordGuildHandler) SyncGuild(w http.ResponseWriter, r *http.Request, 
 	err = h.guildService.SyncGuild(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to sync guild: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Synchronisation fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (h *DiscordGuildHandler) RemoveBot(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int64)
+	userID, ok := session.Values["user_id"].(string)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -228,7 +228,7 @@ func (h *DiscordGuildHandler) RemoveBot(w http.ResponseWriter, r *http.Request, 
 	err = h.guildService.RemoveBot(r.Context(), guildID, userID)
 	if err != nil {
 		log.Printf("Failed to remove bot: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Bot konnte nicht entfernt werden", http.StatusInternalServerError)
 		return
 	}
 

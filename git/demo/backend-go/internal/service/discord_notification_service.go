@@ -28,7 +28,7 @@ func NewDiscordNotificationService(
 	}
 }
 
-func (s *DiscordNotificationService) SendTwitchCommandNotification(ctx context.Context, userID int64, commandData map[string]interface{}) error {
+func (s *DiscordNotificationService) SendTwitchCommandNotification(ctx context.Context, userID string, commandData map[string]interface{}) error {
 	settings, err := s.settingsRepo.GetByUser(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get user settings: %w", err)
@@ -64,7 +64,7 @@ func (s *DiscordNotificationService) SendTwitchCommandNotification(ctx context.C
 	return nil
 }
 
-func (s *DiscordNotificationService) SendActivityNotification(ctx context.Context, userID int64, activityType string, activityData map[string]interface{}) error {
+func (s *DiscordNotificationService) SendActivityNotification(ctx context.Context, userID string, activityType string, activityData map[string]interface{}) error {
 	settings, err := s.settingsRepo.GetByUser(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get user settings: %w", err)
@@ -119,7 +119,7 @@ func (s *DiscordNotificationService) SendAdminContactNotification(ctx context.Co
 	return s.publishToDiscordBot(message)
 }
 
-func (s *DiscordNotificationService) SendTestNotification(ctx context.Context, userID int64, guildID int64, channelID int64) error {
+func (s *DiscordNotificationService) SendTestNotification(ctx context.Context, userID string, guildID int64, channelID int64) error {
 	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
 	if err != nil {
 		return fmt.Errorf("failed to check guild ownership: %w", err)
