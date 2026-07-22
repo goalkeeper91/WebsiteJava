@@ -66,6 +66,14 @@ var (
 	ErrTemplateNotAllowed  = errors.New("workflow template erfordert höheren plan")
 )
 
+// Automation Settings Errors
+var (
+	ErrInvalidClipDurationRange = errors.New("min_clip_duration darf nicht größer als max_clip_duration sein")
+	ErrClipDurationTooShort     = errors.New("min_clip_duration muss mindestens 5 sekunden betragen")
+	ErrClipDurationTooLong      = errors.New("max_clip_duration darf 300 sekunden (5 minuten) nicht überschreiten")
+	ErrInvalidHashtagCount      = errors.New("max_hashtags muss zwischen 0 und 30 liegen")
+)
+
 // General Errors
 var (
 	ErrUnauthorized   = errors.New("nicht autorisiert")

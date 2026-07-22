@@ -6,7 +6,8 @@ import {
   BarChart3,
   Package,
   Settings,
-  Shield
+  Shield,
+  Film
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AdminBadge from "../admin/AdminBadge";
@@ -26,6 +27,7 @@ export default function DashboardSidebar() {
     { path: "/dashboard", icon: Home, label: "Overview" },
     { path: "/dashboard/subscription", icon: CreditCard, label: "Subscription", badge: isAdmin ? <AdminBadge /> : null },
     { path: "/dashboard/n8n", icon: Zap, label: "n8n Integration", premium: true },
+    { path: "/dashboard/clips", icon: Film, label: "Clip-Automatisierung", premium: true },
     { path: "/dashboard/votes", icon: BarChart3, label: "Vote Sessions", premium: true },
     { path: "/dashboard/workflows", icon: Package, label: "Workflows", premium: true },
   ];

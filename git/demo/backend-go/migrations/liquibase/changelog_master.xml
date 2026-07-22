@@ -18,5 +18,9 @@
     <include file="changesets/011-create-discord-guild-settings.xml" relativeToChangelogFile="true"/>
     <include file="changesets/012-create-join-to-create-configs.xml" relativeToChangelogFile="true"/>
     <include file="changesets/013-add-n8n-integration-saas.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/014-create-social-connections.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/015-create-automation-settings.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/016-create-clip-logs.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/017-add-clip-automation-feature.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

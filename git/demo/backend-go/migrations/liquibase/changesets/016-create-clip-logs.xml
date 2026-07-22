@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="016-create-clip-logs-table" author="Marcel">
+        <comment>Historie der verarbeiteten Clips mit n8n Status</comment>
+        
+        <createTable tableName="clip_logs">
+            <!-- Primary Key -->
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Foreign Key zu users -->
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false" 
+                            foreignKeyName="fk_clip_logs_user"
+                            references="users(twitch_id)"
+                            deleteCascade="true"/>
+            </column>
+
+            <!-- Twitch Clip Info -->
+            <column name="clip_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="clip_url" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="clip_title" type="TEXT"/>
+
+            <column name="broadcaster_name" type="VARCHAR(255)"/>
+
+            <column name="game_name" type="VARCHAR(255)"/>
+
+            <column name="duration_seconds" type="INTEGER"/>
+
+            <column name="view_count" type="INTEGER" defaultValue="0"/>
+
+            <column name="created_at_twitch" type="TIMESTAMP"/>
+
+            <!-- Processing Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="pending">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Optionen: pending, processing, completed, failed, cancelled -->
+
+            <!-- n8n Job Info -->
+            <column name="n8n_workflow_id" type="VARCHAR(255)"/>
+
+            <column name="n8n_execution_id" type="VARCHAR(255)"/>
+
+            <column name="n8n_job_data" type="JSONB"/>
+            <!-- Vollständiger Job payload der an n8n gesendet wurde -->
+
+            <!-- AI Generated Content -->
+            <column name="ai_caption" type="TEXT"/>
+
+            <column name="ai_hashtags" type="JSONB"/>
+            <!-- Array von generierten Hashtags -->
+
+            <!-- Platform Posts -->
+            <column name="posted_platforms" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Beispiel: [{"platform": "tiktok", "post_id": "123", "url": "...", "posted_at": "..."}] -->
+
+            <!-- Error Handling -->
+            <column name="error_message" type="TEXT"/>
+
+            <column name="retry_count" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_retry_at" type="TIMESTAMP"/>
+
+            <!-- Metadata (Flexible JSONB für zusätzliche Daten) -->
+            <column name="metadata" type="JSONB" defaultValue="{}">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Beispiel: {"thumbnail_url": "...", "custom_fields": {...}} -->
+
+            <!-- Timestamps -->
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="completed_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <!-- Indizes für häufige Queries -->
+        <createIndex indexName="idx_clip_logs_user" tableName="clip_logs">
+            <column name="user_twitch_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_clip_logs_status" tableName="clip_logs">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_clip_logs_clip_id" tableName="clip_logs">
+            <column name="clip_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_clip_logs_n8n_execution" tableName="clip_logs">
+            <column name="n8n_execution_id"/>
+        </createIndex>
+
+        <!-- Composite Index für Dashboard Queries -->
+        <createIndex indexName="idx_clip_logs_user_status_created" tableName="clip_logs">
+            <column name="user_twitch_id"/>
+            <column name="status"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- GIN Index für JSONB Queries -->
+        <sql>
+            CREATE INDEX idx_clip_logs_metadata_gin ON clip_logs USING GIN (metadata);
+            CREATE INDEX idx_clip_logs_posted_platforms_gin ON clip_logs USING GIN (posted_platforms);
+        </sql>
+
+        <rollback>
+            <dropTable tableName="clip_logs"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

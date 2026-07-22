@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="015-create-automation-settings-table" author="Marcel">
+        <comment>User Automation Configuration für Clip Processing</comment>
+        
+        <createTable tableName="automation_settings">
+            <!-- Foreign Key zu users (1:1 Beziehung) -->
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints primaryKey="true" 
+                            nullable="false"
+                            foreignKeyName="fk_automation_settings_user"
+                            references="users(twitch_id)"
+                            deleteCascade="true"/>
+            </column>
+
+            <!-- Automation aktiv/inaktiv -->
+            <column name="is_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- AI Content Generation Settings -->
+            <column name="ai_tone" type="VARCHAR(50)" defaultValue="neutral">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Optionen: neutral, casual, professional, energetic, funny -->
+
+            <column name="ai_style" type="VARCHAR(50)" defaultValue="standard"/>
+            <!-- Optionen: standard, short, detailed, viral, storytelling -->
+
+            <column name="use_hashtags" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="max_hashtags" type="INTEGER" defaultValue="5">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Clip Filter Settings -->
+            <column name="min_clip_duration" type="INTEGER" defaultValue="10">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Sekunden -->
+
+            <column name="max_clip_duration" type="INTEGER" defaultValue="60">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="min_view_count" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="only_verified_clips" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Zielplattformen (Array als JSON) -->
+            <column name="target_platforms" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Beispiel: ["tiktok", "youtube"] -->
+
+            <!-- Posting Schedule -->
+            <column name="auto_post_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="posting_frequency" type="VARCHAR(50)" defaultValue="daily"/>
+            <!-- Optionen: realtime, hourly, daily, weekly, manual -->
+
+            <column name="preferred_posting_times" type="JSONB"/>
+            <!-- Beispiel: ["09:00", "15:00", "21:00"] -->
+
+            <!-- Content Restrictions -->
+            <column name="blocked_words" type="JSONB" defaultValue="[]"/>
+            <!-- Wörter die nicht in Clips vorkommen dürfen -->
+
+            <column name="allowed_games" type="JSONB"/>
+            <!-- Null = alle Games erlaubt, sonst Array von Game IDs -->
+
+            <!-- Notification Settings -->
+            <column name="notify_on_post" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="notify_on_error" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Timestamps -->
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Index für aktive Automations -->
+        <createIndex indexName="idx_automation_settings_enabled" tableName="automation_settings">
+            <column name="is_enabled"/>
+        </createIndex>
+
+        <createIndex indexName="idx_automation_settings_auto_post" tableName="automation_settings">
+            <column name="auto_post_enabled"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="automation_settings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

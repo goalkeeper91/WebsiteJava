@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/repository/postgres"
@@ -99,6 +100,62 @@ func (s *DiscordNotificationService) SendActivityNotification(ctx context.Contex
 	}
 
 	return nil
+}
+
+// SendClipNotification announces a newly created clip in every Discord guild
+// the user has connected with a configured notification channel. Returns
+// whether at least one channel was actually configured, so the caller can
+// tell "nothing to do" apart from a real failure.
+func (s *DiscordNotificationService) SendClipNotification(ctx context.Context, userID, clipTitle, clipURL, caption string, hashtags []string) (bool, error) {
+	settings, err := s.settingsRepo.GetByUser(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user settings: %w", err)
+	}
+
+	posted := false
+	for _, setting := range settings {
+		if setting.NotificationChannelID == nil {
+			continue
+		}
+
+		guild, err := s.guildRepo.GetByID(ctx, setting.GuildID)
+		if err != nil || guild == nil || !guild.IsActive {
+			continue
+		}
+
+		embed := s.buildClipEmbed(clipTitle, clipURL, caption, hashtags)
+
+		message := map[string]interface{}{
+			"type":              "SEND_NOTIFICATION",
+			"user_id":           userID,
+			"guild_id":          setting.GuildID,
+			"channel_id":        *setting.NotificationChannelID,
+			"notification_type": "new_clip",
+			"embed":             embed,
+		}
+
+		if err := s.publishToDiscordBot(message); err != nil {
+			fmt.Printf("Warning: failed to send clip notification to guild %d: %v\n", setting.GuildID, err)
+			continue
+		}
+		posted = true
+	}
+
+	return posted, nil
+}
+
+func (s *DiscordNotificationService) buildClipEmbed(clipTitle, clipURL, caption string, hashtags []string) map[string]interface{} {
+	description := caption
+	if len(hashtags) > 0 {
+		description += "\n\n" + strings.Join(hashtags, " ")
+	}
+
+	return map[string]interface{}{
+		"title":       "🎬 Neuer Clip: " + clipTitle,
+		"description": description,
+		"url":         clipURL,
+		"color":       9520895, // Twitch-Lila
+	}
 }
 
 func (s *DiscordNotificationService) SendAdminContactNotification(ctx context.Context, contactData map[string]interface{}) error {

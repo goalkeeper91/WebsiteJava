@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="014-create-social-connections-table" author="Marcel">
+        <comment>Social Media Platform OAuth Connections</comment>
+        
+        <createTable tableName="social_connections">
+            <!-- Primary Key -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Foreign Key zu users -->
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false" 
+                            foreignKeyName="fk_social_connections_user"
+                            references="users(twitch_id)"
+                            deleteCascade="true"/>
+            </column>
+
+            <!-- Plattform (tiktok, youtube, instagram) -->
+            <column name="platform" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Platform User ID -->
+            <column name="platform_user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Platform Username/Display Name -->
+            <column name="platform_username" type="VARCHAR(255)"/>
+
+            <!-- Encrypted OAuth Tokens -->
+            <column name="access_token" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="refresh_token" type="TEXT"/>
+
+            <!-- Token Metadata -->
+            <column name="token_type" type="VARCHAR(50)" defaultValue="Bearer"/>
+            
+            <column name="expires_at" type="TIMESTAMP"/>
+
+            <column name="scope" type="TEXT"/>
+
+            <!-- Connection Status -->
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Timestamps -->
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_used_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <!-- Unique: Ein User kann pro Platform nur eine Connection haben -->
+        <addUniqueConstraint 
+            tableName="social_connections"
+            columnNames="user_twitch_id, platform"
+            constraintName="uq_social_connections_user_platform"/>
+
+        <!-- Index für schnelle Lookups -->
+        <createIndex indexName="idx_social_connections_user" tableName="social_connections">
+            <column name="user_twitch_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_social_connections_platform" tableName="social_connections">
+            <column name="platform"/>
+        </createIndex>
+
+        <createIndex indexName="idx_social_connections_active" tableName="social_connections">
+            <column name="is_active"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="social_connections"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

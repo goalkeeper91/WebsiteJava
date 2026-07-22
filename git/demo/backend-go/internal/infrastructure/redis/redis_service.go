@@ -13,7 +13,14 @@ import (
 const (
 	BotEventsChannel     = "bot:events"
 	BackendEventsChannel = "backend:events"
+	ClipsTriggerChannel  = "clips:trigger"
 )
+
+type ClipTrigger struct {
+	UserTwitchID string `json:"user_twitch_id"`
+	Reason       string `json:"reason"`
+	Timestamp    string `json:"timestamp"`
+}
 
 type BotSignal struct {
 	Type         string `json:"type"`
@@ -117,6 +124,28 @@ func (r *RedisService) SendBotAnnounce(message string, twitchUserID string) erro
     }
 
     return r.client.Publish(context.Background(), BotEventsChannel, data).Err()
+}
+
+// SendClipTrigger publishes a clip-worthy-moment trigger from the clip-detector
+// worker to backend-go, which creates the actual Twitch clip (Phase C).
+func (r *RedisService) SendClipTrigger(userTwitchID, reason string) error {
+	trigger := ClipTrigger{
+		UserTwitchID: userTwitchID,
+		Reason:       reason,
+		Timestamp:    time.Now().Format(time.RFC3339),
+	}
+
+	data, err := json.Marshal(trigger)
+	if err != nil {
+		return fmt.Errorf("fehler beim serialisieren: %w", err)
+	}
+
+	if err := r.client.Publish(context.Background(), ClipsTriggerChannel, data).Err(); err != nil {
+		return fmt.Errorf("fehler beim publishen: %w", err)
+	}
+
+	log.Printf("📤 Clip-Trigger gesendet: user=%s reason=%s", userTwitchID, reason)
+	return nil
 }
 
 func (r *RedisService) publish(signal BotSignal) error {

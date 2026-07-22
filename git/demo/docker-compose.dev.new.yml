@@ -82,6 +82,8 @@ services:
         condition: service_healthy
       liquibase:
         condition: service_completed_successfully
+      ollama:
+        condition: service_started
     env_file:
       - .env
     environment:
@@ -115,6 +117,10 @@ services:
       # Frontend
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       ALLOWED_ORIGINS: http://localhost,http://localhost:5173,http://localhost:80
+
+      # Ollama (Phase D)
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: llama3.2:3b
     expose:
       - "8080"
     networks:
@@ -125,6 +131,56 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # =========================
+  # Ollama (Phase D: selbstgehostete KI-Caption, keine externen API-Kosten)
+  # =========================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: goalkeeper_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    networks:
+      - app-network
+
+  # =========================
+  # Clip-Detector (Phase B: Audio/Video-Heuristiken, v1 nur Allowlist-Kanäle)
+  # =========================
+  clip-detector:
+    build:
+      context: ./backend-go
+      dockerfile: docker/Dockerfile.detector
+    container_name: goalkeeper_clip_detector
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      liquibase:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-twitch_auth}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_SSLMODE: disable
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+
+      # Sicherheitsgate v1: nur diese Twitch User-IDs (numerisch, wie users.twitch_id)
+      # werden beobachtet. Siehe Phase-B-Plan zur ToS-Einordnung von streamlink.
+      DETECTOR_ALLOWED_USERS: ${DETECTOR_ALLOWED_USERS:-}
+    networks:
+      - app-network
 
   # =========================
   # Frontend (Vite Dev)
@@ -177,6 +233,8 @@ volumes:
   postgres_data_dev:
     driver: local
   redis_data_dev:
+    driver: local
+  ollama_data:
     driver: local
 
 # =========================

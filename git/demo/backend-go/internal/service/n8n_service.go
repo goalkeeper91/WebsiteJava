@@ -34,6 +34,21 @@ type N8NCommandResponse struct {
 	Actions  []map[string]interface{} `json:"actions,omitempty"`
 }
 
+// N8NClipPostPayload is what we send to n8n once a clip has been created and
+// is ready to be distributed (Phase D picks this up: AI caption + posting).
+type N8NClipPostPayload struct {
+	ClipID          string   `json:"clip_id"`
+	ClipURL         string   `json:"clip_url"`
+	Title           string   `json:"title"`
+	GameName        string   `json:"game_name,omitempty"`
+	DurationSeconds int      `json:"duration_seconds"`
+	AITone          string   `json:"ai_tone"`
+	AIStyle         string   `json:"ai_style"`
+	UseHashtags     bool     `json:"use_hashtags"`
+	MaxHashtags     int      `json:"max_hashtags"`
+	TargetPlatforms []string `json:"target_platforms"`
+}
+
 type N8NService struct {
 	n8nRepo         repository.N8NIntegrationRepository
 	subscriptionSvc *SubscriptionService
@@ -166,6 +181,22 @@ func (s *N8NService) TriggerCommandWebhook(ctx context.Context, userID string, p
 
 	// Use centralized webhook URL with user-specific path
 	webhookURL := fmt.Sprintf("%s/%s/command-handler", s.webhookBaseURL, userID)
+	return s.callWebhook(ctx, webhookURL, payload)
+}
+
+// TriggerClipPostWebhook hands a completed clip off to n8n for distribution
+// (Phase D: AI caption + posting to the user's configured link-share platforms).
+func (s *N8NService) TriggerClipPostWebhook(ctx context.Context, userID string, payload N8NClipPostPayload) (*N8NCommandResponse, error) {
+	integration, err := s.n8nRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if integration == nil || !integration.IsReady() {
+		return nil, domain.ErrN8NIntegrationNotReady
+	}
+
+	webhookURL := fmt.Sprintf("%s/%s/clip-post-handler", s.webhookBaseURL, userID)
 	return s.callWebhook(ctx, webhookURL, payload)
 }
 

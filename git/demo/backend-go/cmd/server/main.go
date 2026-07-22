@@ -71,6 +71,10 @@ func main() {
 	voteRepo := postgres.NewVoteRepository(db)
 	analyticsRepo := postgres.NewUsageAnalyticsRepository(db)
 
+	// Clip-Automatisierung
+	automationSettingsRepo := postgres.NewAutomationSettingsRepository(db)
+	clipLogRepo := postgres.NewClipLogRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -117,6 +121,12 @@ func main() {
 		n8nIntegrationRepo,
 		subscriptionService,
 	)
+
+	automationSettingsService := service.NewAutomationSettingsService(
+		automationSettingsRepo,
+		subscriptionService,
+	)
+	clipLogService := service.NewClipLogService(clipLogRepo)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -201,7 +211,7 @@ func main() {
 		ClientID:     cfg.Twitch.ClientID,
 		ClientSecret: cfg.Twitch.ClientSecret,
 		RedirectURL:  cfg.Twitch.RedirectURL,
-		Scopes:       []string{"user:read:email"},
+		Scopes:       []string{"user:read:email", "clips:edit"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 			TokenURL: "https://id.twitch.tv/oauth2/token",
@@ -218,6 +228,24 @@ func main() {
 
 	// Inject authService into tokenRefreshService
 	tokenRefreshService.SetAuthService(baseAuthService)
+
+	// Clip-Erzeugung (Phase C): braucht baseAuthService für Token-Refresh
+	// Phase D: Caption via selbstgehostetem Ollama, Discord-Post über den bestehenden Bot
+	captionService := service.NewCaptionService(
+		getEnv("OLLAMA_BASE_URL", "http://ollama:11434"),
+		getEnv("OLLAMA_MODEL", "llama3.2:3b"),
+	)
+
+	clipCreationService := service.NewClipCreationService(
+		clipLogRepo,
+		tokenRepo,
+		automationSettingsRepo,
+		baseAuthService,
+		n8nService,
+		discordNotificationService,
+		captionService,
+		cfg.Twitch.ClientID,
+	)
 
 	// Wrapper: synct Channel nach Login
 	authService := &AuthServiceWithChannelSync{
@@ -256,6 +284,8 @@ func main() {
 	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 	workflowTemplateHandler := handler.NewWorkflowTemplateHandler(workflowTemplateService, sessionStore, cfg.Session.Name)
 	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService, cfg.Security.BotInternalSecret)
+	automationSettingsHandler := handler.NewAutomationSettingsHandler(automationSettingsService, sessionStore, cfg.Session.Name)
+	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, sessionStore, cfg.Session.Name, redisService)
@@ -288,6 +318,8 @@ func main() {
 	voteHandler.RegisterRoutes(router)
 	workflowTemplateHandler.RegisterRoutes(router)
 	botAnnounceHandler.RegisterRoutes(router)
+	automationSettingsHandler.RegisterRoutes(router)
+	clipLogHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
@@ -307,6 +339,15 @@ func main() {
 		log.Println("🚀 Discord Bot Event Listener gestartet...")
 		if err := discordBotEventListener.Start(ctx); err != nil {
 			log.Printf("Discord Bot Event Listener Fehler: %v", err)
+		}
+	}()
+
+	// Clip trigger listener (Phase C)
+	clipTriggerListener := service.NewClipTriggerListener(redisService, clipCreationService)
+	go func() {
+		ctx := context.Background()
+		if err := clipTriggerListener.Start(ctx); err != nil {
+			log.Printf("Clip Trigger Listener Fehler: %v", err)
 		}
 	}()
 

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="017-add-clip-automation-feature" author="Marcel">
+        <comment>Clip-Automatisierung ist ein Pro/Premium-Feature (begrenzt laufende Rechenlast auf zahlende Nutzer)</comment>
+
+        <sql>
+            UPDATE subscription_tiers
+            SET features = features || '{"clip_automation": true}'::jsonb
+            WHERE id IN ('pro', 'premium');
+
+            UPDATE subscription_tiers
+            SET features = features || '{"clip_automation": false}'::jsonb
+            WHERE id = 'free';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

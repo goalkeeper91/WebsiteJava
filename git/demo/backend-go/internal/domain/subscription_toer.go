@@ -24,6 +24,7 @@ type TierFeatures struct {
 	CustomWorkflows   bool `json:"custom_workflows"`
 	APIAccess         bool `json:"api_access"`
 	PrioritySupport   bool `json:"priority_support"`
+	ClipAutomation    bool `json:"clip_automation"`
 }
 
 type SubscriptionTier struct {
@@ -61,6 +62,8 @@ func (t *SubscriptionTier) HasFeature(feature string) bool {
 		return t.Features.APIAccess
 	case "priority_support":
 		return t.Features.PrioritySupport
+	case "clip_automation":
+		return t.Features.ClipAutomation
 	}
 	return false
 }

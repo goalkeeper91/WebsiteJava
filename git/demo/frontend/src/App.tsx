@@ -7,6 +7,7 @@ import ProtectedRoute from './components/routes/ProtectedRoutes';
 import AdminRoute from './components/routes/AdminRoute';
 import DiscordCallback from './components/socials/DiscordCallback';
 import N8NIntegrationSetup from './components/N8NIntegrationSetup';
+import ClipAutomationPage from './components/ClipAutomationPage';
 import SubscriptionDashboard from './components/SubscriptionDashboard';
 import VoteSessionManager from './components/VoteSessionManager';
 import WorkflowMarketplace from './components/WorkflowMarketplace';
@@ -64,6 +65,7 @@ const App = () => {
                 <Route index element={<DashboardOverview />} />
                 <Route path='subscription' element={<SubscriptionDashboard />} />
                 <Route path='n8n' element={<N8NIntegrationSetup />} />
+                <Route path='clips' element={<ClipAutomationPage />} />
                 <Route path='votes' element={<VoteSessionManager />} />
                 <Route path='workflows' element={<WorkflowMarketplace />} />
               </Route>
