@@ -84,10 +84,12 @@ export default function N8NIntegrationSetup() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-800 rounded w-1/3"></div>
-          <div className="h-64 bg-gray-800 rounded"></div>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="p-6 max-w-4xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-800 rounded w-1/3"></div>
+            <div className="h-64 bg-gray-800 rounded"></div>
+          </div>
         </div>
       </div>
     );
@@ -95,25 +97,28 @@ export default function N8NIntegrationSetup() {
 
   if (!hasProAccess) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-gray-800 rounded-xl p-8 text-center">
-          <Zap className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">n8n Integration</h2>
-          <p className="text-gray-400 mb-6">
-            Advanced Commands und Workflows mit n8n sind nur in Pro und Premium verfügbar.
-          </p>
-          <a
-            href="/dashboard/subscription"
-            className="inline-block px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg transition-colors font-semibold"
-          >
-            Jetzt upgraden
-          </a>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="p-6 max-w-4xl mx-auto">
+          <div className="bg-gray-800 rounded-xl p-8 text-center">
+            <Zap className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">n8n Integration</h2>
+            <p className="text-gray-400 mb-6">
+              Advanced Commands und Workflows mit n8n sind nur in Pro und Premium verfügbar.
+            </p>
+            <a
+              href="/dashboard/subscription"
+              className="inline-block px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg transition-colors font-semibold"
+            >
+              Jetzt upgraden
+            </a>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
+    <div className="min-h-screen bg-gray-900 text-white">
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -302,6 +307,7 @@ export default function N8NIntegrationSetup() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

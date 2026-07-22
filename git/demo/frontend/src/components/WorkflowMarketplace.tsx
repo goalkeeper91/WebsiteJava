@@ -125,13 +125,15 @@ export default function WorkflowMarketplace() {
 
   if (loading && templates.length === 0) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-800 rounded w-1/3"></div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 bg-gray-800 rounded"></div>
-            ))}
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-800 rounded w-1/3"></div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-64 bg-gray-800 rounded"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -139,6 +141,7 @@ export default function WorkflowMarketplace() {
   }
 
   return (
+    <div className="min-h-screen bg-gray-900 text-white">
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -312,6 +315,7 @@ export default function WorkflowMarketplace() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -181,13 +181,15 @@ export default function SubscriptionDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-800 rounded w-1/3"></div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-96 bg-gray-800 rounded"></div>
-            ))}
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-800 rounded w-1/3"></div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-96 bg-gray-800 rounded"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -197,6 +199,7 @@ export default function SubscriptionDashboard() {
   const currentTierID = subscription?.tierID || "free";
 
   return (
+    <div className="min-h-screen bg-gray-900 text-white">
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
@@ -356,6 +359,7 @@ export default function SubscriptionDashboard() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

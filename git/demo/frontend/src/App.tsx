@@ -24,13 +24,13 @@ import { LoginPopup } from './components/popup/LoginFailed';
 const App = () => {
   return (
     <Router>
-      <div className='flex flex-col w-screen min-h-screen bg-black-100 text-white overflow-x-hidden'>
+      <div className='grid grid-rows-[auto_1fr_auto] w-full min-h-screen bg-black-100 text-white overflow-x-hidden'>
         <Header />
 
         <LoginPopup />
 
-        <main className='flex-grow w-screen pt-17'>
-          <div className='w-full max-w-screen'>
+        <main className='w-full pt-17'>
+          <div className='w-full max-w-full'>
             <Routes>
               {/* Public Routes */}
               <Route path='/' element={<Home />} />

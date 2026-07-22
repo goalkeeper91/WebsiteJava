@@ -12,6 +12,12 @@ export default defineConfig({
       host: true,
       port: 5173,
       strictPort: true,
+      watch: {
+        // Docker Desktop on Windows doesn't propagate inotify events for
+        // bind-mounted volumes, so the default file watcher silently misses
+        // edits. Polling works around that.
+        usePolling: true,
+      },
       hmr: {
         host: 'localhost',     // Browser verbindet sich korrekt
         protocol: 'ws',

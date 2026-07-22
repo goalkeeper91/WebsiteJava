@@ -13,7 +13,7 @@ const Header: React.FC = () => {
     };
 
     return (
-            <header className="fixed z-50 w-full bg-slate-700/60 text-white">
+            <header className="fixed top-0 left-0 z-50 w-full bg-slate-700/60 text-white">
                 <div className="flex items-center justify-between py-2 px-6">
                     <Link to="/" className="flex items-center space-x-4">
                         <img
