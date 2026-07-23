@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MessageSquare, Hash } from "lucide-react";
 import CommandsDashboard from "./CommandsDashboard";
 import DiscordDashboard from "./DiscordDashboard";
@@ -6,7 +7,10 @@ import DiscordDashboard from "./DiscordDashboard";
 type DashboardTab = "twitch" | "discord";
 
 const DashboardOverview: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<DashboardTab>("twitch");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<DashboardTab>(
+    searchParams.get("tab") === "discord" ? "discord" : "twitch"
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

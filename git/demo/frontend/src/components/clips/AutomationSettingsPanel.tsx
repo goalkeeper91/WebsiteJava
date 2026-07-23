@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Save, Lock } from "lucide-react";
+import { Sparkles, Save, Lock, AlertTriangle } from "lucide-react";
 import {
   getAutomationSettings,
   updateAutomationSettings,
@@ -311,6 +311,20 @@ export default function AutomationSettingsPanel() {
         <p className="text-xs text-gray-500 mt-2">
           v1: Clips werden als Link geteilt (Discord/X). Natives Re-Upload zu TikTok/YouTube/Instagram folgt später.
         </p>
+
+        {(settings.target_platforms || []).includes("discord") && (
+          <div className="mt-3 flex items-start gap-2 bg-yellow-900/20 border border-yellow-600/40 rounded-lg p-3 text-sm text-yellow-200">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>
+              Discord ist aktiv, aber Clips werden nur gepostet, wenn dein Server einen Benachrichtigungs-Kanal
+              konfiguriert hat.{" "}
+              <a href="/dashboard?tab=discord" className="underline font-medium hover:text-yellow-100">
+                Jetzt unter Dashboard → Discord einrichten
+              </a>
+              .
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end">
