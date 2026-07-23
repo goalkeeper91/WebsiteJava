@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Pause, RotateCcw, Copy, Radio } from "lucide-react";
 import {
   getSubathonState,
@@ -23,16 +23,24 @@ export default function SubathonPage() {
   const [error, setError] = useState<string | null>(null);
   const [settingsForm, setSettingsForm] = useState({ initialTime: 30, subTime: 120, bitsTime: 30 });
   const [saving, setSaving] = useState(false);
+  // load() polls every second to keep the countdown/stats live, but the
+  // settings form must only be seeded from the server once - otherwise
+  // every tick overwrites whatever the user is currently typing before
+  // they get a chance to hit Save.
+  const settingsLoadedRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
       const data = await getSubathonState();
       setState(data);
-      setSettingsForm({
-        initialTime: data.initialTime,
-        subTime: data.subTime,
-        bitsTime: data.bitsTime,
-      });
+      if (!settingsLoadedRef.current) {
+        setSettingsForm({
+          initialTime: data.initialTime,
+          subTime: data.subTime,
+          bitsTime: data.bitsTime,
+        });
+        settingsLoadedRef.current = true;
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fehler beim Laden");
