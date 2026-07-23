@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/sessions"
     "github.com/gorilla/mux"
@@ -33,7 +32,7 @@ func NewJoinToCreateHandler(
 
 func (h *JoinToCreateHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/discord/join-to-create", h.handleConfigs)
-	router.HandleFunc("/api/discord/join-to-create/", h.handleConfigByID)
+	router.HandleFunc("/api/discord/join-to-create/{id}", h.handleConfigByID)
 }
 
 // handleConfigs handles listing and creating configs
@@ -48,17 +47,13 @@ func (h *JoinToCreateHandler) handleConfigs(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// handleConfigByID handles operations on specific config
+// handleConfigByID handles operations on specific config. Previously
+// registered as the plain string "/api/discord/join-to-create/" with manual
+// strings.TrimPrefix parsing - gorilla/mux only matches that literally, so
+// this whole route 404'd before ever reaching the handler. A path variable
+// ({id}) fixes that.
 func (h *JoinToCreateHandler) handleConfigByID(w http.ResponseWriter, r *http.Request) {
-	// Extract config ID from path
-	path := strings.TrimPrefix(r.URL.Path, "/api/discord/join-to-create/")
-
-	if path == "" {
-		http.Error(w, "Config ID required", http.StatusBadRequest)
-		return
-	}
-
-	configID, err := strconv.ParseInt(path, 10, 64)
+	configID, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid config ID", http.StatusBadRequest)
 		return

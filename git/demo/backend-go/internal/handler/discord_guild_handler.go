@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/mux"
@@ -64,8 +63,20 @@ func (h *DiscordGuildHandler) isAdmin(r *http.Request) bool {
 
 func (h *DiscordGuildHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/discord/guilds", h.handleGuilds)
-	router.HandleFunc("/api/discord/guilds/", h.handleGuildByID)
+	router.HandleFunc("/api/discord/guilds/{id}/sync", h.handleSyncGuild).Methods(http.MethodPost)
+	router.HandleFunc("/api/discord/guilds/{id}/details", h.handleGetGuildDetails).Methods(http.MethodGet)
+	router.HandleFunc("/api/discord/guilds/{id}", h.handleGuildByID)
 	router.HandleFunc("/api/discord/bot/invite-url", h.GetInviteURL)
+}
+
+// parseGuildID reads the {id} path variable gorilla/mux extracted for the
+// current route. The routes above were previously registered as the plain
+// string "/api/discord/guilds/" with manual strings.Split parsing inside the
+// handler - mux only matches that literally, so every nested path
+// (.../{id}, .../{id}/details, .../{id}/sync) 404'd before ever reaching the
+// handler. Path variables fix that.
+func parseGuildID(r *http.Request) (int64, error) {
+	return strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 }
 
 func (h *DiscordGuildHandler) GetInviteURL(w http.ResponseWriter, r *http.Request) {
@@ -120,37 +131,9 @@ func (h *DiscordGuildHandler) ListGuilds(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *DiscordGuildHandler) handleGuildByID(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/discord/guilds/")
-	parts := strings.Split(path, "/")
-
-	if len(parts) == 0 || parts[0] == "" {
-		http.Error(w, "Guild ID required", http.StatusBadRequest)
-		return
-	}
-
-	guildID, err := strconv.ParseInt(parts[0], 10, 64)
+	guildID, err := parseGuildID(r)
 	if err != nil {
 		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
-		return
-	}
-
-	if len(parts) > 1 {
-		switch parts[1] {
-		case "sync":
-			if r.Method == http.MethodPost {
-				h.SyncGuild(w, r, guildID)
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
-		case "details":
-			if r.Method == http.MethodGet {
-				h.GetGuildDetails(w, r, guildID)
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
-		default:
-			http.Error(w, "Not found", http.StatusNotFound)
-		}
 		return
 	}
 
@@ -162,6 +145,24 @@ func (h *DiscordGuildHandler) handleGuildByID(w http.ResponseWriter, r *http.Req
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (h *DiscordGuildHandler) handleSyncGuild(w http.ResponseWriter, r *http.Request) {
+	guildID, err := parseGuildID(r)
+	if err != nil {
+		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+		return
+	}
+	h.SyncGuild(w, r, guildID)
+}
+
+func (h *DiscordGuildHandler) handleGetGuildDetails(w http.ResponseWriter, r *http.Request) {
+	guildID, err := parseGuildID(r)
+	if err != nil {
+		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+		return
+	}
+	h.GetGuildDetails(w, r, guildID)
 }
 
 func (h *DiscordGuildHandler) GetGuild(w http.ResponseWriter, r *http.Request, guildID int64) {

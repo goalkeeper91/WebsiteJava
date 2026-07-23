@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/sessions"
     "github.com/gorilla/mux"
@@ -35,38 +34,31 @@ func NewDiscordSettingsHandler(
 }
 
 func (h *DiscordSettingsHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/discord/guilds/", h.handleGuildSettings)
+	router.HandleFunc("/api/discord/guilds/{id}/settings", h.handleSettingsRoute)
+	router.HandleFunc("/api/discord/guilds/{id}/test-notification", h.handleTestNotificationRoute).Methods(http.MethodPost)
 }
 
-// handleGuildSettings routes guild settings requests
-func (h *DiscordSettingsHandler) handleGuildSettings(w http.ResponseWriter, r *http.Request) {
-	// Extract guild ID and sub-path
-	path := strings.TrimPrefix(r.URL.Path, "/api/discord/guilds/")
-	parts := strings.Split(path, "/")
-
-	if len(parts) < 2 {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
-		return
-	}
-
-	guildID, err := strconv.ParseInt(parts[0], 10, 64)
+// handleSettingsRoute and handleTestNotificationRoute replace a single
+// catch-all that was registered as the plain string "/api/discord/guilds/"
+// with manual strings.Split parsing - gorilla/mux only matches that
+// literally, so every nested path 404'd before ever reaching the handler.
+// Path variables ({id}) fix that.
+func (h *DiscordSettingsHandler) handleSettingsRoute(w http.ResponseWriter, r *http.Request) {
+	guildID, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
 		return
 	}
+	h.handleSettings(w, r, guildID)
+}
 
-	switch parts[1] {
-	case "settings":
-		h.handleSettings(w, r, guildID)
-	case "test-notification":
-		if r.Method == http.MethodPost {
-			h.SendTestNotification(w, r, guildID)
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	default:
-		http.Error(w, "Not found", http.StatusNotFound)
+func (h *DiscordSettingsHandler) handleTestNotificationRoute(w http.ResponseWriter, r *http.Request) {
+	guildID, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+		return
 	}
+	h.SendTestNotification(w, r, guildID)
 }
 
 // handleSettings handles settings CRUD
