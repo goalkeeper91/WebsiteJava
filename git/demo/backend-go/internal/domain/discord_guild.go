@@ -3,9 +3,15 @@ package domain
 import "time"
 
 type DiscordGuild struct {
-	ID              int64      `json:"id" db:"id"`                             // Discord Guild ID (Snowflake)
+	// Snowflakes are serialized as JSON strings (",string") - as a plain
+	// number they silently get mangled once parsed into a JS double, since
+	// Number.prototype.toString() can render a different (but equally valid
+	// nearest-double) decimal past Number.MAX_SAFE_INTEGER. Confirmed live:
+	// 624607110860374016 round-tripped through the frontend as
+	// "624607110860374000", breaking every ownership check downstream.
+	ID              int64      `json:"id,string" db:"id"`                             // Discord Guild ID (Snowflake)
 	OwnerUserID     *string    `json:"ownerUserId" db:"owner_user_id"`         // User (TwitchID) who added the bot
-	OwnerDiscordID  *int64     `json:"ownerDiscordId" db:"owner_discord_id"`   // Raw Discord snowflake of the guild owner (from GUILD_JOINED), used to link ownership retroactively
+	OwnerDiscordID  *int64     `json:"ownerDiscordId,string" db:"owner_discord_id"`   // Raw Discord snowflake of the guild owner (from GUILD_JOINED), used to link ownership retroactively
 	Name          string     `json:"name" db:"name"`
 	IconURL       *string    `json:"iconUrl" db:"icon_url"`
 	MemberCount   *int       `json:"memberCount" db:"member_count"`

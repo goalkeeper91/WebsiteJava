@@ -5,7 +5,7 @@ import "time"
 type DiscordConnection struct {
 	ID                   int64     `json:"id" db:"id"`
 	UserID               string    `json:"userId" db:"user_id"`
-	DiscordUserID        int64     `json:"discordUserId" db:"discord_user_id"`
+	DiscordUserID        int64     `json:"discordUserId,string" db:"discord_user_id"`
 	DiscordUsername      string    `json:"discordUsername" db:"discord_username"`
 	DiscordDiscriminator string    `json:"discordDiscriminator" db:"discord_discriminator"`
 	AccessToken          string    `json:"-" db:"access_token"`           // Encrypted, not in JSON

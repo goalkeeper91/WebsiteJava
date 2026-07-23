@@ -182,7 +182,7 @@ func (h *DiscordSettingsHandler) SendTestNotification(w http.ResponseWriter, r *
 
 	// Parse request body
 	var input struct {
-		ChannelID int64 `json:"channelId"`
+		ChannelID int64 `json:"channelId,string"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)

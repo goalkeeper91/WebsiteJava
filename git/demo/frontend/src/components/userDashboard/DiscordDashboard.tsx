@@ -8,9 +8,9 @@ type View = "guilds" | "settings" | "join-to-create";
 
 const DiscordDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>("guilds");
-  const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
+  const [selectedGuildId, setSelectedGuildId] = useState<string | null>(null);
 
-  const handleSelectGuild = (guildId: number) => {
+  const handleSelectGuild = (guildId: string) => {
     setSelectedGuildId(guildId);
     setCurrentView("settings");
   };

@@ -1,14 +1,14 @@
 package domain
 
 type DiscordChannel struct {
-	ID       int64  `json:"id"`
+	ID       int64  `json:"id,string"`
 	Name     string `json:"name"`
 	Type     string `json:"type"`     // text, voice, category, etc.
 	Position int    `json:"position"`
 }
 
 type DiscordRole struct {
-	ID          int64  `json:"id"`
+	ID          int64  `json:"id,string"`
 	Name        string `json:"name"`
 	Color       int    `json:"color"`
 	Position    int    `json:"position"`

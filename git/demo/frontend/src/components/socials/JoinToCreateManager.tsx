@@ -3,9 +3,9 @@ import { Plus, Trash2, Save, AlertTriangle } from "lucide-react";
 
 interface JoinToCreateConfig {
   id: number;
-  guildId: number;
-  joinChannelId: number;
-  categoryId: number;
+  guildId: string;
+  joinChannelId: string;
+  categoryId: string;
   channelNamePrefix: string;
   userLimit: number;
   privateChannel: boolean;
@@ -13,7 +13,7 @@ interface JoinToCreateConfig {
 }
 
 interface JoinToCreateManagerProps {
-  guildId: number;
+  guildId: string;
 }
 
 const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) => {
@@ -172,7 +172,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                 onChange={(e) =>
                   setNewConfig({
                     ...newConfig,
-                    joinChannelId: Number(e.target.value) || undefined,
+                    joinChannelId: e.target.value || undefined,
                   })
                 }
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -190,7 +190,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                 onChange={(e) =>
                   setNewConfig({
                     ...newConfig,
-                    categoryId: Number(e.target.value) || undefined,
+                    categoryId: e.target.value || undefined,
                   })
                 }
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -276,7 +276,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                       type="text"
                       value={config.joinChannelId}
                       onChange={(e) => {
-                        const updated = { ...config, joinChannelId: Number(e.target.value) };
+                        const updated = { ...config, joinChannelId: e.target.value };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
                       className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -291,7 +291,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                       type="text"
                       value={config.categoryId}
                       onChange={(e) => {
-                        const updated = { ...config, categoryId: Number(e.target.value) };
+                        const updated = { ...config, categoryId: e.target.value };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
                       className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"

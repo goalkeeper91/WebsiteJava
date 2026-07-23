@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Server, Settings, Trash2, RefreshCw, ExternalLink } from "lucide-react";
 
 interface Guild {
-  id: number;
+  id: string;
   name: string;
   iconUrl?: string;
   memberCount?: number;
@@ -23,7 +23,7 @@ interface GuildWithSettings {
 }
 
 interface DiscordGuildListProps {
-  onSelectGuild: (guildId: number) => void;
+  onSelectGuild: (guildId: string) => void;
 }
 
 const DiscordGuildList: React.FC<DiscordGuildListProps> = ({ onSelectGuild }) => {
@@ -65,7 +65,7 @@ const DiscordGuildList: React.FC<DiscordGuildListProps> = ({ onSelectGuild }) =>
     fetchInviteUrl();
   }, []);
 
-  const handleRemoveBot = async (guildId: number, guildName: string) => {
+  const handleRemoveBot = async (guildId: string, guildName: string) => {
     if (!confirm(`Remove bot from "${guildName}"?`)) return;
 
     try {
@@ -81,7 +81,7 @@ const DiscordGuildList: React.FC<DiscordGuildListProps> = ({ onSelectGuild }) =>
     }
   };
 
-  const handleSync = async (guildId: number) => {
+  const handleSync = async (guildId: string) => {
     try {
       const res = await fetch(`/api/discord/guilds/${guildId}/sync`, {
         method: "POST",

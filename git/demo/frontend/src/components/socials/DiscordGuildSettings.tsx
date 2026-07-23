@@ -3,31 +3,31 @@ import { Save, Send, ArrowLeft } from "lucide-react";
 
 interface GuildSettings {
   id: number;
-  guildId: number;
-  userId: number;
-  notificationChannelId?: number;
-  commandChannelId?: number;
-  activityChannelId?: number;
+  guildId: string;
+  userId: string;
+  notificationChannelId?: string;
+  commandChannelId?: string;
+  activityChannelId?: string;
   twitchNotificationsEnabled: boolean;
   joinToCreateEnabled: boolean;
-  adminRoleId?: number;
+  adminRoleId?: string;
 }
 
 interface Channel {
-  id: number;
+  id: string;
   name: string;
   type: string;
 }
 
 interface Role {
-  id: number;
+  id: string;
   name: string;
   color: number;
 }
 
 interface GuildDetails {
   guild: {
-    id: number;
+    id: string;
     name: string;
     iconUrl?: string;
   };
@@ -37,7 +37,7 @@ interface GuildDetails {
 }
 
 interface DiscordGuildSettingsProps {
-  guildId: number;
+  guildId: string;
   onBack: () => void;
 }
 
@@ -213,7 +213,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  notificationChannelId: e.target.value ? Number(e.target.value) : undefined,
+                  notificationChannelId: e.target.value || undefined,
                 })
               }
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -239,7 +239,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  commandChannelId: e.target.value ? Number(e.target.value) : undefined,
+                  commandChannelId: e.target.value || undefined,
                 })
               }
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -265,7 +265,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  activityChannelId: e.target.value ? Number(e.target.value) : undefined,
+                  activityChannelId: e.target.value || undefined,
                 })
               }
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -293,7 +293,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
             onChange={(e) =>
               setSettings({
                 ...settings,
-                adminRoleId: e.target.value ? Number(e.target.value) : undefined,
+                adminRoleId: e.target.value || undefined,
               })
             }
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
