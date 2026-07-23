@@ -56,6 +56,23 @@ type SubathonState struct {
 	UpdatedAt          time.Time        `json:"-" db:"updated_at"`
 }
 
+// SubathonFailedEvent is a sub/cheer that failed to persist (e.g. a
+// transient DB error) - kept visible and retried automatically instead of
+// silently vanishing, since a lost event during a subathon means real
+// support the streamer never gets credit for.
+type SubathonFailedEvent struct {
+	ID           int64     `json:"id" db:"id"`
+	UserID       string    `json:"userId" db:"user_id"`
+	MessageID    string    `json:"messageId" db:"message_id"`
+	EventType    string    `json:"eventType" db:"event_type"`
+	RawPayload   []byte    `json:"-" db:"raw_payload"`
+	ErrorMessage string    `json:"errorMessage" db:"error_message"`
+	RetryCount   int       `json:"retryCount" db:"retry_count"`
+	Resolved     bool      `json:"resolved" db:"resolved"`
+	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt    time.Time `json:"updatedAt" db:"updated_at"`
+}
+
 // SubathonStateUpdateInput carries a partial update from the dashboard
 // (start/pause toggles isRunning, settings form updates the *TimeSeconds
 // fields, reset sets everything back to defaults).

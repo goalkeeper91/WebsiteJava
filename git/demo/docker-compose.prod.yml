@@ -115,6 +115,11 @@ services:
       DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL}
       DISCORD_PERMISSIONS: ${DISCORD_BOT_PERMISSIONS:-8}
 
+      # Subathon Timer EventSub webhook (Twitch signs deliveries with this
+      # secret; callback URL must be publicly reachable, no localhost default)
+      SUBATHON_EVENTSUB_SECRET: ${SUBATHON_EVENTSUB_SECRET}
+      SUBATHON_CALLBACK_URL: ${SUBATHON_CALLBACK_URL:-https://goalkeeper91.de/api/subathon/eventsub/callback}
+
       # Security
       GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
       SESSION_SECRET: ${SESSION_SECRET}

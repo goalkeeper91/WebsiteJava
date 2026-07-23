@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="020-create-subathon-eventsub-reliability" author="Marcel">
+        <comment>
+            Absicherung fuer die Subathon-EventSub-Verarbeitung: Twitch liefert
+            Events "at-least-once" (Duplikate moeglich) und garantiert bei
+            fehlgeschlagener Verarbeitung auf unserer Seite keine Nachlieferung -
+            subathon_processed_events verhindert Doppelzaehlung, subathon_failed_events
+            stellt sicher, dass ein Event bei einem DB-Fehler nicht stillschweigend
+            verloren geht, sondern sichtbar bleibt und automatisch nachversucht wird.
+        </comment>
+
+        <createTable tableName="subathon_processed_events" remarks="Dedup-Ledger fuer bereits verarbeitete Twitch EventSub Message-IDs">
+            <column name="message_id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_subathon_processed_events_user" tableName="subathon_processed_events">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createTable tableName="subathon_failed_events" remarks="Events, die beim Verarbeiten fehlgeschlagen sind - werden automatisch nachversucht, bleiben aber bis zur Loesung sichtbar">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_id" type="VARCHAR(255)"/>
+            <column name="event_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="raw_payload" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolved" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_subathon_failed_events_unresolved" tableName="subathon_failed_events">
+            <column name="resolved"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -126,7 +126,7 @@ func (r *SubathonRepository) Update(ctx context.Context, userID string, input do
 }
 
 // GetAllUserIDs lists every user with a subathon state row - the set the
-// background EventSub client keeps a live Twitch connection for.
+// background EventSub manager keeps webhook subscriptions active for.
 func (r *SubathonRepository) GetAllUserIDs(ctx context.Context) ([]string, error) {
 	rows, err := r.db.QueryContext(ctx, `SELECT user_id FROM subathon_timer_state`)
 	if err != nil {
@@ -143,4 +143,83 @@ func (r *SubathonRepository) GetAllUserIDs(ctx context.Context) ([]string, error
 		ids = append(ids, id)
 	}
 	return ids, nil
+}
+
+// MarkEventProcessed records a Twitch EventSub message ID as handled.
+// Returns false if it was already recorded (a duplicate delivery - Twitch
+// only guarantees at-least-once, so this is the dedup guard against
+// double-counting a sub/cheer).
+func (r *SubathonRepository) MarkEventProcessed(ctx context.Context, messageID, userID string) (bool, error) {
+	result, err := r.db.ExecContext(ctx, `
+		INSERT INTO subathon_processed_events (message_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (message_id) DO NOTHING
+	`, messageID, userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to mark event processed: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	return rows > 0, nil
+}
+
+// RecordFailedEvent persists an event that failed to process so it stays
+// visible and can be retried, instead of a silent log line.
+func (r *SubathonRepository) RecordFailedEvent(ctx context.Context, userID, messageID, eventType string, rawPayload []byte, errMsg string) error {
+	_, err := r.db.ExecContext(ctx, `
+		INSERT INTO subathon_failed_events (user_id, message_id, event_type, raw_payload, error_message)
+		VALUES ($1, $2, $3, $4, $5)
+	`, userID, messageID, eventType, rawPayload, errMsg)
+	if err != nil {
+		return fmt.Errorf("failed to record failed event: %w", err)
+	}
+	return nil
+}
+
+// GetUnresolvedFailedEvents lists failed events still worth retrying (caps
+// retries at 5 so a permanently-broken payload doesn't retry forever).
+func (r *SubathonRepository) GetUnresolvedFailedEvents(ctx context.Context) ([]domain.SubathonFailedEvent, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, user_id, message_id, event_type, raw_payload, error_message,
+		       retry_count, resolved, created_at, updated_at
+		FROM subathon_failed_events
+		WHERE resolved = false AND retry_count < 5
+		ORDER BY created_at ASC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list failed events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []domain.SubathonFailedEvent
+	for rows.Next() {
+		var e domain.SubathonFailedEvent
+		if err := rows.Scan(
+			&e.ID, &e.UserID, &e.MessageID, &e.EventType, &e.RawPayload, &e.ErrorMessage,
+			&e.RetryCount, &e.Resolved, &e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan failed event: %w", err)
+		}
+		events = append(events, e)
+	}
+	return events, nil
+}
+
+func (r *SubathonRepository) MarkFailedEventResolved(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE subathon_failed_events SET resolved = true, updated_at = NOW() WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("failed to mark failed event resolved: %w", err)
+	}
+	return nil
+}
+
+func (r *SubathonRepository) IncrementFailedEventRetry(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE subathon_failed_events SET retry_count = retry_count + 1, updated_at = NOW() WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("failed to increment failed event retry count: %w", err)
+	}
+	return nil
 }

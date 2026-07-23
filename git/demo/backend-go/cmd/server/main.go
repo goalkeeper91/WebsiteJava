@@ -175,6 +175,13 @@ func main() {
 		log.Printf("⚠️ Warnung: DISCORD_CLIENT_ID nicht gesetzt - Discord Features deaktiviert")
 	}
 
+	// Subathon Timer - EventSub webhook transport
+	subathonWebhookSecret := getEnv("SUBATHON_EVENTSUB_SECRET", "")
+	subathonCallbackURL := getEnv("SUBATHON_CALLBACK_URL", "https://goalkeeper91.de/api/subathon/eventsub/callback")
+	if subathonWebhookSecret == "" {
+		log.Printf("⚠️ Warnung: SUBATHON_EVENTSUB_SECRET nicht gesetzt - Subathon-Webhook-Signaturen koennen nicht verifiziert werden")
+	}
+
 	discordAuthService := service.NewDiscordAuthService(
 		discordConnRepo,
 		discordClientID,
@@ -306,6 +313,7 @@ func main() {
 
 	// Subathon Timer
 	subathonHandler := handler.NewSubathonHandler(subathonService, sessionStore, cfg.Session.Name)
+	subathonWebhookHandler := handler.NewSubathonWebhookHandler(subathonService, subathonWebhookSecret)
 
 	// ============================================================
 	// ROUTER
@@ -343,6 +351,7 @@ func main() {
 
 	// Subathon Timer routes
 	subathonHandler.RegisterRoutes(router)
+	subathonWebhookHandler.RegisterRoutes(router)
 
 	// ============================================================
 	// BACKGROUND SERVICES
@@ -358,10 +367,10 @@ func main() {
 		}
 	}()
 
-	// Subathon EventSub client - keeps a live Twitch connection per user so
-	// subs/bits are counted even without the dashboard's Subathon tab open
-	subathonEventSubClient := service.NewSubathonEventSubClient(subathonService, tokenRepo, cfg.Twitch.ClientID)
-	go subathonEventSubClient.Start(context.Background())
+	// Subathon EventSub manager - keeps webhook subscriptions active per user
+	// and retries any events that failed to persist (see subathon_eventsub_manager.go)
+	subathonEventSubManager := service.NewSubathonEventSubManager(subathonService, tokenRepo, cfg.Twitch.ClientID, subathonWebhookSecret, subathonCallbackURL)
+	go subathonEventSubManager.Start(context.Background())
 
 	// Clip trigger listener (Phase C)
 	clipTriggerListener := service.NewClipTriggerListener(redisService, clipCreationService)
