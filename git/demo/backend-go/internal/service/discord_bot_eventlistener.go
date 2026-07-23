@@ -52,8 +52,12 @@ func (l *DiscordBotEventListener) Start(ctx context.Context) error {
 				continue
 			}
 
-			// Parse message
-			var event map[string]interface{}
+			// Parse message. Decoding straight into typed int64 fields
+			// (rather than map[string]interface{}, which forces every JSON
+			// number through float64 and silently rounds anything past
+			// 2^53 - guaranteed for Discord snowflakes) keeps guild and
+			// owner IDs exact.
+			var event discordBotEvent
 			if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
 				log.Printf("Failed to parse bot event: %v", err)
 				continue
@@ -67,56 +71,51 @@ func (l *DiscordBotEventListener) Start(ctx context.Context) error {
 	}
 }
 
-func (l *DiscordBotEventListener) handleEvent(ctx context.Context, event map[string]interface{}) error {
-	eventType, ok := event["type"].(string)
-	if !ok {
+type discordBotEvent struct {
+	Type        string `json:"type"`
+	GuildID     int64  `json:"guild_id"`
+	GuildName   string `json:"guild_name"`
+	IconURL     string `json:"icon_url"`
+	MemberCount *int   `json:"member_count"`
+	OwnerID     *int64 `json:"owner_id"`
+}
+
+func (l *DiscordBotEventListener) handleEvent(ctx context.Context, event discordBotEvent) error {
+	if event.Type == "" {
 		log.Printf("Missing event type in bot event")
 		return nil
 	}
 
-	log.Printf("📨 Received bot event: %s", eventType)
+	log.Printf("📨 Received bot event: %s", event.Type)
 
-	switch eventType {
+	switch event.Type {
 	case "GUILD_JOINED":
 		return l.handleGuildJoined(ctx, event)
 	case "GUILD_LEFT":
 		return l.handleGuildLeft(ctx, event)
 	default:
-		log.Printf("Unknown bot event type: %s", eventType)
+		log.Printf("Unknown bot event type: %s", event.Type)
 	}
 
 	return nil
 }
 
-func (l *DiscordBotEventListener) handleGuildJoined(ctx context.Context, event map[string]interface{}) error {
-	// Extract guild data
-	guildIDFloat, ok := event["guild_id"].(float64)
-	if !ok {
-		log.Printf("Invalid guild_id in GUILD_JOINED event")
-		return nil
-	}
-	guildID := int64(guildIDFloat)
-
-	guildName, _ := event["guild_name"].(string)
-	iconURL, _ := event["icon_url"].(string)
-
-	var memberCount *int
-	if mc, ok := event["member_count"].(float64); ok {
-		count := int(mc)
-		memberCount = &count
-	}
+func (l *DiscordBotEventListener) handleGuildJoined(ctx context.Context, event discordBotEvent) error {
+	guildID := event.GuildID
+	guildName := event.GuildName
+	iconURL := event.IconURL
+	memberCount := event.MemberCount
 
 	var ownerDiscordID *int64
 	var ownerUserID *string
-	if ownerIDFloat, ok := event["owner_id"].(float64); ok {
-		id := int64(ownerIDFloat)
-		ownerDiscordID = &id
+	if event.OwnerID != nil {
+		ownerDiscordID = event.OwnerID
 
 		// If the guild owner has already connected their Discord account with
 		// us, link ownership immediately. Otherwise it stays unset until they
 		// do (see DiscordGuildService.LinkOwnedGuilds, called on connect).
 		if l.connRepo != nil {
-			if conn, err := l.connRepo.GetByDiscordUserID(ctx, id); err == nil && conn != nil {
+			if conn, err := l.connRepo.GetByDiscordUserID(ctx, *event.OwnerID); err == nil && conn != nil {
 				ownerUserID = &conn.UserID
 			}
 		}
@@ -171,14 +170,8 @@ func (l *DiscordBotEventListener) handleGuildJoined(ctx context.Context, event m
 	return nil
 }
 
-func (l *DiscordBotEventListener) handleGuildLeft(ctx context.Context, event map[string]interface{}) error {
-	// Extract guild ID
-	guildIDFloat, ok := event["guild_id"].(float64)
-	if !ok {
-		log.Printf("Invalid guild_id in GUILD_LEFT event")
-		return nil
-	}
-	guildID := int64(guildIDFloat)
+func (l *DiscordBotEventListener) handleGuildLeft(ctx context.Context, event discordBotEvent) error {
+	guildID := event.GuildID
 
 	log.Printf("👋 Bot left guild: %d", guildID)
 
