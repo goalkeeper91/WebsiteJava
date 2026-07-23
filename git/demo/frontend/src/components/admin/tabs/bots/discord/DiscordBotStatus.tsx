@@ -2,29 +2,30 @@ import React, { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle, RefreshCcw, LogOut } from "lucide-react";
 import UptimeDisplay from "../../stats/UptimeDisplay";
 
-interface DiscordStatus {
-  running?: boolean;
-  since: string | null;
-  uptimeSeconds?: number;
-  guilds?: Guild[];
-}
-
 interface Guild {
   id: string;
   name: string;
 }
 
+interface DiscordStatus {
+  running: boolean;
+  guildCount: number;
+  totalMembers: number;
+  uptimeSeconds?: number;
+  guilds: Guild[];
+}
+
 const DiscordBotStatus: React.FC = () => {
   const [status, setStatus] = useState<DiscordStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
-  const fetchInviteLink = async () => {
+  const fetchInviteUrl = async () => {
     try {
-      const res = await fetch("/api/discord/guild/invite-link");
+      const res = await fetch("/api/discord/bot/invite-url");
       if (!res.ok) throw new Error("Fehler beim Abrufen des Invite-Links");
       const data = await res.json();
-      setInviteLink(data.inviteLink);
+      setInviteUrl(data.inviteUrl);
     } catch (err) {
       console.error(err);
     }
@@ -33,7 +34,7 @@ const DiscordBotStatus: React.FC = () => {
   const fetchStatus = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/discord/status");
+      const res = await fetch("/api/discord/bot/status", { credentials: "include" });
       if (!res.ok) throw new Error("Fehler beim Abrufen des Discord-Status");
       const data: DiscordStatus = await res.json();
       setStatus(data);
@@ -44,34 +45,29 @@ const DiscordBotStatus: React.FC = () => {
     }
   };
 
-  const syncGuilds = async () => {
+  const syncGuild = async (guildId: string) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/discord/guild/sync", {
+      const res = await fetch(`/api/discord/guilds/${guildId}/sync`, {
         method: "POST",
+        credentials: "include",
       });
-      if (!res.ok) throw new Error("Fehler beim Synchronisieren der Guilds");
-
-      const data: Guild[] = await res.json(); // aktualisierte Guilds aus Backend
-      setStatus((prev) =>
-        prev
-          ? { ...prev, guilds: data }
-          : { running: false, since: null, guilds: data } // Fallback falls prev null
-      );
+      if (!res.ok) throw new Error("Fehler beim Synchronisieren des Servers");
+      fetchStatus();
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const disconnectGuild = async (guildId: string) => {
+  const removeGuild = async (guildId: string, guildName: string) => {
+    if (!confirm(`Bot wirklich von "${guildName}" entfernen?`)) return;
+
     try {
-      const res = await fetch(`/api/discord/guilds/${guildId}/disconnect`, {
-        method: "POST",
+      const res = await fetch(`/api/discord/guilds/${guildId}`, {
+        method: "DELETE",
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Fehler beim Trennen des Servers");
-      fetchStatus(); // Status neu laden
+      fetchStatus();
     } catch (err) {
       console.error(err);
     }
@@ -79,7 +75,6 @@ const DiscordBotStatus: React.FC = () => {
 
   useEffect(() => {
     fetchStatus();
-    syncGuilds();
     const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -103,6 +98,9 @@ const DiscordBotStatus: React.FC = () => {
               {status.running && status.uptimeSeconds !== undefined && (
                 <UptimeDisplay uptimeSeconds={status.uptimeSeconds} />
               )}
+              <p className="mt-1">
+                {status.guildCount} Server · {status.totalMembers} Mitglieder
+              </p>
             </div>
           ) : (
             <p className="text-gray-400">Noch keine Daten geladen</p>
@@ -121,15 +119,15 @@ const DiscordBotStatus: React.FC = () => {
       </div>
 
       <button
-        onClick={fetchInviteLink}
+        onClick={fetchInviteUrl}
         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded"
       >
         Bot zu Server hinzufügen
       </button>
 
-      {inviteLink && (
+      {inviteUrl && (
         <a
-          href={inviteLink}
+          href={inviteUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-2 text-blue-700 underline"
@@ -142,15 +140,24 @@ const DiscordBotStatus: React.FC = () => {
         <div>
           <h3 className="font-semibold mb-2">Verbundene Server</h3>
           <ul className="space-y-2">
-            {status.guilds.map((guild, index) => (
-              <li key={`${guild.id}-${index}`} className="flex justify-between items-center p-2 rounded">
+            {status.guilds.map((guild) => (
+              <li key={guild.id} className="flex justify-between items-center p-2 rounded">
                 <span>{guild.name}</span>
-                <button
-                  onClick={() => disconnectGuild(guild.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center"
-                >
-                  <LogOut className="w-4 h-4 mr-1" /> Trennen
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => syncGuild(guild.id)}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded"
+                    title="Server synchronisieren"
+                  >
+                    <RefreshCcw className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => removeGuild(guild.id, guild.name)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center"
+                  >
+                    <LogOut className="w-4 h-4 mr-1" /> Trennen
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

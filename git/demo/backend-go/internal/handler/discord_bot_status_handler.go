@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
     "github.com/gorilla/mux"
 	"demo/backend-go/internal/service"
@@ -37,30 +38,36 @@ func (h *DiscordBotStatusHandler) GetBotStatus(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Get guild count
-	guildCount, err := h.guildService.GetGuildCount(r.Context())
+	// Get all guilds, keeping only ones the bot is currently in
+	allGuilds, err := h.guildService.GetAllGuilds(r.Context())
 	if err != nil {
-		guildCount = 0
+		allGuilds = []domain.DiscordGuild{}
 	}
 
-	// Get all guilds (for detailed info)
-	guilds, err := h.guildService.GetAllGuilds(r.Context())
-	if err != nil {
-		guilds = []domain.DiscordGuild{}
+	type guildSummary struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
 	}
-
-	// Calculate total member count
 	totalMembers := 0
-	for _, guild := range guilds {
+	guildList := make([]guildSummary, 0, len(allGuilds))
+	for _, guild := range allGuilds {
+		if !guild.IsActive {
+			continue
+		}
 		if guild.MemberCount != nil {
 			totalMembers += *guild.MemberCount
 		}
+		guildList = append(guildList, guildSummary{
+			ID:   strconv.FormatInt(guild.ID, 10),
+			Name: guild.Name,
+		})
 	}
 
 	response := map[string]interface{}{
 		"running":      false,
-		"guilds":       guildCount,
+		"guildCount":   len(guildList),
 		"totalMembers": totalMembers,
+		"guilds":       guildList,
 	}
 
 	if h.redisService != nil {

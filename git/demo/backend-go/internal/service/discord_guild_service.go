@@ -50,14 +50,16 @@ func (s *DiscordGuildService) GetUserGuilds(ctx context.Context, userID string) 
 	return result, nil
 }
 
-func (s *DiscordGuildService) GetGuild(ctx context.Context, guildID int64, userID string) (*domain.DiscordGuild, error) {
-	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check guild ownership: %w", err)
-	}
+func (s *DiscordGuildService) GetGuild(ctx context.Context, guildID int64, userID string, isAdmin bool) (*domain.DiscordGuild, error) {
+	if !isAdmin {
+		owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check guild ownership: %w", err)
+		}
 
-	if !owns {
-		return nil, fmt.Errorf("user does not own this guild")
+		if !owns {
+			return nil, fmt.Errorf("user does not own this guild")
+		}
 	}
 
 	guild, err := s.guildRepo.GetByID(ctx, guildID)
@@ -111,14 +113,16 @@ func (s *DiscordGuildService) GetGuildDetails(ctx context.Context, guildID int64
 	}, nil
 }
 
-func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, userID string) error {
-	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
-	if err != nil {
-		return fmt.Errorf("failed to check guild ownership: %w", err)
-	}
+func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, userID string, isAdmin bool) error {
+	if !isAdmin {
+		owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
+		if err != nil {
+			return fmt.Errorf("failed to check guild ownership: %w", err)
+		}
 
-	if !owns {
-		return fmt.Errorf("user does not own this guild")
+		if !owns {
+			return fmt.Errorf("user does not own this guild")
+		}
 	}
 
 	message := map[string]interface{}{
@@ -129,14 +133,16 @@ func (s *DiscordGuildService) SyncGuild(ctx context.Context, guildID int64, user
 	return s.publishToDiscordBot(message)
 }
 
-func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, userID string) error {
-	owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
-	if err != nil {
-		return fmt.Errorf("failed to check guild ownership: %w", err)
-	}
+func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, userID string, isAdmin bool) error {
+	if !isAdmin {
+		owns, err := s.guildRepo.UserOwnsGuild(ctx, userID, guildID)
+		if err != nil {
+			return fmt.Errorf("failed to check guild ownership: %w", err)
+		}
 
-	if !owns {
-		return fmt.Errorf("user does not own this guild")
+		if !owns {
+			return fmt.Errorf("user does not own this guild")
+		}
 	}
 
 	message := map[string]interface{}{
@@ -144,7 +150,7 @@ func (s *DiscordGuildService) RemoveBot(ctx context.Context, guildID int64, user
 		"guild_id": guildID,
 	}
 
-	err = s.publishToDiscordBot(message)
+	err := s.publishToDiscordBot(message)
 	if err != nil {
 		return fmt.Errorf("failed to send leave request: %w", err)
 	}

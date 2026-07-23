@@ -9,11 +9,13 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/mux"
+	"demo/backend-go/internal/repository"
 	"demo/backend-go/internal/service"
 )
 
 type DiscordGuildHandler struct {
 	guildService *service.DiscordGuildService
+	userRepo     repository.UserRepository
 	sessionStore sessions.Store
 	sessionName  string
 	botClientID  string
@@ -22,6 +24,7 @@ type DiscordGuildHandler struct {
 
 func NewDiscordGuildHandler(
 	guildService *service.DiscordGuildService,
+	userRepo repository.UserRepository,
 	sessionStore sessions.Store,
 	sessionName string,
 	botClientID string,
@@ -29,11 +32,34 @@ func NewDiscordGuildHandler(
 ) *DiscordGuildHandler {
 	return &DiscordGuildHandler{
 		guildService:   guildService,
+		userRepo:       userRepo,
 		sessionStore:   sessionStore,
 		sessionName:    sessionName,
 		botClientID:    botClientID,
 		botPermissions: botPermissions,
 	}
+}
+
+// isAdmin reports whether the session user is a site admin, allowed to
+// manage any guild (not just ones they personally added the bot to) — used
+// by the admin bot-management panel, mirroring bot_status_handler.go.
+func (h *DiscordGuildHandler) isAdmin(r *http.Request) bool {
+	session, err := h.sessionStore.Get(r, h.sessionName)
+	if err != nil {
+		return false
+	}
+
+	userID, ok := session.Values["user_id"].(string)
+	if !ok || userID == "" {
+		return false
+	}
+
+	user, err := h.userRepo.GetByTwitchID(r.Context(), userID)
+	if err != nil || user == nil {
+		return false
+	}
+
+	return user.IsAdmin
 }
 
 func (h *DiscordGuildHandler) RegisterRoutes(router *mux.Router) {
@@ -151,7 +177,7 @@ func (h *DiscordGuildHandler) GetGuild(w http.ResponseWriter, r *http.Request, g
 		return
 	}
 
-	guild, err := h.guildService.GetGuild(r.Context(), guildID, userID)
+	guild, err := h.guildService.GetGuild(r.Context(), guildID, userID, h.isAdmin(r))
 	if err != nil {
 		log.Printf("Failed to get guild: %v", err)
 		http.Error(w, "Zugriff auf diesen Server nicht möglich", http.StatusForbidden)
@@ -199,7 +225,7 @@ func (h *DiscordGuildHandler) SyncGuild(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	err = h.guildService.SyncGuild(r.Context(), guildID, userID)
+	err = h.guildService.SyncGuild(r.Context(), guildID, userID, h.isAdmin(r))
 	if err != nil {
 		log.Printf("Failed to sync guild: %v", err)
 		http.Error(w, "Synchronisation fehlgeschlagen", http.StatusInternalServerError)
@@ -225,7 +251,7 @@ func (h *DiscordGuildHandler) RemoveBot(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	err = h.guildService.RemoveBot(r.Context(), guildID, userID)
+	err = h.guildService.RemoveBot(r.Context(), guildID, userID, h.isAdmin(r))
 	if err != nil {
 		log.Printf("Failed to remove bot: %v", err)
 		http.Error(w, "Bot konnte nicht entfernt werden", http.StatusInternalServerError)

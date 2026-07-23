@@ -289,7 +289,7 @@ func main() {
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
-	discordGuildHandler := handler.NewDiscordGuildHandler(discordGuildService, sessionStore, cfg.Session.Name, discordClientID, discordPermissions)
+	discordGuildHandler := handler.NewDiscordGuildHandler(discordGuildService, userRepo, sessionStore, cfg.Session.Name, discordClientID, discordPermissions)
 	discordSettingsHandler := handler.NewDiscordSettingsHandler(discordSettingsService, discordNotificationService, sessionStore, cfg.Session.Name)
 	jtcHandler := handler.NewJoinToCreateHandler(jtcService, sessionStore, cfg.Session.Name)
 	discordBotStatusHandler := handler.NewDiscordBotStatusHandler(discordGuildService, redisService)
