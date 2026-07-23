@@ -23,6 +23,7 @@ import (
 	"demo/backend-go/internal/repository/postgres"
 	"demo/backend-go/internal/security"
 	"demo/backend-go/internal/service"
+	"demo/backend-go/internal/twitch"
 	"demo/backend-go/pkg/config"
 )
 
@@ -78,6 +79,9 @@ func main() {
 	automationSettingsRepo := postgres.NewAutomationSettingsRepository(db)
 	clipLogRepo := postgres.NewClipLogRepository(db)
 
+	// Automatisierte Chat-Nachrichten (Timer/Scheduler)
+	scheduledMessageRepo := postgres.NewScheduledMessageRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -130,6 +134,14 @@ func main() {
 		subscriptionService,
 	)
 	clipLogService := service.NewClipLogService(clipLogRepo)
+
+	scheduledMessageAppToken := twitch.NewTwitchAppTokenClient(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
+	scheduledMessageService := service.NewScheduledMessageService(
+		scheduledMessageRepo,
+		channelRepo,
+		redisService,
+		scheduledMessageAppToken,
+	)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -305,6 +317,7 @@ func main() {
 	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService, cfg.Security.BotInternalSecret)
 	automationSettingsHandler := handler.NewAutomationSettingsHandler(automationSettingsService, sessionStore, cfg.Session.Name)
 	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
+	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -343,6 +356,7 @@ func main() {
 	botAnnounceHandler.RegisterRoutes(router)
 	automationSettingsHandler.RegisterRoutes(router)
 	clipLogHandler.RegisterRoutes(router)
+	scheduledMessageHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
@@ -386,6 +400,11 @@ func main() {
 	// Token refresh service
 	go tokenRefreshService.Start()
 	defer tokenRefreshService.Stop()
+
+	// Scheduled-message scheduler - checks every 30s for due automated chat messages
+	scheduledMessageScheduler := service.NewScheduledMessageScheduler(scheduledMessageService, 30*time.Second)
+	go scheduledMessageScheduler.Start()
+	defer scheduledMessageScheduler.Stop()
 
 	log.Println("✅ Background Services gestartet")
 

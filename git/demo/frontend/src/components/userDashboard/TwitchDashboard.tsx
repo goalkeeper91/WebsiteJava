@@ -3,8 +3,9 @@ import TwitchBotStatus from "./TwitchBotStatus";
 import CommandsDashboard from "./CommandsDashboard";
 import BuiltinCommandsInfo from "./BuiltinCommandsInfo";
 import VoteSessionManager from "../VoteSessionManager";
+import ScheduledMessagesDashboard from "./ScheduledMessagesDashboard";
 
-type View = "commands" | "builtin" | "votes";
+type View = "commands" | "builtin" | "votes" | "scheduled";
 
 export default function TwitchDashboard() {
   const [currentView, setCurrentView] = useState<View>("commands");
@@ -44,12 +45,23 @@ export default function TwitchDashboard() {
         >
           Umfragen
         </button>
+        <button
+          onClick={() => setCurrentView("scheduled")}
+          className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+            currentView === "scheduled"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+          Automatisierte Nachrichten
+        </button>
       </div>
 
       <div>
         {currentView === "commands" && <CommandsDashboard />}
         {currentView === "builtin" && <BuiltinCommandsInfo />}
         {currentView === "votes" && <VoteSessionManager />}
+        {currentView === "scheduled" && <ScheduledMessagesDashboard />}
       </div>
     </div>
   );

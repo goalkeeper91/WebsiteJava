@@ -25,5 +25,6 @@
     <include file="changesets/018-add-owner-discord-id-to-guilds.xml" relativeToChangelogFile="true"/>
     <include file="changesets/019-create-subathon-timer-state.xml" relativeToChangelogFile="true"/>
     <include file="changesets/020-create-subathon-eventsub-reliability.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/021-create-scheduled-messages.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

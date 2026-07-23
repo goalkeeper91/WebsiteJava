@@ -74,6 +74,13 @@ var (
 	ErrInvalidHashtagCount      = errors.New("max_hashtags muss zwischen 0 und 30 liegen")
 )
 
+// Scheduled Message Errors
+var (
+	ErrScheduledMessageNotFound = errors.New("automatisierte nachricht nicht gefunden")
+	ErrEmptyMessage             = errors.New("nachricht darf nicht leer sein")
+	ErrIntervalTooShort         = errors.New("intervall muss mindestens 60 sekunden betragen")
+)
+
 // General Errors
 var (
 	ErrUnauthorized   = errors.New("nicht autorisiert")

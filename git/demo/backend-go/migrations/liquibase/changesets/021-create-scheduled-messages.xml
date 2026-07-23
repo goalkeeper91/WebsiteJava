@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="021-create-scheduled-messages" author="Marcel">
+        <createTable tableName="scheduled_messages">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="channel_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="interval_seconds" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="only_when_live" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_send_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_sent_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_scheduled_messages_channel" tableName="scheduled_messages">
+            <column name="channel_id"/>
+        </createIndex>
+
+        <!-- Deckt die Due-Query des Schedulers ab (enabled = true AND next_send_at <= NOW()). -->
+        <createIndex indexName="idx_scheduled_messages_due" tableName="scheduled_messages">
+            <column name="enabled"/>
+            <column name="next_send_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="scheduled_messages"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

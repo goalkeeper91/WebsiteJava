@@ -1,8 +1,8 @@
-// Package detector implements the clip-detector worker: it watches live
-// Twitch streams (audio + video heuristics) and publishes a Redis trigger
-// when a clip-worthy moment is detected. See Phase B of the clip automation
-// plan for the overall architecture.
-package detector
+// Package twitch holds shared, dependency-free Twitch Helix API clients used
+// by more than one service (the clip-detector and the scheduled-message
+// scheduler both need to check a channel's live status via an App Access
+// Token, so this lives outside any one feature's package).
+package twitch
 
 import (
 	"context"

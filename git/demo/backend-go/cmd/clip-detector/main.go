@@ -14,6 +14,7 @@ import (
 	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/repository"
 	"demo/backend-go/internal/repository/postgres"
+	"demo/backend-go/internal/twitch"
 	"demo/backend-go/pkg/config"
 )
 
@@ -48,7 +49,7 @@ func main() {
 	defer redisService.Close()
 
 	automationRepo := postgres.NewAutomationSettingsRepository(db)
-	appToken := detector.NewTwitchAppTokenClient(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
+	appToken := twitch.NewTwitchAppTokenClient(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
 
 	allowlist := parseAllowlist(getEnv("DETECTOR_ALLOWED_USERS", ""))
 	if len(allowlist) == 0 {
@@ -76,7 +77,7 @@ func main() {
 func pollOnce(
 	ctx context.Context,
 	automationRepo repository.AutomationSettingsRepository,
-	appToken *detector.TwitchAppTokenClient,
+	appToken *twitch.TwitchAppTokenClient,
 	allowlist map[string]bool,
 	active map[string]*detector.StreamIngestor,
 	redisService *redis.RedisService,

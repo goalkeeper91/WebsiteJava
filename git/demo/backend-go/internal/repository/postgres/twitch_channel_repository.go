@@ -68,6 +68,33 @@ func (r *twitchChannelRepository) GetByTwitchUserID(ctx context.Context, twitchU
 	return channel, nil
 }
 
+func (r *twitchChannelRepository) GetByID(ctx context.Context, id int64) (*domain.TwitchChannel, error) {
+	query := `
+		SELECT id, twitch_user_id, user_name, is_active, created_at, updated_at
+		FROM twitch_channels
+		WHERE id = $1
+	`
+
+	channel := &domain.TwitchChannel{}
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&channel.ID,
+		&channel.TwitchUserID,
+		&channel.Username,
+		&channel.IsActive,
+		&channel.CreatedAt,
+		&channel.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrChannelNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden des Channels: %w", err)
+	}
+
+	return channel, nil
+}
+
 func (r *twitchChannelRepository) Update(ctx context.Context, channel *domain.TwitchChannel) error {
 	query := `
 		UPDATE twitch_channels
