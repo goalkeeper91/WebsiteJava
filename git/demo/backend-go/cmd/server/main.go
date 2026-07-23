@@ -228,6 +228,8 @@ func main() {
 			// Subathon-Timer: EventSub-Subscriptions für Subs/Bits
 			"channel:read:subscriptions", "bits:read",
 			"channel:read:redemptions", "moderator:read:followers",
+			// Eingebaute Chat-Commands: !title/!game setzen
+			"channel:manage:broadcast",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
