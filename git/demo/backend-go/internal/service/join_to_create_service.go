@@ -87,7 +87,7 @@ func (s *JoinToCreateService) CreateConfig(ctx context.Context, input domain.Joi
 		return nil, fmt.Errorf("failed to create config: %w", err)
 	}
 
-	err = s.notifyBotReloadConfigs(input.GuildID)
+	err = s.notifyBotReloadConfigs(ctx, input.GuildID)
 	if err != nil {
 		fmt.Printf("Warning: failed to notify bot about config change: %v\n", err)
 	}
@@ -119,7 +119,7 @@ func (s *JoinToCreateService) UpdateConfig(ctx context.Context, configID int64, 
 		return nil, fmt.Errorf("failed to update config: %w", err)
 	}
 
-	err = s.notifyBotReloadConfigs(existing.GuildID)
+	err = s.notifyBotReloadConfigs(ctx, existing.GuildID)
 	if err != nil {
 		fmt.Printf("Warning: failed to notify bot about config change: %v\n", err)
 	}
@@ -151,7 +151,7 @@ func (s *JoinToCreateService) DeleteConfig(ctx context.Context, configID int64, 
 		return fmt.Errorf("failed to delete config: %w", err)
 	}
 
-	err = s.notifyBotReloadConfigs(existing.GuildID)
+	err = s.notifyBotReloadConfigs(ctx, existing.GuildID)
 	if err != nil {
 		fmt.Printf("Warning: failed to notify bot about config deletion: %v\n", err)
 	}
@@ -208,15 +208,39 @@ func (s *JoinToCreateService) validateConfigInput(input domain.JoinToCreateConfi
 	return nil
 }
 
-func (s *JoinToCreateService) notifyBotReloadConfigs(guildID int64) error {
+// notifyBotReloadConfigs pushes the guild's full current trigger list to the
+// bot. The bot's RELOAD_CONFIGS handler does a full replace (wipes its
+// in-memory config for the guild, then repopulates from "triggers") rather
+// than an incremental update, so every call must include every trigger, not
+// just the one that changed - omitting "triggers" entirely (the previous
+// bug here) silently wiped the guild's config to empty instead of loading it.
+func (s *JoinToCreateService) notifyBotReloadConfigs(ctx context.Context, guildID int64) error {
 	if s.redisService == nil {
 		return fmt.Errorf("redis service not available")
+	}
+
+	configs, err := s.jtcRepo.GetByGuild(ctx, guildID)
+	if err != nil {
+		return fmt.Errorf("failed to get guild configs: %w", err)
+	}
+
+	triggers := make([]map[string]interface{}, 0, len(configs))
+	for _, c := range configs {
+		triggers = append(triggers, map[string]interface{}{
+			"channel_id":          c.JoinChannelID,
+			"category_id":         c.CategoryID,
+			"channel_name_prefix": c.ChannelNamePrefix,
+			"user_limit":          c.UserLimit,
+			"private_channel":     c.PrivateChannel,
+			"enabled":             c.Enabled,
+		})
 	}
 
 	message := map[string]interface{}{
 		"type":        "RELOAD_CONFIGS",
 		"guild_id":    guildID,
 		"config_type": "join_to_create",
+		"triggers":    triggers,
 	}
 
 	data, err := json.Marshal(message)
