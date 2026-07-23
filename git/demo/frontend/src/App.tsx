@@ -9,7 +9,6 @@ import DiscordCallback from './components/socials/DiscordCallback';
 import N8NIntegrationSetup from './components/N8NIntegrationSetup';
 import ClipAutomationPage from './components/ClipAutomationPage';
 import SubscriptionDashboard from './components/SubscriptionDashboard';
-import VoteSessionManager from './components/VoteSessionManager';
 import WorkflowMarketplace from './components/WorkflowMarketplace';
 import DashboardOverview from './components/userDashboard/DashboardOverview';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -81,7 +80,8 @@ const App = () => {
             <Route path='subscription' element={<SubscriptionDashboard />} />
             <Route path='n8n' element={<N8NIntegrationSetup />} />
             <Route path='clips' element={<ClipAutomationPage />} />
-            <Route path='votes' element={<VoteSessionManager />} />
+            {/* Umfragen sind jetzt Unterbereich des Twitch-Chatbot-Tabs */}
+            <Route path='votes' element={<Navigate to="/dashboard?tab=twitch" replace />} />
             <Route path='workflows' element={<WorkflowMarketplace />} />
           </Route>
 

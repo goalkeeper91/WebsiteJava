@@ -148,20 +148,17 @@ export default function VoteSessionManager() {
 
   if (loading && sessions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white">
-        <div className="p-6 max-w-6xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-800 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-800 rounded"></div>
-          </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-800 rounded w-1/3"></div>
+          <div className="h-64 bg-gray-800 rounded"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -388,7 +385,6 @@ export default function VoteSessionManager() {
           </div>
         </div>
       )}
-    </div>
     </div>
   );
 }

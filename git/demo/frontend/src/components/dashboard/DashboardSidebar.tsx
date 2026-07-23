@@ -3,7 +3,6 @@ import {
   Home,
   CreditCard,
   Zap,
-  BarChart3,
   Package,
   Settings,
   Shield,
@@ -28,7 +27,6 @@ export default function DashboardSidebar() {
     { path: "/dashboard/subscription", icon: CreditCard, label: "Subscription", badge: isAdmin ? <AdminBadge /> : null },
     { path: "/dashboard/n8n", icon: Zap, label: "n8n Integration", premium: true },
     { path: "/dashboard/clips", icon: Film, label: "Clip-Automatisierung", premium: true },
-    { path: "/dashboard/votes", icon: BarChart3, label: "Vote Sessions", premium: true },
     { path: "/dashboard/workflows", icon: Package, label: "Workflows", premium: true },
   ];
 

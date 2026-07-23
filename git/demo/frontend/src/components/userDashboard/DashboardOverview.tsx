@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MessageSquare, Hash, Radio } from "lucide-react";
-import CommandsDashboard from "./CommandsDashboard";
+import TwitchDashboard from "./TwitchDashboard";
 import DiscordDashboard from "./DiscordDashboard";
 import SubathonPage from "./SubathonPage";
 
@@ -42,7 +42,7 @@ const DashboardOverview: React.FC = () => {
               }`}
             >
               <MessageSquare className="w-5 h-5" />
-              <span>Twitch Bot</span>
+              <span>Twitch Chatbot</span>
             </button>
 
             <button
@@ -74,7 +74,7 @@ const DashboardOverview: React.FC = () => {
 
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto">
-        {activeTab === "twitch" && <CommandsDashboard />}
+        {activeTab === "twitch" && <TwitchDashboard />}
         {activeTab === "discord" && <DiscordDashboard />}
         {activeTab === "subathon" && <SubathonPage />}
       </div>
