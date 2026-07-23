@@ -55,31 +55,34 @@ func (s *DiscordAuthService) GetAuthURL() (string, string, error) {
 	return authURL, state, nil
 }
 
-func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, userID string) error {
+// HandleCallback exchanges the OAuth code, stores the Discord connection, and
+// returns the connected Discord user's snowflake ID so callers can backfill
+// guild ownership (see DiscordGuildService.LinkOwnedGuilds).
+func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, userID string) (int64, error) {
 	token, err := s.exchangeCodeForToken(code)
 	if err != nil {
-		return fmt.Errorf("failed to exchange code: %w", err)
+		return 0, fmt.Errorf("failed to exchange code: %w", err)
 	}
 
 	discordUser, err := s.getDiscordUser(token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("failed to get discord user: %w", err)
+		return 0, fmt.Errorf("failed to get discord user: %w", err)
 	}
 
 	existing, err := s.connectionRepo.GetByDiscordUserID(ctx, discordUser.ID)
 	if err != nil {
-		return fmt.Errorf("failed to check existing connection: %w", err)
+		return 0, fmt.Errorf("failed to check existing connection: %w", err)
 	}
 
 	if existing != nil && existing.UserID != userID {
-		return fmt.Errorf("this Discord account is already connected to another user")
+		return 0, fmt.Errorf("this Discord account is already connected to another user")
 	}
 
 	expiresAt := time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
 
 	existingForUser, err := s.connectionRepo.GetByUserID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("failed to get existing connection: %w", err)
+		return 0, fmt.Errorf("failed to get existing connection: %w", err)
 	}
 
 	if existingForUser != nil {
@@ -91,7 +94,7 @@ func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, us
 			TokenExpiresAt:       &expiresAt,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to update connection: %w", err)
+			return 0, fmt.Errorf("failed to update connection: %w", err)
 		}
 	} else {
 		// Create new connection
@@ -105,11 +108,11 @@ func (s *DiscordAuthService) HandleCallback(ctx context.Context, code string, us
 			TokenExpiresAt:       expiresAt,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create connection: %w", err)
+			return 0, fmt.Errorf("failed to create connection: %w", err)
 		}
 	}
 
-	return nil
+	return discordUser.ID, nil
 }
 
 func (s *DiscordAuthService) GetConnection(ctx context.Context, userID string) (*domain.DiscordConnection, error) {

@@ -22,18 +22,19 @@ func (r *DiscordGuildRepository) Create(ctx context.Context, input domain.Discor
 
 	query := `
 		INSERT INTO discord_guilds (
-			id, owner_user_id, name, icon_url, member_count,
+			id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 			bot_added_at, is_active, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (id) DO UPDATE SET
 			owner_user_id = COALESCE(EXCLUDED.owner_user_id, discord_guilds.owner_user_id),
+			owner_discord_id = COALESCE(EXCLUDED.owner_discord_id, discord_guilds.owner_discord_id),
 			name = EXCLUDED.name,
 			icon_url = EXCLUDED.icon_url,
 			member_count = EXCLUDED.member_count,
 			bot_added_at = EXCLUDED.bot_added_at,
 			is_active = EXCLUDED.is_active,
 			updated_at = EXCLUDED.updated_at
-		RETURNING id, owner_user_id, name, icon_url, member_count,
+		RETURNING id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 		          bot_added_at, bot_removed_at, is_active, created_at, updated_at
 	`
 
@@ -42,6 +43,7 @@ func (r *DiscordGuildRepository) Create(ctx context.Context, input domain.Discor
 		ctx, query,
 		input.ID,
 		input.OwnerUserID,
+		input.OwnerDiscordID,
 		input.Name,
 		input.IconURL,
 		input.MemberCount,
@@ -52,6 +54,7 @@ func (r *DiscordGuildRepository) Create(ctx context.Context, input domain.Discor
 	).Scan(
 		&guild.ID,
 		&guild.OwnerUserID,
+		&guild.OwnerDiscordID,
 		&guild.Name,
 		&guild.IconURL,
 		&guild.MemberCount,
@@ -71,7 +74,7 @@ func (r *DiscordGuildRepository) Create(ctx context.Context, input domain.Discor
 
 func (r *DiscordGuildRepository) GetByID(ctx context.Context, guildID int64) (*domain.DiscordGuild, error) {
 	query := `
-		SELECT id, owner_user_id, name, icon_url, member_count,
+		SELECT id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 		       bot_added_at, bot_removed_at, is_active, created_at, updated_at
 		FROM discord_guilds
 		WHERE id = $1
@@ -81,6 +84,7 @@ func (r *DiscordGuildRepository) GetByID(ctx context.Context, guildID int64) (*d
 	err := r.db.QueryRowContext(ctx, query, guildID).Scan(
 		&guild.ID,
 		&guild.OwnerUserID,
+		&guild.OwnerDiscordID,
 		&guild.Name,
 		&guild.IconURL,
 		&guild.MemberCount,
@@ -103,7 +107,7 @@ func (r *DiscordGuildRepository) GetByID(ctx context.Context, guildID int64) (*d
 
 func (r *DiscordGuildRepository) GetByOwner(ctx context.Context, userID string) ([]domain.DiscordGuild, error) {
 	query := `
-		SELECT id, owner_user_id, name, icon_url, member_count,
+		SELECT id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 		       bot_added_at, bot_removed_at, is_active, created_at, updated_at
 		FROM discord_guilds
 		WHERE owner_user_id = $1 AND is_active = true
@@ -122,6 +126,7 @@ func (r *DiscordGuildRepository) GetByOwner(ctx context.Context, userID string) 
 		err := rows.Scan(
 			&guild.ID,
 			&guild.OwnerUserID,
+			&guild.OwnerDiscordID,
 			&guild.Name,
 			&guild.IconURL,
 			&guild.MemberCount,
@@ -142,7 +147,7 @@ func (r *DiscordGuildRepository) GetByOwner(ctx context.Context, userID string) 
 
 func (r *DiscordGuildRepository) GetAll(ctx context.Context) ([]domain.DiscordGuild, error) {
 	query := `
-		SELECT id, owner_user_id, name, icon_url, member_count,
+		SELECT id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 		       bot_added_at, bot_removed_at, is_active, created_at, updated_at
 		FROM discord_guilds
 		ORDER BY created_at DESC
@@ -160,6 +165,7 @@ func (r *DiscordGuildRepository) GetAll(ctx context.Context) ([]domain.DiscordGu
 		err := rows.Scan(
 			&guild.ID,
 			&guild.OwnerUserID,
+			&guild.OwnerDiscordID,
 			&guild.Name,
 			&guild.IconURL,
 			&guild.MemberCount,
@@ -180,7 +186,7 @@ func (r *DiscordGuildRepository) GetAll(ctx context.Context) ([]domain.DiscordGu
 
 func (r *DiscordGuildRepository) GetActive(ctx context.Context) ([]domain.DiscordGuild, error) {
 	query := `
-		SELECT id, owner_user_id, name, icon_url, member_count,
+		SELECT id, owner_user_id, owner_discord_id, name, icon_url, member_count,
 		       bot_added_at, bot_removed_at, is_active, created_at, updated_at
 		FROM discord_guilds
 		WHERE is_active = true
@@ -199,6 +205,7 @@ func (r *DiscordGuildRepository) GetActive(ctx context.Context) ([]domain.Discor
 		err := rows.Scan(
 			&guild.ID,
 			&guild.OwnerUserID,
+			&guild.OwnerDiscordID,
 			&guild.Name,
 			&guild.IconURL,
 			&guild.MemberCount,
@@ -303,4 +310,28 @@ func (r *DiscordGuildRepository) GetGuildCount(ctx context.Context) (int, error)
 	}
 
 	return count, nil
+}
+
+// LinkOwnerByDiscordID backfills owner_user_id for any guild whose raw Discord
+// owner snowflake matches discordUserID but that hasn't been linked to a
+// platform user yet. Needed because GUILD_JOINED events can arrive before the
+// guild owner ever connects their Discord account with us.
+func (r *DiscordGuildRepository) LinkOwnerByDiscordID(ctx context.Context, discordUserID int64, userID string) (int64, error) {
+	query := `
+		UPDATE discord_guilds
+		SET owner_user_id = $1, updated_at = NOW()
+		WHERE owner_discord_id = $2 AND owner_user_id IS NULL
+	`
+
+	result, err := r.db.ExecContext(ctx, query, userID, discordUserID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to link guilds by discord owner id: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return rows, nil
 }

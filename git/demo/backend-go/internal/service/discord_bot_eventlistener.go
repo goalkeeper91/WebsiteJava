@@ -13,15 +13,18 @@ import (
 type DiscordBotEventListener struct {
 	redisService *redis.RedisService
 	guildRepo    *postgres.DiscordGuildRepository
+	connRepo     *postgres.DiscordConnectionRepository
 }
 
 func NewDiscordBotEventListener(
 	redisService *redis.RedisService,
 	guildRepo *postgres.DiscordGuildRepository,
+	connRepo *postgres.DiscordConnectionRepository,
 ) *DiscordBotEventListener {
 	return &DiscordBotEventListener{
 		redisService: redisService,
 		guildRepo:    guildRepo,
+		connRepo:     connRepo,
 	}
 }
 
@@ -103,17 +106,36 @@ func (l *DiscordBotEventListener) handleGuildJoined(ctx context.Context, event m
 		memberCount = &count
 	}
 
+	var ownerDiscordID *int64
+	var ownerUserID *string
+	if ownerIDFloat, ok := event["owner_id"].(float64); ok {
+		id := int64(ownerIDFloat)
+		ownerDiscordID = &id
+
+		// If the guild owner has already connected their Discord account with
+		// us, link ownership immediately. Otherwise it stays unset until they
+		// do (see DiscordGuildService.LinkOwnedGuilds, called on connect).
+		if l.connRepo != nil {
+			if conn, err := l.connRepo.GetByDiscordUserID(ctx, id); err == nil && conn != nil {
+				ownerUserID = &conn.UserID
+			}
+		}
+	} else {
+		log.Printf("GUILD_JOINED event for guild %d has no owner_id", guildID)
+	}
+
 	log.Printf("🎉 Bot joined guild: %s (ID: %d)", guildName, guildID)
 
 	// Try to get existing guild
 	// Since GetByGuildID doesn't exist, we'll try GetByID with the guildID
 	// Or we create it and handle duplicate key error
 	input := domain.DiscordGuildCreateInput{
-		ID:          guildID,
-		OwnerUserID: nil, // Will be set when user connects
-		Name:        guildName,
-		IconURL:     &iconURL,
-		MemberCount: memberCount,
+		ID:             guildID,
+		OwnerUserID:    ownerUserID,
+		OwnerDiscordID: ownerDiscordID,
+		Name:           guildName,
+		IconURL:        &iconURL,
+		MemberCount:    memberCount,
 	}
 
 	guild, err := l.guildRepo.Create(ctx, input)

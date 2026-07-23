@@ -187,6 +187,22 @@ func (s *DiscordGuildService) HandleGuildLeft(ctx context.Context, guildID int64
 	return nil
 }
 
+// LinkOwnedGuilds backfills ownership for any guild the bot already joined
+// whose raw Discord owner ID matches discordUserID but that hasn't been
+// linked to a platform user yet. Called right after a user connects their
+// Discord account, so guilds joined before that connection existed still
+// show up on the dashboard.
+func (s *DiscordGuildService) LinkOwnedGuilds(ctx context.Context, discordUserID int64, userID string) error {
+	linked, err := s.guildRepo.LinkOwnerByDiscordID(ctx, discordUserID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to link owned guilds: %w", err)
+	}
+	if linked > 0 {
+		fmt.Printf("Linked %d guild(s) to user %s via discord owner id %d\n", linked, userID, discordUserID)
+	}
+	return nil
+}
+
 func (s *DiscordGuildService) GetAllGuilds(ctx context.Context) ([]domain.DiscordGuild, error) {
 	return s.guildRepo.GetAll(ctx)
 }

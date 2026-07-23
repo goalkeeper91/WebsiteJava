@@ -17,6 +17,7 @@ import (
 
 type DiscordAuthHandler struct {
 	authService  *service.DiscordAuthService
+	guildService *service.DiscordGuildService
 	sessionStore sessions.Store
 	sessionName  string
 	redisService *redis.RedisService
@@ -24,12 +25,14 @@ type DiscordAuthHandler struct {
 
 func NewDiscordAuthHandler(
 	authService *service.DiscordAuthService,
+	guildService *service.DiscordGuildService,
 	sessionStore sessions.Store,
 	sessionName string,
 	redisService *redis.RedisService,
 ) *DiscordAuthHandler {
 	return &DiscordAuthHandler{
 		authService:  authService,
+		guildService: guildService,
 		sessionStore: sessionStore,
 		sessionName:  sessionName,
 		redisService: redisService,
@@ -125,7 +128,7 @@ func (h *DiscordAuthHandler) HandleCallback(w http.ResponseWriter, r *http.Reque
 	log.Printf("Processing Discord callback for user %s", userIDFromState)
 
 	// Handle callback
-	err = h.authService.HandleCallback(r.Context(), code, userIDFromState)
+	discordUserID, err := h.authService.HandleCallback(r.Context(), code, userIDFromState)
 	if err != nil {
 		log.Printf("Failed to handle callback: %v", err)
 		http.Error(w, "Discord-Verbindung fehlgeschlagen", http.StatusInternalServerError)
@@ -135,6 +138,15 @@ func (h *DiscordAuthHandler) HandleCallback(w http.ResponseWriter, r *http.Reque
 	// Clean up state
 	h.deleteState(state)
 	log.Printf("Successfully connected Discord for user %s", userIDFromState)
+
+	// Backfill ownership for any guild the bot already joined before this
+	// user connected their Discord account (GUILD_JOINED only knows the raw
+	// Discord owner ID until this link exists).
+	if h.guildService != nil {
+		if err := h.guildService.LinkOwnedGuilds(r.Context(), discordUserID, userIDFromState); err != nil {
+			log.Printf("Failed to link owned guilds for user %s: %v", userIDFromState, err)
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{

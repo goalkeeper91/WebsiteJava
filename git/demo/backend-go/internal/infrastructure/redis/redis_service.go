@@ -95,6 +95,13 @@ func (r *RedisService) GetBotStatusData(ctx context.Context) (string, error) {
     return r.client.Get(ctx, "bot:status").Result()
 }
 
+// GetDiscordBotStatusData reads the heartbeat the Python discord-bot service
+// (services/discord-bot in bot-plattform) writes every 30s to this key, with
+// a 90s TTL so a crashed/stopped bot naturally reads as offline.
+func (r *RedisService) GetDiscordBotStatusData(ctx context.Context) (string, error) {
+    return r.client.Get(ctx, "discord_bot:status").Result()
+}
+
 func (r *RedisService) SendJoinChannelSignal(twitchUserID string) error {
 	signal := BotSignal{
 		Type:         "JOIN_CHANNEL",

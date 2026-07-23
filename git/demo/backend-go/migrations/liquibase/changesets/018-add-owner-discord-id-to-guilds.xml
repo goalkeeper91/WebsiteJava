@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="018-add-owner-discord-id-to-guilds" author="Marcel">
+        <comment>
+            Speichert die rohe Discord-Owner-Snowflake (guild.owner_id aus dem GUILD_JOINED Event),
+            damit die Zuordnung zu owner_user_id auch nachträglich erfolgen kann, wenn der User
+            sein Discord-Konto erst nach dem Bot-Invite verbindet.
+        </comment>
+
+        <addColumn tableName="discord_guilds">
+            <column name="owner_discord_id" type="BIGINT" remarks="Discord Snowflake des Guild-Owners (aus GUILD_JOINED Event)"/>
+        </addColumn>
+
+        <createIndex indexName="idx_discord_guilds_owner_discord_id" tableName="discord_guilds">
+            <column name="owner_discord_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

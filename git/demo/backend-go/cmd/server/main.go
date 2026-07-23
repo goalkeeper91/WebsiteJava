@@ -288,11 +288,11 @@ func main() {
 	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
 
 	// Discord
-	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, sessionStore, cfg.Session.Name, redisService)
+	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
 	discordGuildHandler := handler.NewDiscordGuildHandler(discordGuildService, sessionStore, cfg.Session.Name, discordClientID, discordPermissions)
 	discordSettingsHandler := handler.NewDiscordSettingsHandler(discordSettingsService, discordNotificationService, sessionStore, cfg.Session.Name)
 	jtcHandler := handler.NewJoinToCreateHandler(jtcService, sessionStore, cfg.Session.Name)
-	discordBotStatusHandler := handler.NewDiscordBotStatusHandler(discordGuildService)
+	discordBotStatusHandler := handler.NewDiscordBotStatusHandler(discordGuildService, redisService)
 
 	// ============================================================
 	// ROUTER
@@ -333,7 +333,7 @@ func main() {
 	// ============================================================
 
 	// Discord bot event listener
-	discordBotEventListener := service.NewDiscordBotEventListener(redisService, discordGuildRepo)
+	discordBotEventListener := service.NewDiscordBotEventListener(redisService, discordGuildRepo, discordConnRepo)
 	go func() {
 		ctx := context.Background()
 		log.Println("🚀 Discord Bot Event Listener gestartet...")
