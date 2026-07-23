@@ -118,6 +118,14 @@ func (r *RedisService) SendRefreshCommandsSignal(twitchUserID string) error {
 	return r.publish(signal)
 }
 
+func (r *RedisService) SendRefreshAutomodSignal(twitchUserID string) error {
+	signal := BotSignal{
+		Type:         "REFRESH_AUTOMOD",
+		TwitchUserID: twitchUserID,
+	}
+	return r.publish(signal)
+}
+
 func (r *RedisService) SendBotAnnounce(message string, twitchUserID string) error {
     payload := map[string]interface{}{
         "type":           "BOT_ANNOUNCE",

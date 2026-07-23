@@ -65,7 +65,7 @@ export default function EditScheduledMessageModal({
                 onChange={(e) => setMessage(e.target.value)}
                 required
                 rows={3}
-                className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
             </div>
           )}
@@ -78,7 +78,7 @@ export default function EditScheduledMessageModal({
               onChange={(e) => setIntervalMinutes(Number(e.target.value))}
               min={1}
               required
-              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -88,7 +88,7 @@ export default function EditScheduledMessageModal({
               id="only-when-live"
               checked={onlyWhenLive}
               onChange={(e) => setOnlyWhenLive(e.target.checked)}
-              className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-purple-600 focus:ring-2 focus:ring-purple-500"
+              className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <label htmlFor="only-when-live" className="text-sm cursor-pointer">
               Nur posten, wenn der Kanal live ist

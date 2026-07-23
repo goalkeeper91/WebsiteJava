@@ -68,7 +68,7 @@ export default function CreateScheduledMessageModal({
             type="button"
             onClick={() => setMode("message")}
             className={`flex-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-              mode === "message" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-gray-200"
+              mode === "message" ? "bg-green-600 text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Eigene Nachricht
@@ -77,7 +77,7 @@ export default function CreateScheduledMessageModal({
             type="button"
             onClick={() => setMode("command")}
             className={`flex-1 px-3 py-1.5 rounded-md text-sm transition-colors ${
-              mode === "command" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-gray-200"
+              mode === "command" ? "bg-green-600 text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Bestehendes Command
@@ -93,7 +93,7 @@ export default function CreateScheduledMessageModal({
                 onChange={(e) => setMessage(e.target.value)}
                 required
                 rows={3}
-                className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
               />
             </div>
           ) : (
@@ -108,7 +108,7 @@ export default function CreateScheduledMessageModal({
                   value={commandId ?? ""}
                   onChange={(e) => setCommandId(Number(e.target.value))}
                   required
-                  className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   {commands.map((cmd) => (
                     <option key={cmd.id} value={cmd.id}>
@@ -131,7 +131,7 @@ export default function CreateScheduledMessageModal({
               onChange={(e) => setIntervalMinutes(Number(e.target.value))}
               min={1}
               required
-              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <p className="text-xs text-gray-400 mt-1">Mindestens 1 Minute.</p>
           </div>
@@ -147,7 +147,7 @@ export default function CreateScheduledMessageModal({
             <button
               type="submit"
               disabled={loading || (mode === "command" && commands.length === 0)}
-              className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-500 disabled:opacity-50"
+              className="px-4 py-2 bg-green-600 rounded hover:bg-green-500 disabled:opacity-50"
             >
               {loading ? "Speichern…" : "Erstellen"}
             </button>

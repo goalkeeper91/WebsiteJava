@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="023-create-automod" author="Marcel">
+        <comment>
+            Automod: automatisches Löschen von Chat-Nachrichten mit verbotenen
+            Wörtern/nicht erlaubten Links + eskalierende Timeouts bei
+            Wiederholungstätern. automod_settings ist 1:1 pro Channel (analog
+            zu automation_settings), automod_violations trackt den
+            Eskalations-Zähler pro (Channel, Zuschauer)-Paar dauerhaft, damit
+            ein Bot-Neustart die Eskalation nicht zurücksetzt.
+        </comment>
+
+        <createTable tableName="automod_settings">
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_automod_settings_user"
+                             references="users(twitch_id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="blocked_words" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="link_filter_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_domains" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_automod_settings_enabled" tableName="automod_settings">
+            <column name="enabled"/>
+        </createIndex>
+
+        <createTable tableName="automod_violations">
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="offender_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="violation_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_violation_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addPrimaryKey tableName="automod_violations"
+                        columnNames="user_twitch_id, offender_twitch_id"
+                        constraintName="pk_automod_violations"/>
+
+        <rollback>
+            <dropTable tableName="automod_violations"/>
+            <dropTable tableName="automod_settings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

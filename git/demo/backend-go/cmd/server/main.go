@@ -82,6 +82,9 @@ func main() {
 	// Automatisierte Chat-Nachrichten (Timer/Scheduler)
 	scheduledMessageRepo := postgres.NewScheduledMessageRepository(db)
 
+	// Automod
+	automodRepo := postgres.NewAutomodRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -143,6 +146,8 @@ func main() {
 		redisService,
 		scheduledMessageAppToken,
 	)
+
+	automodService := service.NewAutomodService(automodRepo, redisService)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -243,6 +248,8 @@ func main() {
 			"channel:read:redemptions", "moderator:read:followers",
 			// Eingebaute Chat-Commands: !title/!game setzen
 			"channel:manage:broadcast",
+			// Automod: Nachrichten löschen + Timeout verhängen
+			"moderator:manage:chat_messages", "moderator:manage:banned_users",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
@@ -319,6 +326,7 @@ func main() {
 	automationSettingsHandler := handler.NewAutomationSettingsHandler(automationSettingsService, sessionStore, cfg.Session.Name)
 	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
 	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
+	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -358,6 +366,7 @@ func main() {
 	automationSettingsHandler.RegisterRoutes(router)
 	clipLogHandler.RegisterRoutes(router)
 	scheduledMessageHandler.RegisterRoutes(router)
+	automodHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
