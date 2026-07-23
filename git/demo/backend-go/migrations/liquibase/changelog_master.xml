@@ -23,5 +23,6 @@
     <include file="changesets/016-create-clip-logs.xml" relativeToChangelogFile="true"/>
     <include file="changesets/017-add-clip-automation-feature.xml" relativeToChangelogFile="true"/>
     <include file="changesets/018-add-owner-discord-id-to-guilds.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/019-create-subathon-timer-state.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

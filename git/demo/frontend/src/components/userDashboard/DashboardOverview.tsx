@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, Hash } from "lucide-react";
+import { MessageSquare, Hash, Radio } from "lucide-react";
 import CommandsDashboard from "./CommandsDashboard";
 import DiscordDashboard from "./DiscordDashboard";
+import SubathonPage from "./SubathonPage";
 
-type DashboardTab = "twitch" | "discord";
+type DashboardTab = "twitch" | "discord" | "subathon";
 
 const DashboardOverview: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    searchParams.get("tab") === "discord" ? "discord" : "twitch"
+    searchParams.get("tab") === "discord"
+      ? "discord"
+      : searchParams.get("tab") === "subathon"
+      ? "subathon"
+      : "twitch"
   );
 
   return (
@@ -51,6 +56,18 @@ const DashboardOverview: React.FC = () => {
               <Hash className="w-5 h-5" />
               <span>Discord Bot</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab("subathon")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+                activeTab === "subathon"
+                  ? "bg-gray-900 text-white border-t-2 border-purple-500"
+                  : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200"
+              }`}
+            >
+              <Radio className="w-5 h-5" />
+              <span>Subathon Timer</span>
+            </button>
           </div>
         </div>
       </div>
@@ -59,6 +76,7 @@ const DashboardOverview: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {activeTab === "twitch" && <CommandsDashboard />}
         {activeTab === "discord" && <DiscordDashboard />}
+        {activeTab === "subathon" && <SubathonPage />}
       </div>
     </div>
   );

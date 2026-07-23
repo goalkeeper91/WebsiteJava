@@ -63,6 +63,9 @@ func main() {
 	discordSettingsRepo := postgres.NewDiscordGuildSettingsRepository(db)
 	jtcRepo := postgres.NewJoinToCreateRepository(db)
 
+	// Subathon Timer
+	subathonRepo := postgres.NewSubathonRepository(db)
+
 	// SaaS / n8n
 	subscriptionTierRepo := postgres.NewSubscriptionTierRepository(db)
 	userSubscriptionRepo := postgres.NewUserSubscriptionRepository(db)
@@ -203,6 +206,8 @@ func main() {
 		redisService,
 	)
 
+	subathonService := service.NewSubathonService(subathonRepo)
+
 	// ============================================================
 	// AUTH SERVICE (braucht channelService → kommt nach services)
 	// ============================================================
@@ -211,7 +216,12 @@ func main() {
 		ClientID:     cfg.Twitch.ClientID,
 		ClientSecret: cfg.Twitch.ClientSecret,
 		RedirectURL:  cfg.Twitch.RedirectURL,
-		Scopes:       []string{"user:read:email", "clips:edit"},
+		Scopes: []string{
+			"user:read:email", "clips:edit",
+			// Subathon-Timer: EventSub-Subscriptions für Subs/Bits
+			"channel:read:subscriptions", "bits:read",
+			"channel:read:redemptions", "moderator:read:followers",
+		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 			TokenURL: "https://id.twitch.tv/oauth2/token",
@@ -294,6 +304,9 @@ func main() {
 	jtcHandler := handler.NewJoinToCreateHandler(jtcService, sessionStore, cfg.Session.Name)
 	discordBotStatusHandler := handler.NewDiscordBotStatusHandler(discordGuildService, redisService)
 
+	// Subathon Timer
+	subathonHandler := handler.NewSubathonHandler(subathonService, sessionStore, cfg.Session.Name)
+
 	// ============================================================
 	// ROUTER
 	// ============================================================
@@ -328,6 +341,9 @@ func main() {
 	jtcHandler.RegisterRoutes(router)
 	discordBotStatusHandler.RegisterRoutes(router)
 
+	// Subathon Timer routes
+	subathonHandler.RegisterRoutes(router)
+
 	// ============================================================
 	// BACKGROUND SERVICES
 	// ============================================================
@@ -341,6 +357,11 @@ func main() {
 			log.Printf("Discord Bot Event Listener Fehler: %v", err)
 		}
 	}()
+
+	// Subathon EventSub client - keeps a live Twitch connection per user so
+	// subs/bits are counted even without the dashboard's Subathon tab open
+	subathonEventSubClient := service.NewSubathonEventSubClient(subathonService, tokenRepo, cfg.Twitch.ClientID)
+	go subathonEventSubClient.Start(context.Background())
 
 	// Clip trigger listener (Phase C)
 	clipTriggerListener := service.NewClipTriggerListener(redisService, clipCreationService)

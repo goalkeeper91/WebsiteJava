@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="019-create-subathon-timer-state" author="Marcel">
+        <comment>
+            Per-user Subathon-Timer-Zustand (ersetzt das In-Memory-Objekt der
+            urspruenglichen Next.js-App, da dieses Dashboard Multi-Tenant ist).
+        </comment>
+
+        <createTable tableName="subathon_timer_state" remarks="Subathon timer state and settings, one row per user">
+            <column name="user_id" type="VARCHAR(255)" remarks="Twitch ID des Streamers">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_subathon_timer_state_user"
+                             referencedTableName="users"
+                             referencedColumnNames="twitch_id"/>
+            </column>
+
+            <column name="time_remaining" type="INTEGER" defaultValueNumeric="1800">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_running" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_timestamp" type="BIGINT" remarks="Unix-Millis, wann der Timer bei 0 ankommt (nur waehrend is_running)"/>
+
+            <column name="total_subs" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_bits" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_events" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="initial_time_minutes" type="INTEGER" defaultValueNumeric="30">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sub_time_seconds" type="INTEGER" defaultValueNumeric="120">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bits_time_seconds" type="INTEGER" defaultValueNumeric="30">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="event_log" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
