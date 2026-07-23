@@ -46,6 +46,7 @@ func (h *ScheduledMessageHandler) RegisterRoutes(router *mux.Router) {
 
 type CreateScheduledMessageRequest struct {
 	Message         string `json:"message"`
+	CommandID       *int64 `json:"command_id,omitempty"`
 	IntervalSeconds int    `json:"interval_seconds"`
 }
 
@@ -135,7 +136,13 @@ func (h *ScheduledMessageHandler) CreateMessage(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	message, err := h.messageService.CreateMessage(r.Context(), user.ID, req.Message, req.IntervalSeconds)
+	var message *domain.ScheduledMessage
+	var err error
+	if req.CommandID != nil {
+		message, err = h.messageService.CreateCommandSchedule(r.Context(), user.ID, *req.CommandID, req.IntervalSeconds)
+	} else {
+		message, err = h.messageService.CreateMessage(r.Context(), user.ID, req.Message, req.IntervalSeconds)
+	}
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -256,6 +263,10 @@ func (h *ScheduledMessageHandler) handleError(w http.ResponseWriter, err error) 
 		http.Error(w, "Intervall muss mindestens 60 Sekunden betragen", http.StatusBadRequest)
 	case domain.ErrChannelNotRegistered:
 		http.Error(w, "Channel nicht registriert. Bitte erneut einloggen.", http.StatusBadRequest)
+	case domain.ErrCommandNotFound:
+		http.Error(w, "Command nicht gefunden", http.StatusNotFound)
+	case domain.ErrFeatureNotAvailable:
+		http.Error(w, "Nur einfache Commands (ohne n8n) können mit einem Timer verknüpft werden", http.StatusBadRequest)
 	default:
 		log.Printf("Scheduled-Message Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)

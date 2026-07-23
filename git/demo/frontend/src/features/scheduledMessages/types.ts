@@ -3,7 +3,8 @@
 export interface ScheduledMessage {
   id: number;
   channel_id: string;
-  message: string;
+  message: string | null;
+  command_id?: number;
   interval_seconds: number;
   enabled: boolean;
   only_when_live: boolean;
@@ -14,7 +15,8 @@ export interface ScheduledMessage {
 }
 
 export interface CreateScheduledMessageRequest {
-  message: string;
+  message?: string;
+  command_id?: number;
   interval_seconds: number;
 }
 

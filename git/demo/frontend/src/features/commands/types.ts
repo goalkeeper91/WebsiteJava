@@ -7,6 +7,7 @@ export interface ChatCommand {
   response: string;
   cooldown: number;
   enabled: boolean;
+  command_type: "simple" | "advanced";
   created_at: string;
   updated_at: string;
 }

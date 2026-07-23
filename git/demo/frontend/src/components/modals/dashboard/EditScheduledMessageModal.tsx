@@ -13,7 +13,8 @@ export default function EditScheduledMessageModal({
   onClose,
   onUpdated,
 }: EditScheduledMessageModalProps) {
-  const [message, setMessage] = useState(scheduledMessage.message);
+  const isCommandLinked = !!scheduledMessage.command_id;
+  const [message, setMessage] = useState(scheduledMessage.message ?? "");
   const [intervalMinutes, setIntervalMinutes] = useState(
     Math.max(1, Math.round(scheduledMessage.interval_seconds / 60))
   );
@@ -29,7 +30,7 @@ export default function EditScheduledMessageModal({
 
     try {
       const updated = await updateScheduledMessage(scheduledMessage.id, {
-        message,
+        ...(isCommandLinked ? {} : { message }),
         interval_seconds: intervalMinutes * 60,
         enabled,
         only_when_live: onlyWhenLive,
@@ -51,16 +52,23 @@ export default function EditScheduledMessageModal({
         {error && <p className="text-red-500 mb-2 text-sm">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-sm mb-1">Nachricht</label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              required
-              rows={3}
-              className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-            />
-          </div>
+          {isCommandLinked ? (
+            <div className="bg-gray-900 border border-gray-700 rounded p-3 text-sm text-gray-400">
+              🔗 Diese Nachricht ist mit einem Command verknüpft — der Text folgt automatisch
+              dessen aktueller Antwort. Um den Text zu ändern, bearbeite den Command selbst.
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm mb-1">Nachricht</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                required
+                rows={3}
+                className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm mb-1">Intervall (Minuten)</label>

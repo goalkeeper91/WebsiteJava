@@ -21,8 +21,8 @@ func NewScheduledMessageRepository(db *sql.DB) repository.ScheduledMessageReposi
 func (r *scheduledMessageRepository) Create(ctx context.Context, m *domain.ScheduledMessage) error {
 	query := `
 		INSERT INTO scheduled_messages
-		(channel_id, message, interval_seconds, enabled, only_when_live, next_send_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		(channel_id, message, command_id, interval_seconds, enabled, only_when_live, next_send_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
 	`
 
@@ -31,6 +31,7 @@ func (r *scheduledMessageRepository) Create(ctx context.Context, m *domain.Sched
 		query,
 		m.ChannelID,
 		m.Message,
+		m.CommandID,
 		m.IntervalSeconds,
 		m.Enabled,
 		m.OnlyWhenLive,
@@ -48,18 +49,13 @@ func (r *scheduledMessageRepository) Create(ctx context.Context, m *domain.Sched
 
 func (r *scheduledMessageRepository) GetByID(ctx context.Context, id int64, channelID string) (*domain.ScheduledMessage, error) {
 	query := `
-		SELECT id, channel_id, message, interval_seconds, enabled, only_when_live,
+		SELECT id, channel_id, message, command_id, interval_seconds, enabled, only_when_live,
 		       next_send_at, last_sent_at, created_at, updated_at
 		FROM scheduled_messages
 		WHERE id = $1 AND channel_id = $2
 	`
 
-	m := &domain.ScheduledMessage{}
-	err := r.db.QueryRowContext(ctx, query, id, channelID).Scan(
-		&m.ID, &m.ChannelID, &m.Message, &m.IntervalSeconds, &m.Enabled, &m.OnlyWhenLive,
-		&m.NextSendAt, &m.LastSentAt, &m.CreatedAt, &m.UpdatedAt,
-	)
-
+	m, err := scanOneScheduledMessage(r.db.QueryRowContext(ctx, query, id, channelID))
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrScheduledMessageNotFound
 	}
@@ -82,7 +78,7 @@ func (r *scheduledMessageRepository) GetAll(ctx context.Context, channelID strin
 	}
 
 	query := `
-		SELECT id, channel_id, message, interval_seconds, enabled, only_when_live,
+		SELECT id, channel_id, message, command_id, interval_seconds, enabled, only_when_live,
 		       next_send_at, last_sent_at, created_at, updated_at
 		FROM scheduled_messages
 		WHERE channel_id = $1
@@ -146,7 +142,7 @@ func (r *scheduledMessageRepository) Delete(ctx context.Context, id int64, chann
 
 func (r *scheduledMessageRepository) GetDue(ctx context.Context, limit int) ([]*domain.ScheduledMessage, error) {
 	query := `
-		SELECT id, channel_id, message, interval_seconds, enabled, only_when_live,
+		SELECT id, channel_id, message, command_id, interval_seconds, enabled, only_when_live,
 		       next_send_at, last_sent_at, created_at, updated_at
 		FROM scheduled_messages
 		WHERE enabled = true AND next_send_at <= NOW()
@@ -175,14 +171,39 @@ func (r *scheduledMessageRepository) MarkSent(ctx context.Context, id int64, sen
 	return nil
 }
 
+// rowScanner is satisfied by both *sql.Row and *sql.Rows, letting
+// scanOneScheduledMessage share the column layout with scanScheduledMessages.
+type rowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func scanOneScheduledMessage(row rowScanner) (*domain.ScheduledMessage, error) {
+	m := &domain.ScheduledMessage{}
+	var message sql.NullString
+	var commandID sql.NullInt64
+
+	err := row.Scan(
+		&m.ID, &m.ChannelID, &message, &commandID, &m.IntervalSeconds, &m.Enabled, &m.OnlyWhenLive,
+		&m.NextSendAt, &m.LastSentAt, &m.CreatedAt, &m.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if message.Valid {
+		m.Message = &message.String
+	}
+	if commandID.Valid {
+		m.CommandID = &commandID.Int64
+	}
+
+	return m, nil
+}
+
 func scanScheduledMessages(rows *sql.Rows) ([]*domain.ScheduledMessage, error) {
 	messages := make([]*domain.ScheduledMessage, 0)
 	for rows.Next() {
-		m := &domain.ScheduledMessage{}
-		err := rows.Scan(
-			&m.ID, &m.ChannelID, &m.Message, &m.IntervalSeconds, &m.Enabled, &m.OnlyWhenLive,
-			&m.NextSendAt, &m.LastSentAt, &m.CreatedAt, &m.UpdatedAt,
-		)
+		m, err := scanOneScheduledMessage(rows)
 		if err != nil {
 			return nil, fmt.Errorf("fehler beim Scannen der automatisierten Nachricht: %w", err)
 		}

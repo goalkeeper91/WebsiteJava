@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="022-add-command-link-to-scheduled-messages" author="Marcel">
+        <comment>
+            Erlaubt einer automatisierten Nachricht, statt eigenem Freitext einen
+            bereits existierenden Chat-Command zu referenzieren - der Timer postet
+            dann immer den aktuellen response-Text des Commands, ohne ihn zu
+            duplizieren. Ein Eintrag hat entweder message ODER command_id (nie
+            beides, nie keins), erzwungen per CHECK-Constraint.
+        </comment>
+
+        <dropNotNullConstraint tableName="scheduled_messages" columnName="message" columnDataType="TEXT"/>
+
+        <addColumn tableName="scheduled_messages">
+            <column name="command_id" type="BIGINT" remarks="Verweist auf twitch_chat_commands.id, falls diese Nachricht ein verknüpfter Command statt Freitext ist"/>
+        </addColumn>
+
+        <addForeignKeyConstraint
+                baseTableName="scheduled_messages" baseColumnNames="command_id"
+                referencedTableName="twitch_chat_commands" referencedColumnNames="id"
+                constraintName="fk_scheduled_messages_command"
+                onDelete="CASCADE"/>
+
+        <sql>
+            ALTER TABLE scheduled_messages
+            ADD CONSTRAINT chk_scheduled_messages_message_xor_command
+            CHECK (
+                (message IS NOT NULL AND command_id IS NULL) OR
+                (message IS NULL AND command_id IS NOT NULL)
+            );
+        </sql>
+
+        <createIndex indexName="idx_scheduled_messages_command" tableName="scheduled_messages">
+            <column name="command_id"/>
+        </createIndex>
+
+        <rollback>
+            <sql>ALTER TABLE scheduled_messages DROP CONSTRAINT chk_scheduled_messages_message_xor_command;</sql>
+            <dropForeignKeyConstraint baseTableName="scheduled_messages" constraintName="fk_scheduled_messages_command"/>
+            <dropColumn tableName="scheduled_messages" columnName="command_id"/>
+            <addNotNullConstraint tableName="scheduled_messages" columnName="message" columnDataType="TEXT"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

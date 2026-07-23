@@ -7,6 +7,8 @@ import {
 import type { ScheduledMessage } from "../../features/scheduledMessages/types";
 import CreateScheduledMessageModal from "../modals/dashboard/CreateScheduledMessageModal";
 import EditScheduledMessageModal from "../modals/dashboard/EditScheduledMessageModal";
+import { getCommands } from "../../features/commands/api";
+import type { ChatCommand } from "../../features/commands/types";
 
 function formatRelative(dateString?: string): string | null {
   if (!dateString) return null;
@@ -26,10 +28,17 @@ export default function ScheduledMessagesDashboard() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
+  const [commandsById, setCommandsById] = useState<Map<number, ChatCommand>>(new Map());
 
   useEffect(() => {
     loadMessages();
   }, [page]);
+
+  useEffect(() => {
+    getCommands(1, 100)
+      .then((data) => setCommandsById(new Map((data.data || []).map((cmd) => [cmd.id, cmd]))))
+      .catch((err) => console.error("Fehler beim Laden der Commands:", err));
+  }, []);
 
   async function loadMessages() {
     setLoading(true);
@@ -142,7 +151,16 @@ export default function ScheduledMessagesDashboard() {
                     <span className="text-xs text-gray-500">Zuletzt gepostet: {lastSent}</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-300 break-words">{m.message}</p>
+                {m.command_id ? (
+                  <p className="text-sm text-gray-300 break-words">
+                    🔗 Verknüpft mit{" "}
+                    <span className="font-mono text-green-400">
+                      !{commandsById.get(m.command_id)?.trigger ?? "?"}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-300 break-words">{m.message}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">

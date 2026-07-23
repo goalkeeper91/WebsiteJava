@@ -139,6 +139,7 @@ func main() {
 	scheduledMessageService := service.NewScheduledMessageService(
 		scheduledMessageRepo,
 		channelRepo,
+		commandRepo,
 		redisService,
 		scheduledMessageAppToken,
 	)

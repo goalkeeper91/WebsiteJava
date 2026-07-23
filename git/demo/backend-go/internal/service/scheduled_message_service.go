@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"demo/backend-go/internal/domain"
@@ -21,6 +22,7 @@ const dueMessagesBatchSize = 100
 type ScheduledMessageService struct {
 	messageRepo  repository.ScheduledMessageRepository
 	channelRepo  repository.TwitchChannelRepository
+	commandRepo  repository.ChatCommandRepository
 	redisService *redis.RedisService
 	appToken     *twitch.TwitchAppTokenClient
 }
@@ -28,12 +30,14 @@ type ScheduledMessageService struct {
 func NewScheduledMessageService(
 	messageRepo repository.ScheduledMessageRepository,
 	channelRepo repository.TwitchChannelRepository,
+	commandRepo repository.ChatCommandRepository,
 	redisService *redis.RedisService,
 	appToken *twitch.TwitchAppTokenClient,
 ) *ScheduledMessageService {
 	return &ScheduledMessageService{
 		messageRepo:  messageRepo,
 		channelRepo:  channelRepo,
+		commandRepo:  commandRepo,
 		redisService: redisService,
 		appToken:     appToken,
 	}
@@ -55,6 +59,7 @@ func (s *ScheduledMessageService) GetMessageByID(ctx context.Context, twitchUser
 	return s.messageRepo.GetByID(ctx, id, channelID)
 }
 
+// CreateMessage creates a free-text scheduled message.
 func (s *ScheduledMessageService) CreateMessage(ctx context.Context, twitchUserID, message string, intervalSeconds int) (*domain.ScheduledMessage, error) {
 	if err := domain.ValidateScheduledMessage(message, intervalSeconds); err != nil {
 		return nil, err
@@ -65,9 +70,39 @@ func (s *ScheduledMessageService) CreateMessage(ctx context.Context, twitchUserI
 		return nil, err
 	}
 
-	scheduled := domain.NewScheduledMessage(channelID, message, intervalSeconds)
+	scheduled := domain.NewFreeTextScheduledMessage(channelID, message, intervalSeconds)
 	if err := s.messageRepo.Create(ctx, scheduled); err != nil {
 		return nil, fmt.Errorf("fehler beim Erstellen der automatisierten Nachricht: %w", err)
+	}
+
+	return scheduled, nil
+}
+
+// CreateCommandSchedule links an existing simple chat command to a timer -
+// the command stays usable as a normal !trigger, but also auto-posts on the
+// given interval. Only simple commands qualify (advanced/n8n commands have
+// no static response text to reuse without a real chat trigger).
+func (s *ScheduledMessageService) CreateCommandSchedule(ctx context.Context, twitchUserID string, commandID int64, intervalSeconds int) (*domain.ScheduledMessage, error) {
+	if err := domain.ValidateScheduledInterval(intervalSeconds); err != nil {
+		return nil, err
+	}
+
+	channelID, err := s.getChannelID(ctx, twitchUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	command, err := s.commandRepo.GetByID(ctx, commandID, channelID)
+	if err != nil {
+		return nil, err
+	}
+	if !command.IsSimple() {
+		return nil, domain.ErrFeatureNotAvailable
+	}
+
+	scheduled := domain.NewCommandScheduledMessage(channelID, commandID, intervalSeconds)
+	if err := s.messageRepo.Create(ctx, scheduled); err != nil {
+		return nil, fmt.Errorf("fehler beim Erstellen des Command-Zeitplans: %w", err)
 	}
 
 	return scheduled, nil
@@ -91,16 +126,24 @@ func (s *ScheduledMessageService) UpdateMessage(
 		return nil, err
 	}
 
-	newMessage := scheduled.Message
-	if message != nil {
-		newMessage = *message
-	}
 	newInterval := scheduled.IntervalSeconds
 	if intervalSeconds != nil {
 		newInterval = *intervalSeconds
 	}
-	if err := domain.ValidateScheduledMessage(newMessage, newInterval); err != nil {
+	if err := domain.ValidateScheduledInterval(newInterval); err != nil {
 		return nil, err
+	}
+	if !scheduled.IsCommandLinked() {
+		newMessage := ""
+		if scheduled.Message != nil {
+			newMessage = *scheduled.Message
+		}
+		if message != nil {
+			newMessage = *message
+		}
+		if newMessage == "" {
+			return nil, domain.ErrEmptyMessage
+		}
 	}
 
 	scheduled.Update(message, intervalSeconds, enabled, onlyWhenLive)
@@ -187,20 +230,58 @@ func (s *ScheduledMessageService) RunDueMessages(ctx context.Context) {
 
 	now := time.Now()
 	for _, m := range due {
+		text, ok := s.resolveMessageText(ctx, m)
+		if !ok {
+			// Command wurde gelöscht/deaktiviert/ist kein Simple-Command mehr -
+			// überspringen, aber Zeitplan trotzdem fortschreiben (kein Crash-Loop).
+			s.advance(ctx, m, now)
+			continue
+		}
+
 		twitchUserID, ok := twitchUserIDs[m.ID]
 		if ok {
 			_, isLive := liveStreams[twitchUserID]
 			if !m.OnlyWhenLive || isLive {
-				if err := s.redisService.SendBotAnnounce(m.Message, twitchUserID); err != nil {
+				if err := s.redisService.SendBotAnnounce(text, twitchUserID); err != nil {
 					log.Printf("⚠️ Fehler beim Posten der automatisierten Nachricht %d: %v", m.ID, err)
 				}
 			}
 		}
 
-		nextSendAt := now.Add(time.Duration(m.IntervalSeconds) * time.Second)
-		if err := s.messageRepo.MarkSent(ctx, m.ID, now, nextSendAt); err != nil {
-			log.Printf("⚠️ Fehler beim Fortschreiben von Nachricht %d: %v", m.ID, err)
+		s.advance(ctx, m, now)
+	}
+}
+
+// resolveMessageText returns the text to post for a due entry - either the
+// stored free text, or the current response of the linked command (with the
+// {user} placeholder stripped, since there's no real chatter to substitute).
+// ok=false means the entry couldn't be resolved (e.g. linked command no
+// longer exists or isn't a simple command) and should just be skipped.
+func (s *ScheduledMessageService) resolveMessageText(ctx context.Context, m *domain.ScheduledMessage) (string, bool) {
+	if !m.IsCommandLinked() {
+		if m.Message == nil {
+			return "", false
 		}
+		return *m.Message, true
+	}
+
+	command, err := s.commandRepo.GetByID(ctx, *m.CommandID, m.ChannelID)
+	if err != nil {
+		log.Printf("⚠️ Verknüpfter Command für automatisierte Nachricht %d nicht gefunden: %v", m.ID, err)
+		return "", false
+	}
+	if !command.IsSimple() || !command.Enabled {
+		log.Printf("⚠️ Verknüpfter Command für automatisierte Nachricht %d ist nicht (mehr) aktiv/simple", m.ID)
+		return "", false
+	}
+
+	return strings.ReplaceAll(command.Response, "{user}", ""), true
+}
+
+func (s *ScheduledMessageService) advance(ctx context.Context, m *domain.ScheduledMessage, now time.Time) {
+	nextSendAt := now.Add(time.Duration(m.IntervalSeconds) * time.Second)
+	if err := s.messageRepo.MarkSent(ctx, m.ID, now, nextSendAt); err != nil {
+		log.Printf("⚠️ Fehler beim Fortschreiben von Nachricht %d: %v", m.ID, err)
 	}
 }
 
