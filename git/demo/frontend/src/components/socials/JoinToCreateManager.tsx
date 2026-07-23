@@ -137,13 +137,13 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
   };
 
   if (loading) {
-    return <p className="text-gray-500">Loading Join-to-Create configs...</p>;
+    return <p className="text-gray-400">Loading Join-to-Create configs...</p>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-white">
           Join-to-Create Channels
         </h3>
         <button
@@ -157,12 +157,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
 
       {/* New Config Form */}
       {showNewForm && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-          <h4 className="font-medium text-gray-900">New Join-to-Create Config</h4>
+        <div className="p-4 bg-gray-900 rounded-lg border border-gray-700 space-y-3">
+          <h4 className="font-medium text-white">New Join-to-Create Config</h4>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Join Channel ID *
               </label>
               <input
@@ -175,12 +175,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                     joinChannelId: e.target.value || undefined,
                   })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-gray-800 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Category ID *
               </label>
               <input
@@ -193,12 +193,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                     categoryId: e.target.value || undefined,
                   })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-gray-800 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Channel Name Prefix *
               </label>
               <input
@@ -208,12 +208,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                 onChange={(e) =>
                   setNewConfig({ ...newConfig, channelNamePrefix: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-gray-800 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 User Limit (0 = unlimited)
               </label>
               <input
@@ -224,7 +224,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                 onChange={(e) =>
                   setNewConfig({ ...newConfig, userLimit: Number(e.target.value) })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-gray-800 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
           </div>
@@ -236,21 +236,21 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
               onChange={(e) =>
                 setNewConfig({ ...newConfig, privateChannel: e.target.checked })
               }
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              className="w-4 h-4 accent-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
             />
-            <span className="text-sm text-gray-700">Private channel (only creator can see)</span>
+            <span className="text-sm text-gray-300">Private channel (only creator can see)</span>
           </label>
 
           <div className="flex gap-2">
             <button
               onClick={handleCreate}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm"
             >
               Create Config
             </button>
             <button
               onClick={() => setShowNewForm(false)}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-colors text-sm"
             >
               Cancel
             </button>
@@ -264,12 +264,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
           {configs.map((config) => (
             <div
               key={config.id}
-              className="p-4 bg-white rounded-lg border border-gray-200 space-y-3"
+              className="p-4 bg-gray-900 rounded-lg border border-gray-700 space-y-3"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
                       Join Channel ID
                     </label>
                     <input
@@ -279,12 +279,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                         const updated = { ...config, joinChannelId: e.target.value };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
-                      className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-gray-800 border border-gray-700 text-white p-2 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
                       Category ID
                     </label>
                     <input
@@ -294,12 +294,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                         const updated = { ...config, categoryId: e.target.value };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
-                      className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-gray-800 border border-gray-700 text-white p-2 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
                       Channel Prefix
                     </label>
                     <input
@@ -309,12 +309,12 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                         const updated = { ...config, channelNamePrefix: e.target.value };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
-                      className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-gray-800 border border-gray-700 text-white p-2 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-medium text-gray-400 mb-1">
                       User Limit
                     </label>
                     <input
@@ -324,7 +324,7 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                         const updated = { ...config, userLimit: Number(e.target.value) };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
-                      className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-gray-800 border border-gray-700 text-white p-2 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -340,9 +340,9 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                         const updated = { ...config, privateChannel: e.target.checked };
                         setConfigs(configs.map((c) => (c.id === config.id ? updated : c)));
                       }}
-                      className="w-4 h-4 text-indigo-600 rounded"
+                      className="w-4 h-4 accent-indigo-600 rounded"
                     />
-                    <span className="text-sm text-gray-700">Private</span>
+                    <span className="text-sm text-gray-300">Private</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -350,23 +350,23 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
                       type="checkbox"
                       checked={config.enabled}
                       onChange={() => toggleEnabled(config)}
-                      className="w-4 h-4 text-green-600 rounded"
+                      className="w-4 h-4 accent-green-600 rounded"
                     />
-                    <span className="text-sm text-gray-700">Enabled</span>
+                    <span className="text-sm text-gray-300">Enabled</span>
                   </label>
                 </div>
 
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleUpdate(config)}
-                    className="flex items-center gap-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm"
+                    className="flex items-center gap-1 px-3 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors text-sm"
                   >
                     <Save className="w-4 h-4" />
                     Save
                   </button>
                   <button
                     onClick={() => handleDelete(config.id)}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm"
+                    className="flex items-center gap-1 px-3 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors text-sm"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
@@ -377,9 +377,9 @@ const JoinToCreateManager: React.FC<JoinToCreateManagerProps> = ({ guildId }) =>
           ))}
         </div>
       ) : (
-        <div className="flex items-center justify-center p-8 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <AlertTriangle className="w-5 h-5 mr-2 text-yellow-600" />
-          <span className="text-yellow-700">No Join-to-Create configs yet</span>
+        <div className="flex items-center justify-center p-8 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
+          <AlertTriangle className="w-5 h-5 mr-2 text-yellow-500" />
+          <span className="text-yellow-400">No Join-to-Create configs yet</span>
         </div>
       )}
     </div>
