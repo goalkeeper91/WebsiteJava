@@ -23,11 +23,35 @@ export default function SubathonPage() {
   const [error, setError] = useState<string | null>(null);
   const [settingsForm, setSettingsForm] = useState({ initialTime: 30, subTime: 120, bitsTime: 30 });
   const [saving, setSaving] = useState(false);
+  const [overlayStyle, setOverlayStyle] = useState({
+    color: "ffffff",
+    bg: true,
+    op: 0.4,
+    glow: true,
+  });
   // load() polls every second to keep the countdown/stats live, but the
   // settings form must only be seeded from the server once - otherwise
   // every tick overwrites whatever the user is currently typing before
   // they get a chance to hit Save.
   const settingsLoadedRef = useRef(false);
+
+  // Overlay look has no backend field of its own (it's purely a URL query
+  // string the overlay page reads) - persist it locally so the copied OBS
+  // URL doesn't silently reset to defaults on the next dashboard visit.
+  useEffect(() => {
+    const saved = localStorage.getItem("subathonOverlayStyle");
+    if (saved) {
+      try {
+        setOverlayStyle(JSON.parse(saved));
+      } catch {
+        // ignore corrupt value, keep defaults
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("subathonOverlayStyle", JSON.stringify(overlayStyle));
+  }, [overlayStyle]);
 
   const load = useCallback(async () => {
     try {
@@ -91,9 +115,15 @@ export default function SubathonPage() {
     }
   }
 
-  const overlayUrl = state
-    ? `${window.location.origin}/overlay/subathon?user=${state.userId ?? ""}`
-    : "";
+  const overlayParams = new URLSearchParams({
+    user: state?.userId ?? "",
+    color: overlayStyle.color,
+    bg: String(overlayStyle.bg),
+    op: String(overlayStyle.op),
+    glow: String(overlayStyle.glow),
+  });
+  const overlayUrl = state ? `${window.location.origin}/overlay/subathon?${overlayParams}` : "";
+  const previewUrl = state ? `/overlay/subathon?${overlayParams}` : "";
 
   function copyOverlayUrl() {
     navigator.clipboard.writeText(overlayUrl);
@@ -238,6 +268,79 @@ export default function SubathonPage() {
         <div className="space-y-6">
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
             <h3 className="font-semibold text-white mb-3">OBS Overlay</h3>
+
+            <div
+              className="relative w-full aspect-video rounded-lg mb-4 overflow-hidden border border-gray-700"
+              style={{
+                backgroundImage:
+                  "repeating-conic-gradient(#374151 0% 25%, #1f2937 0% 50%) 50% / 20px 20px",
+              }}
+            >
+              {previewUrl && (
+                <iframe
+                  key={previewUrl}
+                  src={previewUrl}
+                  title="Overlay-Vorschau"
+                  className="absolute inset-0 w-full h-full border-0"
+                  style={{ colorScheme: "light" }}
+                />
+              )}
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-xs text-gray-400">Textfarbe</label>
+                <input
+                  type="color"
+                  value={`#${overlayStyle.color}`}
+                  onChange={(e) =>
+                    setOverlayStyle({ ...overlayStyle, color: e.target.value.slice(1) })
+                  }
+                  className="w-10 h-8 bg-gray-900 border border-gray-700 rounded cursor-pointer"
+                />
+              </div>
+
+              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <span className="text-xs text-gray-400">Hintergrund-Box</span>
+                <input
+                  type="checkbox"
+                  checked={overlayStyle.bg}
+                  onChange={(e) => setOverlayStyle({ ...overlayStyle, bg: e.target.checked })}
+                  className="w-4 h-4 accent-purple-500"
+                />
+              </label>
+
+              {overlayStyle.bg && (
+                <div>
+                  <label className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                    <span>Deckkraft</span>
+                    <span>{Math.round(overlayStyle.op * 100)}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={overlayStyle.op}
+                    onChange={(e) =>
+                      setOverlayStyle({ ...overlayStyle, op: Number(e.target.value) })
+                    }
+                    className="w-full accent-purple-500"
+                  />
+                </div>
+              )}
+
+              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <span className="text-xs text-gray-400">Leucht-Effekt</span>
+                <input
+                  type="checkbox"
+                  checked={overlayStyle.glow}
+                  onChange={(e) => setOverlayStyle({ ...overlayStyle, glow: e.target.checked })}
+                  className="w-4 h-4 accent-purple-500"
+                />
+              </label>
+            </div>
+
             <input
               type="text"
               readOnly

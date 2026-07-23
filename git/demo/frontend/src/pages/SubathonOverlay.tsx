@@ -36,12 +36,20 @@ export default function SubathonOverlay() {
   const showGlow = searchParams.get("glow") !== "false";
 
   useEffect(() => {
-    const previousBg = document.body.style.background;
+    // index.css paints <html> white under prefers-color-scheme: light (OBS's
+    // embedded browser has no dark-mode preference, so it always hits that
+    // media query). Making only <body> transparent still let that white
+    // <html> background show through underneath - both elements need it.
+    const html = document.documentElement;
+    const previousHtmlBg = html.style.background;
+    const previousBodyBg = document.body.style.background;
+    html.style.setProperty("background", "transparent", "important");
     document.body.style.setProperty("background", "transparent", "important");
     document.body.style.margin = "0";
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.background = previousBg;
+      html.style.background = previousHtmlBg;
+      document.body.style.background = previousBodyBg;
       document.body.style.removeProperty("margin");
       document.body.style.removeProperty("overflow");
     };

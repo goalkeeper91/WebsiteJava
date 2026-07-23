@@ -5,18 +5,29 @@
       <link rel="icon" type="image/x-icon" href="/favicon32x32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Goalkeeper91</title>
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="1273f5fe-7c66-466a-b0bc-7a15c4b60657"
-       data-blockingmode="auto" type="text/javascript">
-    </script>
-    <!-- Google Tag Manager -->
     <script>
+      // The OBS overlay is a Browser Source, not a real visitor - nobody
+      // there to give cookie consent, and a consent banner rendered over an
+      // "invisible" video source is a real bug (white dialog box on top of
+      // what's supposed to be a transparent timer). Skip Cookiebot/GTM
+      // entirely on that one route rather than trying to hide their output
+      // after the fact.
+      if (!location.pathname.startsWith('/overlay/')) {
+        var cookiebotScript = document.createElement('script');
+        cookiebotScript.id = 'Cookiebot';
+        cookiebotScript.src = 'https://consent.cookiebot.com/uc.js';
+        cookiebotScript.setAttribute('data-cbid', '1273f5fe-7c66-466a-b0bc-7a15c4b60657');
+        cookiebotScript.setAttribute('data-blockingmode', 'auto');
+        cookiebotScript.type = 'text/javascript';
+        document.head.appendChild(cookiebotScript);
+
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','GTM-TMVHKMFL');
+      }
     </script>
-    <!-- End Google Tag Manager -->
   </head>
   <body>
       <!-- Google Tag Manager (noscript) -->
