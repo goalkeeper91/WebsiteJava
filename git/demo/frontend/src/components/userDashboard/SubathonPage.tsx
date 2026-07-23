@@ -92,7 +92,7 @@ export default function SubathonPage() {
   }
 
   const overlayUrl = state
-    ? `https://timer.goalkeeper91.de/overlay?user=${state.userId ?? ""}`
+    ? `${window.location.origin}/overlay/subathon?user=${state.userId ?? ""}`
     : "";
 
   function copyOverlayUrl() {

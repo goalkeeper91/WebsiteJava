@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -20,74 +20,85 @@ import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
 import Dashboard from "./pages/[user]/Dashboard";
 import { LoginPopup } from './components/popup/LoginFailed';
+import SubathonOverlay from './pages/SubathonOverlay';
+
+// Wraps every normal page in the shared header/footer chrome. Routes that
+// need to render bare (no chrome at all - e.g. the OBS overlay, which must
+// be a transparent Browser Source, not a page inside the site) live outside
+// this layout entirely instead of just hiding Header/Footer with CSS.
+const SiteLayout = () => (
+  <div className='grid grid-rows-[auto_1fr_auto] w-full min-h-screen bg-black-100 text-white overflow-x-hidden'>
+    <Header />
+    <LoginPopup />
+    <main className='w-full pt-17'>
+      <div className='w-full max-w-full'>
+        <Outlet />
+      </div>
+    </main>
+    <Footer />
+  </div>
+);
 
 const App = () => {
   return (
     <Router>
-      <div className='grid grid-rows-[auto_1fr_auto] w-full min-h-screen bg-black-100 text-white overflow-x-hidden'>
-        <Header />
+      <Routes>
+        {/* Bare routes - no header/footer chrome */}
+        <Route path='/overlay/subathon' element={<SubathonOverlay />} />
 
-        <LoginPopup />
+        <Route element={<SiteLayout />}>
+          {/* Public Routes */}
+          <Route path='/' element={<Home />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path='/about' element={<About />} />
 
-        <main className='w-full pt-17'>
-          <div className='w-full max-w-full'>
-            <Routes>
-              {/* Public Routes */}
-              <Route path='/' element={<Home />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/services" element={<ServicesPage />} />
-              <Route path='/about' element={<About />} />
+          {/* Legal */}
+          <Route path="/legal/impressum" element={<Impressum />} />
+          <Route path="/legal/datenschutz" element={<Datenschutz />} />
+          <Route path="/legal/agb" element={<Agb />} />
 
-              {/* Legal */}
-              <Route path="/legal/impressum" element={<Impressum />} />
-              <Route path="/legal/datenschutz" element={<Datenschutz />} />
-              <Route path="/legal/agb" element={<Agb />} />
+          {/* Admin Routes - Protected for Admins only */}
+          <Route
+            path='/admin'
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
 
-              {/* Admin Routes - Protected for Admins only */}
-              <Route
-                path='/admin'
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
+          {/* User Dashboard Routes - Protected for authenticated users */}
+          <Route
+            path='/dashboard'
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardOverview />} />
+            <Route path='subscription' element={<SubscriptionDashboard />} />
+            <Route path='n8n' element={<N8NIntegrationSetup />} />
+            <Route path='clips' element={<ClipAutomationPage />} />
+            <Route path='votes' element={<VoteSessionManager />} />
+            <Route path='workflows' element={<WorkflowMarketplace />} />
+          </Route>
 
-              {/* User Dashboard Routes - Protected for authenticated users */}
-              <Route
-                path='/dashboard'
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<DashboardOverview />} />
-                <Route path='subscription' element={<SubscriptionDashboard />} />
-                <Route path='n8n' element={<N8NIntegrationSetup />} />
-                <Route path='clips' element={<ClipAutomationPage />} />
-                <Route path='votes' element={<VoteSessionManager />} />
-                <Route path='workflows' element={<WorkflowMarketplace />} />
-              </Route>
+          {/* Discord OAuth Callback */}
+          <Route
+            path='/discord/callback'
+            element={
+              <ProtectedRoute>
+                <DiscordCallback />
+              </ProtectedRoute>
+            }
+          />
 
-              {/* Discord OAuth Callback */}
-              <Route
-                path='/discord/callback'
-                element={
-                  <ProtectedRoute>
-                    <DiscordCallback />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Catch all - redirect to home */}
-              <Route path='*' element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </main>
-
-        <Footer />
-      </div>
+          {/* Catch all - redirect to home */}
+          <Route path='*' element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
     </Router>
   );
 };
