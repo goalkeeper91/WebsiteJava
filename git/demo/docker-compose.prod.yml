@@ -107,6 +107,14 @@ services:
       TWITCH_ADMIN_TWITCH_ID: ${TWITCH_ADMIN_TWITCH_ID}
       ADMIN_TWITCH_ID: ${TWITCH_ADMIN_TWITCH_ID}
 
+      # Discord OAuth (never wired in here before - client_id came through
+      # empty, breaking both "Connect Discord" and "Invite Bot" with Discord
+      # rejecting the empty client_id as an invalid snowflake)
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL}
+      DISCORD_PERMISSIONS: ${DISCORD_BOT_PERMISSIONS:-8}
+
       # Security
       GO_APP_SECRET_KEY: ${GO_APP_SECRET_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
