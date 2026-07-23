@@ -4,10 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/repository/postgres"
+)
+
+const (
+	guildDataPollInterval = 200 * time.Millisecond
+	guildDataPollTimeout  = 3 * time.Second
 )
 
 type DiscordGuildService struct {
@@ -98,7 +104,7 @@ func (s *DiscordGuildService) GetGuildDetails(ctx context.Context, guildID int64
 		return nil, fmt.Errorf("failed to get settings: %w", err)
 	}
 
-	channels, roles, err := s.requestGuildDataFromBot(guildID)
+	channels, roles, err := s.requestGuildDataFromBot(ctx, guildID)
 	if err != nil {
 		fmt.Printf("Warning: failed to get guild data from bot: %v\n", err)
 		channels = []domain.DiscordChannel{}
@@ -217,15 +223,46 @@ func (s *DiscordGuildService) GetGuildCount(ctx context.Context) (int, error) {
 	return s.guildRepo.GetGuildCount(ctx)
 }
 
-func (s *DiscordGuildService) requestGuildDataFromBot(guildID int64) ([]domain.DiscordChannel, []domain.DiscordRole, error) {
-	// TODO: Implement request-response pattern with Redis
-	// For now, return empty slices
-	// In production, this would:
-	// 1. Send request to Redis
-	// 2. Wait for response (with timeout)
-	// 3. Parse and return channels/roles
+// requestGuildDataFromBot asks the discord-bot service (bot-plattform) to
+// report a guild's current channels/roles, then polls the Redis key it
+// writes the response to. The bot handles SYNC_GUILD by fetching live data
+// from Discord's gateway cache and publishing it there with a short TTL, so
+// a missing key past the timeout means the bot never answered (offline, or
+// no longer in that guild).
+func (s *DiscordGuildService) requestGuildDataFromBot(ctx context.Context, guildID int64) ([]domain.DiscordChannel, []domain.DiscordRole, error) {
+	if err := s.SyncGuild(ctx, guildID, "", true); err != nil {
+		return nil, nil, fmt.Errorf("failed to request guild data: %w", err)
+	}
 
-	return []domain.DiscordChannel{}, []domain.DiscordRole{}, nil
+	client := s.redisService.GetClient()
+	if client == nil {
+		return nil, nil, fmt.Errorf("redis client not available")
+	}
+
+	key := fmt.Sprintf("discord_guild_data:%d", guildID)
+
+	deadline := time.Now().Add(guildDataPollTimeout)
+	for time.Now().Before(deadline) {
+		val, err := client.Get(ctx, key).Result()
+		if err == nil && val != "" {
+			var data struct {
+				Channels []domain.DiscordChannel `json:"channels"`
+				Roles    []domain.DiscordRole    `json:"roles"`
+			}
+			if err := json.Unmarshal([]byte(val), &data); err != nil {
+				return nil, nil, fmt.Errorf("failed to parse guild data: %w", err)
+			}
+			return data.Channels, data.Roles, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, nil, ctx.Err()
+		case <-time.After(guildDataPollInterval):
+		}
+	}
+
+	return nil, nil, fmt.Errorf("timed out waiting for guild data from bot")
 }
 
 func (s *DiscordGuildService) publishToDiscordBot(message map[string]interface{}) error {
