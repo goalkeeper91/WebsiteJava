@@ -118,16 +118,16 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
 
   if (loading) {
     return (
-      <div className="p-6 bg-white rounded-xl shadow">
-        <p className="text-gray-500">Loading settings...</p>
+      <div className="p-6 bg-gray-800 border border-gray-700 rounded-xl">
+        <p className="text-gray-400">Loading settings...</p>
       </div>
     );
   }
 
   if (!details) {
     return (
-      <div className="p-6 bg-white rounded-xl shadow">
-        <p className="text-red-500">Failed to load guild details</p>
+      <div className="p-6 bg-gray-800 border border-gray-700 rounded-xl">
+        <p className="text-red-400">Failed to load guild details</p>
       </div>
     );
   }
@@ -140,7 +140,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
       <div className="flex items-center gap-4">
         <button
           onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -153,22 +153,22 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
             />
           )}
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{details.guild.name}</h2>
-            <p className="text-sm text-gray-500">Guild Settings</p>
+            <h2 className="text-xl font-bold text-white">{details.guild.name}</h2>
+            <p className="text-sm text-gray-400">Guild Settings</p>
           </div>
         </div>
       </div>
 
       {/* Settings Form */}
-      <div className="p-6 bg-white rounded-xl shadow space-y-6">
+      <div className="p-6 bg-gray-800 border border-gray-700 rounded-xl space-y-6">
         {/* Feature Toggles */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Features</h3>
+          <h3 className="font-semibold text-white">Features</h3>
 
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+          <label className="flex items-center justify-between p-4 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-900/70 transition-colors">
             <div>
-              <p className="font-medium text-gray-900">Twitch Notifications</p>
-              <p className="text-sm text-gray-500">
+              <p className="font-medium text-white">Twitch Notifications</p>
+              <p className="text-sm text-gray-400">
                 Receive notifications for new commands and stream activity
               </p>
             </div>
@@ -178,14 +178,14 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
               onChange={(e) =>
                 setSettings({ ...settings, twitchNotificationsEnabled: e.target.checked })
               }
-              className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              className="w-5 h-5 accent-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
             />
           </label>
 
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+          <label className="flex items-center justify-between p-4 bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-900/70 transition-colors">
             <div>
-              <p className="font-medium text-gray-900">Join-to-Create</p>
-              <p className="text-sm text-gray-500">
+              <p className="font-medium text-white">Join-to-Create</p>
+              <p className="text-sm text-gray-400">
                 Enable automatic voice channel creation
               </p>
             </div>
@@ -195,17 +195,17 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
               onChange={(e) =>
                 setSettings({ ...settings, joinToCreateEnabled: e.target.checked })
               }
-              className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              className="w-5 h-5 accent-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
             />
           </label>
         </div>
 
         {/* Channel Configuration */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Notification Channels</h3>
+          <h3 className="font-semibold text-white">Notification Channels</h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               General Notifications
             </label>
             <select
@@ -216,7 +216,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
                   notificationChannelId: e.target.value || undefined,
                 })
               }
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full bg-gray-900 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">Select a channel...</option>
               {textChannels.map((ch) => (
@@ -231,7 +231,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Command Notifications
             </label>
             <select
@@ -242,7 +242,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
                   commandChannelId: e.target.value || undefined,
                 })
               }
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full bg-gray-900 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">Select a channel...</option>
               {textChannels.map((ch) => (
@@ -257,7 +257,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Activity Notifications
             </label>
             <select
@@ -268,7 +268,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
                   activityChannelId: e.target.value || undefined,
                 })
               }
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full bg-gray-900 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">Select a channel...</option>
               {textChannels.map((ch) => (
@@ -285,7 +285,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
 
         {/* Admin Role */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Admin Role (Optional)
           </label>
           <select
@@ -296,7 +296,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
                 adminRoleId: e.target.value || undefined,
               })
             }
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full bg-gray-900 border border-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="">No role required</option>
             {details.roles.map((role) => (
@@ -315,7 +315,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-lg transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400/50 text-white rounded-lg transition-colors"
           >
             <Save className="w-4 h-4" />
             {saving ? "Saving..." : "Save Settings"}
@@ -323,7 +323,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
           <button
             onClick={handleTestNotification}
             disabled={!settings.notificationChannelId}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-gray-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 text-gray-200 rounded-lg transition-colors"
           >
             <Send className="w-4 h-4" />
             Test Notification
