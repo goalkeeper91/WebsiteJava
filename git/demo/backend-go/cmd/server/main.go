@@ -158,7 +158,7 @@ func main() {
 	loyaltyChattersClient := twitch.NewChattersClient(cfg.Twitch.ClientID)
 	loyaltyService := service.NewLoyaltyService(loyaltyRepo, tokenRepo, scheduledMessageAppToken, loyaltyChattersClient)
 
-	giveawayService := service.NewGiveawayService(giveawayRepo)
+	giveawayService := service.NewGiveawayService(giveawayRepo, redisService)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -341,7 +341,7 @@ func main() {
 	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
 	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
-	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
+	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, redisService)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)

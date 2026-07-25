@@ -7,15 +7,29 @@ import (
 	"math/big"
 
 	"demo/backend-go/internal/domain"
+	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/repository"
 )
 
 type GiveawayService struct {
 	giveawayRepo repository.GiveawayRepository
+	redisService *redis.RedisService
 }
 
-func NewGiveawayService(giveawayRepo repository.GiveawayRepository) *GiveawayService {
-	return &GiveawayService{giveawayRepo: giveawayRepo}
+func NewGiveawayService(giveawayRepo repository.GiveawayRepository, redisService *redis.RedisService) *GiveawayService {
+	return &GiveawayService{giveawayRepo: giveawayRepo, redisService: redisService}
+}
+
+// notifyGiveawayChanged keeps the bot's in-memory codeword cache in sync
+// regardless of whether the change came from a chat command or the
+// dashboard (Giveaways Teil 3 made the dashboard a second writer) - see
+// GiveawayCommands.refresh_single on the bot side.
+func (s *GiveawayService) notifyGiveawayChanged(userTwitchID string) {
+	if s.redisService != nil {
+		if err := s.redisService.SendRefreshGiveawaySignal(userTwitchID); err != nil {
+			fmt.Printf("⚠️ Fehler beim Senden des Giveaway-Reload-Signals: %v\n", err)
+		}
+	}
 }
 
 // StartGiveaway is bot-facing - fails if a giveaway is already open for this
@@ -41,6 +55,8 @@ func (s *GiveawayService) StartGiveaway(ctx context.Context, userTwitchID, keywo
 	if err := s.giveawayRepo.CreateGiveaway(ctx, giveaway); err != nil {
 		return nil, fmt.Errorf("fehler beim Starten des Giveaways: %w", err)
 	}
+
+	s.notifyGiveawayChanged(userTwitchID)
 
 	return giveaway, nil
 }
@@ -113,6 +129,8 @@ func (s *GiveawayService) DrawWinner(ctx context.Context, userTwitchID string) (
 	giveaway.Status = domain.GiveawayStatusClosed
 	giveaway.WinnerTwitchID = &winner.ViewerTwitchID
 	giveaway.WinnerLogin = &winner.ViewerLogin
+
+	s.notifyGiveawayChanged(userTwitchID)
 
 	return giveaway, nil
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"demo/backend-go/internal/domain"
+	"demo/backend-go/internal/infrastructure/redis"
 	"demo/backend-go/internal/service"
 )
 
@@ -18,6 +20,7 @@ type GiveawayHandler struct {
 	sessionStore    *sessions.CookieStore
 	sessionName     string
 	internalSecret  string
+	redisService    *redis.RedisService
 }
 
 func NewGiveawayHandler(
@@ -25,18 +28,22 @@ func NewGiveawayHandler(
 	sessionStore *sessions.CookieStore,
 	sessionName string,
 	internalSecret string,
+	redisService *redis.RedisService,
 ) *GiveawayHandler {
 	return &GiveawayHandler{
 		giveawayService: giveawayService,
 		sessionStore:    sessionStore,
 		sessionName:     sessionName,
 		internalSecret:  internalSecret,
+		redisService:    redisService,
 	}
 }
 
 func (h *GiveawayHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/dashboard/giveaways/status", h.GetStatus).Methods("GET")
 	router.HandleFunc("/api/dashboard/giveaways/history", h.GetHistory).Methods("GET")
+	router.HandleFunc("/api/dashboard/giveaways/start", h.StartForDashboard).Methods("POST")
+	router.HandleFunc("/api/dashboard/giveaways/draw", h.DrawForDashboard).Methods("POST")
 
 	router.HandleFunc("/api/bot/giveaways/start", h.StartForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/enter", h.EnterForBot).Methods("POST")
@@ -103,6 +110,80 @@ func (h *GiveawayHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 		PageSize:   pageSize,
 		TotalPages: totalPages,
 	})
+}
+
+// StartForDashboard lets the streamer start a giveaway from the dashboard
+// instead of chat - see DrawForDashboard for the matching draw action.
+// Both post a chat announcement via SendBotAnnounce, since this codepath
+// never runs the bot's own ctx.send confirmation.
+func (h *GiveawayHandler) StartForDashboard(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+
+	var req StartGiveawayRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
+		return
+	}
+
+	giveaway, err := h.giveawayService.StartGiveaway(r.Context(), user.ID, req.Keyword, req.SubBonus)
+	if err == domain.ErrGiveawayAlreadyOpen {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err == domain.ErrGiveawayKeywordInvalid {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err != nil {
+		log.Printf("Giveaway Fehler (Dashboard-Start): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	if h.redisService != nil {
+		message := fmt.Sprintf("🎉 Giveaway gestartet! Tippt \"%s\" in den Chat zum Teilnehmen.", giveaway.Keyword)
+		if err := h.redisService.SendBotAnnounce(message, user.ID); err != nil {
+			log.Printf("Giveaway Fehler (Ankündigung Start): %v", err)
+		}
+	}
+
+	h.respondJSON(w, http.StatusOK, giveaway)
+}
+
+// DrawForDashboard mirrors DrawForBot but is session-auth-gated for
+// dashboard use.
+func (h *GiveawayHandler) DrawForDashboard(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+
+	giveaway, err := h.giveawayService.DrawWinner(r.Context(), user.ID)
+	if err == domain.ErrNoOpenGiveaway || err == domain.ErrNoGiveawayEntries {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err != nil {
+		log.Printf("Giveaway Fehler (Dashboard-Ziehung): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	if h.redisService != nil {
+		winnerLogin := ""
+		if giveaway.WinnerLogin != nil {
+			winnerLogin = *giveaway.WinnerLogin
+		}
+		message := fmt.Sprintf("🎉 Der Gewinner ist @%s! Herzlichen Glückwunsch!", winnerLogin)
+		if err := h.redisService.SendBotAnnounce(message, user.ID); err != nil {
+			log.Printf("Giveaway Fehler (Ankündigung Ziehung): %v", err)
+		}
+	}
+
+	h.respondJSON(w, http.StatusOK, giveaway)
 }
 
 // ============================================================

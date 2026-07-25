@@ -27,3 +27,8 @@ export interface PaginatedResponse<T> {
   page_size: number;
   total_pages: number;
 }
+
+export interface StartGiveawayRequest {
+  keyword: string;
+  sub_bonus: boolean;
+}
