@@ -44,10 +44,12 @@ func (h *GiveawayHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/dashboard/giveaways/history", h.GetHistory).Methods("GET")
 	router.HandleFunc("/api/dashboard/giveaways/start", h.StartForDashboard).Methods("POST")
 	router.HandleFunc("/api/dashboard/giveaways/draw", h.DrawForDashboard).Methods("POST")
+	router.HandleFunc("/api/dashboard/giveaways/cancel", h.CancelForDashboard).Methods("POST")
 
 	router.HandleFunc("/api/bot/giveaways/start", h.StartForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/enter", h.EnterForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/draw", h.DrawForBot).Methods("POST")
+	router.HandleFunc("/api/bot/giveaways/cancel", h.CancelForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/status", h.GetStatusForBot).Methods("GET")
 	router.HandleFunc("/api/bot/giveaways/open", h.GetOpenForBot).Methods("GET")
 }
@@ -186,6 +188,35 @@ func (h *GiveawayHandler) DrawForDashboard(w http.ResponseWriter, r *http.Reques
 	h.respondJSON(w, http.StatusOK, giveaway)
 }
 
+// CancelForDashboard closes an open giveaway without drawing a winner - lets
+// a streamer end one with zero (or unwanted) entries instead of being stuck
+// until someone enters or forever hiding the start form.
+func (h *GiveawayHandler) CancelForDashboard(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+
+	giveaway, err := h.giveawayService.CancelGiveaway(r.Context(), user.ID)
+	if err == domain.ErrNoOpenGiveaway {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err != nil {
+		log.Printf("Giveaway Fehler (Dashboard-Abbruch): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	if h.redisService != nil {
+		if err := h.redisService.SendBotAnnounce("🚫 Das Giveaway wurde abgebrochen.", user.ID); err != nil {
+			log.Printf("Giveaway Fehler (Ankündigung Abbruch): %v", err)
+		}
+	}
+
+	h.respondJSON(w, http.StatusOK, giveaway)
+}
+
 // ============================================================
 // BOT-INTERN (Shared-Secret-Auth, kein Browser-Login)
 // ============================================================
@@ -291,6 +322,35 @@ func (h *GiveawayHandler) DrawForBot(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		log.Printf("Giveaway Fehler (Ziehung): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, giveaway)
+}
+
+func (h *GiveawayHandler) CancelForBot(w http.ResponseWriter, r *http.Request) {
+	if !requireInternalSecret(w, r, h.internalSecret) {
+		return
+	}
+
+	var req DrawGiveawayRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Ungültige Anfrage", http.StatusBadRequest)
+		return
+	}
+	if req.BroadcasterTwitchID == "" {
+		http.Error(w, "broadcaster_id ist erforderlich", http.StatusBadRequest)
+		return
+	}
+
+	giveaway, err := h.giveawayService.CancelGiveaway(r.Context(), req.BroadcasterTwitchID)
+	if err == domain.ErrNoOpenGiveaway {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err != nil {
+		log.Printf("Giveaway Fehler (Abbruch): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
 		return
 	}

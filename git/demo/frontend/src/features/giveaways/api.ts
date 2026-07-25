@@ -61,3 +61,17 @@ export async function drawGiveawayWinner(): Promise<Giveaway> {
 
   return res.json();
 }
+
+export async function cancelGiveaway(): Promise<Giveaway> {
+  const res = await fetch(`${BASE_URL}/cancel`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(error || 'Fehler beim Abbrechen des Giveaways');
+  }
+
+  return res.json();
+}

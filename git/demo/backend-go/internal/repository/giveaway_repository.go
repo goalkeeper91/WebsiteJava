@@ -28,6 +28,11 @@ type GiveawayRepository interface {
 
 	CloseGiveaway(ctx context.Context, giveawayID int64, winnerTwitchID, winnerLogin string) error
 
+	// CancelGiveaway closes a giveaway without a winner (winner fields stay
+	// NULL) - used when a streamer wants to end one with no entries instead
+	// of drawing.
+	CancelGiveaway(ctx context.Context, giveawayID int64) error
+
 	// GetHistory returns a channel's past giveaways, newest first, paginated.
 	GetHistory(ctx context.Context, userTwitchID string, limit, offset int) ([]*domain.Giveaway, int64, error)
 }

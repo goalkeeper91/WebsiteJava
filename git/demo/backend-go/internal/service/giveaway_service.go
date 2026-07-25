@@ -135,6 +135,29 @@ func (s *GiveawayService) DrawWinner(ctx context.Context, userTwitchID string) (
 	return giveaway, nil
 }
 
+// CancelGiveaway closes an open giveaway without drawing a winner - lets a
+// streamer end one with zero (or unwanted) entries instead of being stuck
+// until someone enters.
+func (s *GiveawayService) CancelGiveaway(ctx context.Context, userTwitchID string) (*domain.Giveaway, error) {
+	giveaway, err := s.giveawayRepo.GetOpenGiveaway(ctx, userTwitchID)
+	if err != nil {
+		return nil, err
+	}
+	if giveaway == nil {
+		return nil, domain.ErrNoOpenGiveaway
+	}
+
+	if err := s.giveawayRepo.CancelGiveaway(ctx, giveaway.ID); err != nil {
+		return nil, err
+	}
+
+	giveaway.Status = domain.GiveawayStatusClosed
+
+	s.notifyGiveawayChanged(userTwitchID)
+
+	return giveaway, nil
+}
+
 // GetStatus is used by both the dashboard's live-status card and the bot's
 // `!giveaway status` command. Returns nil giveaway (not an error) if none
 // is open.

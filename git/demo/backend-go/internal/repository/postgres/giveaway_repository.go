@@ -173,6 +173,18 @@ func (r *giveawayRepository) CloseGiveaway(ctx context.Context, giveawayID int64
 	return nil
 }
 
+func (r *giveawayRepository) CancelGiveaway(ctx context.Context, giveawayID int64) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE giveaways
+		SET status = 'closed', ended_at = NOW(), updated_at = NOW()
+		WHERE id = $1
+	`, giveawayID)
+	if err != nil {
+		return fmt.Errorf("fehler beim Abbrechen des Giveaways: %w", err)
+	}
+	return nil
+}
+
 func (r *giveawayRepository) GetHistory(ctx context.Context, userTwitchID string, limit, offset int) ([]*domain.Giveaway, int64, error) {
 	var total int64
 	err := r.db.QueryRowContext(

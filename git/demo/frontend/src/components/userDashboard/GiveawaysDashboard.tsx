@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getGiveawayStatus, getGiveawayHistory, startGiveaway, drawGiveawayWinner } from "../../features/giveaways/api";
+import { getGiveawayStatus, getGiveawayHistory, startGiveaway, drawGiveawayWinner, cancelGiveaway } from "../../features/giveaways/api";
 import type { Giveaway } from "../../features/giveaways/types";
 
 function formatRelative(dateString: string): string {
@@ -31,6 +31,10 @@ export default function GiveawaysDashboard() {
   const [drawing, setDrawing] = useState(false);
   const [drawError, setDrawError] = useState("");
   const [lastWinner, setLastWinner] = useState<string | null>(null);
+
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelledNotice, setCancelledNotice] = useState(false);
 
   useEffect(() => {
     const loadStatus = () => {
@@ -64,6 +68,7 @@ export default function GiveawaysDashboard() {
     setStarting(true);
     setStartError("");
     setLastWinner(null);
+    setCancelledNotice(false);
     try {
       const giveaway = await startGiveaway({ keyword: keyword.trim(), sub_bonus: subBonus });
       setCurrent(giveaway);
@@ -80,6 +85,7 @@ export default function GiveawaysDashboard() {
   async function handleDraw() {
     setDrawing(true);
     setDrawError("");
+    setCancelledNotice(false);
     try {
       const giveaway = await drawGiveawayWinner();
       setCurrent(null);
@@ -93,6 +99,26 @@ export default function GiveawaysDashboard() {
       setDrawError(err.message || "Fehler beim Ziehen des Gewinners");
     } finally {
       setDrawing(false);
+    }
+  }
+
+  async function handleCancel() {
+    setCancelling(true);
+    setCancelError("");
+    setLastWinner(null);
+    try {
+      await cancelGiveaway();
+      setCurrent(null);
+      setEntryCount(0);
+      setCancelledNotice(true);
+      setHistoryPage(1);
+      const data = await getGiveawayHistory(1, 10);
+      setHistory(data.data || []);
+      setHistoryTotalPages(data.total_pages || 0);
+    } catch (err: any) {
+      setCancelError(err.message || "Fehler beim Abbrechen des Giveaways");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -129,6 +155,9 @@ export default function GiveawaysDashboard() {
         {lastWinner && (
           <p className="text-sm text-yellow-400 mb-3">🏆 {lastWinner} hat gewonnen! Herzlichen Glückwunsch!</p>
         )}
+        {cancelledNotice && (
+          <p className="text-sm text-gray-400 mb-3">🚫 Giveaway wurde abgebrochen.</p>
+        )}
 
         {current ? (
           <div className="space-y-3">
@@ -141,13 +170,23 @@ export default function GiveawaysDashboard() {
               <span className="text-gray-400">{current.sub_bonus ? "Sub-Bonus aktiv" : "Kein Sub-Bonus"}</span>
             </div>
             {drawError && <p className="text-sm text-red-400">{drawError}</p>}
-            <button
-              onClick={handleDraw}
-              disabled={drawing}
-              className="px-4 py-2 bg-indigo-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 transition-colors text-sm font-semibold"
-            >
-              {drawing ? "Ziehe…" : "🎉 Gewinner ziehen"}
-            </button>
+            {cancelError && <p className="text-sm text-red-400">{cancelError}</p>}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleDraw}
+                disabled={drawing || cancelling}
+                className="px-4 py-2 bg-indigo-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 transition-colors text-sm font-semibold"
+              >
+                {drawing ? "Ziehe…" : "🎉 Gewinner ziehen"}
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={drawing || cancelling}
+                className="px-4 py-2 bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors text-sm font-semibold"
+              >
+                {cancelling ? "Breche ab…" : "Giveaway abbrechen"}
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleStart} className="space-y-3">
