@@ -150,7 +150,7 @@ func main() {
 		scheduledMessageAppToken,
 	)
 
-	automodService := service.NewAutomodService(automodRepo, redisService)
+	automodService := service.NewAutomodService(automodRepo, redisService, loyaltyRepo)
 
 	loyaltyChattersClient := twitch.NewChattersClient(cfg.Twitch.ClientID)
 	loyaltyService := service.NewLoyaltyService(loyaltyRepo, tokenRepo, scheduledMessageAppToken, loyaltyChattersClient)

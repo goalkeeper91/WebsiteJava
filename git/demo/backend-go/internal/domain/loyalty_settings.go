@@ -19,6 +19,11 @@ type LoyaltySettings struct {
 	PointsName        string    `json:"points_name"`
 	PointsPerInterval int       `json:"points_per_interval"`
 	IntervalMinutes   int       `json:"interval_minutes"`
+	// RegularsThreshold is the points balance at which a viewer is treated
+	// as a "Regular" (an internal classification, not real Twitch VIP) and
+	// automatically exempted from Automod - 0 disables this entirely. See
+	// automod_service.go's GetAllEnabledSettingsForBot for the merge.
+	RegularsThreshold int       `json:"regulars_threshold"`
 	NextAccrualAt     time.Time `json:"next_accrual_at"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
@@ -32,6 +37,7 @@ func NewLoyaltySettings(userTwitchID string) *LoyaltySettings {
 		PointsName:        "Punkte",
 		PointsPerInterval: 1,
 		IntervalMinutes:   5,
+		RegularsThreshold: 0,
 		NextAccrualAt:     now,
 		CreatedAt:         now,
 		UpdatedAt:         now,
@@ -45,6 +51,7 @@ type LoyaltySettingsUpdateInput struct {
 	PointsName        *string `json:"points_name,omitempty"`
 	PointsPerInterval *int    `json:"points_per_interval,omitempty"`
 	IntervalMinutes   *int    `json:"interval_minutes,omitempty"`
+	RegularsThreshold *int    `json:"regulars_threshold,omitempty"`
 }
 
 func (s *LoyaltySettings) ApplyUpdate(input LoyaltySettingsUpdateInput) {
@@ -59,6 +66,9 @@ func (s *LoyaltySettings) ApplyUpdate(input LoyaltySettingsUpdateInput) {
 	}
 	if input.IntervalMinutes != nil && *input.IntervalMinutes >= MinLoyaltyIntervalMinutes {
 		s.IntervalMinutes = *input.IntervalMinutes
+	}
+	if input.RegularsThreshold != nil && *input.RegularsThreshold >= 0 {
+		s.RegularsThreshold = *input.RegularsThreshold
 	}
 	s.UpdatedAt = time.Now()
 }

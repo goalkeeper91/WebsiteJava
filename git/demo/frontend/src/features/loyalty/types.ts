@@ -6,6 +6,7 @@ export interface LoyaltySettings {
   points_name: string;
   points_per_interval: number;
   interval_minutes: number;
+  regulars_threshold: number;
   next_accrual_at: string;
   created_at: string;
   updated_at: string;
@@ -16,6 +17,7 @@ export interface UpdateLoyaltySettingsRequest {
   points_name?: string;
   points_per_interval?: number;
   interval_minutes?: number;
+  regulars_threshold?: number;
 }
 
 export interface LeaderboardEntry {

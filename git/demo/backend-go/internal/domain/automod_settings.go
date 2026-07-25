@@ -8,8 +8,10 @@ import "time"
 // thresholds; the emote-spam filter's threshold is per-channel configurable,
 // since emote spam in the right moment - e.g. an esports highlight - can be
 // a legitimate reaction rather than spam), and exemptions beyond
-// mods/broadcaster (VIPs, a manually-curated trusted-user list standing in
-// for real watchtime-based "Regulars", which don't exist yet). Off by
+// mods/broadcaster (VIPs, a manually-curated trusted-user list, and - since
+// ExemptRegulars - viewers whose Loyalty points cross the channel's Regulars
+// threshold, merged into ExemptUsers at read time by
+// AutomodService.GetAllEnabledSettingsForBot, never persisted here). Off by
 // default - a streamer has to opt in rather than have messages start
 // disappearing unannounced.
 type AutomodSettings struct {
@@ -24,6 +26,7 @@ type AutomodSettings struct {
 	EmoteThreshold           int         `json:"emote_threshold"`
 	RepetitionFilterEnabled  bool        `json:"repetition_filter_enabled"`
 	ExemptVips               bool        `json:"exempt_vips"`
+	ExemptRegulars           bool        `json:"exempt_regulars"`
 	ExemptUsers              StringArray `json:"exempt_users"`
 	CreatedAt                time.Time   `json:"created_at"`
 	UpdatedAt                time.Time   `json:"updated_at"`
@@ -39,6 +42,7 @@ func NewAutomodSettings(userTwitchID string) *AutomodSettings {
 		AllowedDomains:    StringArray{},
 		EmoteThreshold:    6,
 		ExemptVips:        true,
+		ExemptRegulars:    true,
 		ExemptUsers:       StringArray{},
 		CreatedAt:         now,
 		UpdatedAt:         now,
@@ -58,6 +62,7 @@ type AutomodSettingsUpdateInput struct {
 	EmoteThreshold          *int         `json:"emote_threshold,omitempty"`
 	RepetitionFilterEnabled *bool        `json:"repetition_filter_enabled,omitempty"`
 	ExemptVips              *bool        `json:"exempt_vips,omitempty"`
+	ExemptRegulars          *bool        `json:"exempt_regulars,omitempty"`
 	ExemptUsers             *StringArray `json:"exempt_users,omitempty"`
 }
 
@@ -91,6 +96,9 @@ func (s *AutomodSettings) ApplyUpdate(input AutomodSettingsUpdateInput) {
 	}
 	if input.ExemptVips != nil {
 		s.ExemptVips = *input.ExemptVips
+	}
+	if input.ExemptRegulars != nil {
+		s.ExemptRegulars = *input.ExemptRegulars
 	}
 	if input.ExemptUsers != nil {
 		s.ExemptUsers = *input.ExemptUsers

@@ -34,4 +34,9 @@ type LoyaltyRepository interface {
 	// GetViewerPoints looks up one viewer's balance by login
 	// (case-insensitive). Returns nil, nil if the viewer has no rows yet.
 	GetViewerPoints(ctx context.Context, userTwitchID, viewerLogin string) (*domain.LoyaltyPoints, error)
+
+	// GetViewerLoginsAboveThreshold returns the logins of every viewer
+	// whose points meet or exceed threshold - backs the Regulars merge in
+	// AutomodService and the !regulars chat command.
+	GetViewerLoginsAboveThreshold(ctx context.Context, userTwitchID string, threshold int) ([]string, error)
 }

@@ -20,14 +20,14 @@ func NewLoyaltyRepository(db *sql.DB) repository.LoyaltyRepository {
 
 const loyaltySettingsColumns = `
 	user_twitch_id, enabled, points_name, points_per_interval, interval_minutes,
-	next_accrual_at, created_at, updated_at
+	regulars_threshold, next_accrual_at, created_at, updated_at
 `
 
 func scanLoyaltySettings(row interface{ Scan(dest ...interface{}) error }) (*domain.LoyaltySettings, error) {
 	s := &domain.LoyaltySettings{}
 	err := row.Scan(
 		&s.UserTwitchID, &s.Enabled, &s.PointsName, &s.PointsPerInterval, &s.IntervalMinutes,
-		&s.NextAccrualAt, &s.CreatedAt, &s.UpdatedAt,
+		&s.RegularsThreshold, &s.NextAccrualAt, &s.CreatedAt, &s.UpdatedAt,
 	)
 	return s, err
 }
@@ -50,21 +50,22 @@ func (r *loyaltyRepository) UpsertSettings(ctx context.Context, s *domain.Loyalt
 	query := `
 		INSERT INTO loyalty_settings
 		(user_twitch_id, enabled, points_name, points_per_interval, interval_minutes,
-		 next_accrual_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		 regulars_threshold, next_accrual_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (user_twitch_id)
 		DO UPDATE SET
 			enabled = EXCLUDED.enabled,
 			points_name = EXCLUDED.points_name,
 			points_per_interval = EXCLUDED.points_per_interval,
 			interval_minutes = EXCLUDED.interval_minutes,
+			regulars_threshold = EXCLUDED.regulars_threshold,
 			updated_at = EXCLUDED.updated_at
 	`
 
 	_, err := r.db.ExecContext(
 		ctx, query,
 		s.UserTwitchID, s.Enabled, s.PointsName, s.PointsPerInterval, s.IntervalMinutes,
-		s.NextAccrualAt, s.CreatedAt, s.UpdatedAt,
+		s.RegularsThreshold, s.NextAccrualAt, s.CreatedAt, s.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("fehler beim Speichern der Loyalty-Settings: %w", err)
@@ -207,4 +208,26 @@ func (r *loyaltyRepository) GetViewerPoints(ctx context.Context, userTwitchID, v
 	}
 
 	return p, nil
+}
+
+func (r *loyaltyRepository) GetViewerLoginsAboveThreshold(ctx context.Context, userTwitchID string, threshold int) ([]string, error) {
+	rows, err := r.db.QueryContext(ctx,
+		"SELECT viewer_login FROM loyalty_points WHERE user_twitch_id = $1 AND points >= $2",
+		userTwitchID, threshold,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden der Regulars: %w", err)
+	}
+	defer rows.Close()
+
+	logins := make([]string, 0)
+	for rows.Next() {
+		var login string
+		if err := rows.Scan(&login); err != nil {
+			return nil, fmt.Errorf("fehler beim Scannen der Regulars: %w", err)
+		}
+		logins = append(logins, login)
+	}
+
+	return logins, nil
 }

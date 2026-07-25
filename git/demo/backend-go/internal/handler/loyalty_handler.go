@@ -41,6 +41,7 @@ func (h *LoyaltyHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/bot/loyalty/points", h.GetPointsForBot).Methods("GET")
 	router.HandleFunc("/api/bot/loyalty/leaderboard", h.GetLeaderboardForBot).Methods("GET")
+	router.HandleFunc("/api/bot/loyalty/regulars", h.GetRegularsForBot).Methods("GET")
 }
 
 // ============================================================
@@ -177,6 +178,29 @@ func (h *LoyaltyHandler) GetLeaderboardForBot(w http.ResponseWriter, r *http.Req
 	h.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"entries":     entries,
 		"points_name": pointsName,
+	})
+}
+
+func (h *LoyaltyHandler) GetRegularsForBot(w http.ResponseWriter, r *http.Request) {
+	if !requireInternalSecret(w, r, h.internalSecret) {
+		return
+	}
+
+	broadcasterID := r.URL.Query().Get("broadcaster_id")
+	if broadcasterID == "" {
+		http.Error(w, "broadcaster_id ist erforderlich", http.StatusBadRequest)
+		return
+	}
+
+	logins, err := h.loyaltyService.GetRegularsForBot(r.Context(), broadcasterID)
+	if err != nil {
+		log.Printf("Loyalty Fehler (Bot Regulars): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"logins": logins,
 	})
 }
 

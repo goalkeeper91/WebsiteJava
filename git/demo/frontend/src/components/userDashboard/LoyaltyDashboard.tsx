@@ -22,6 +22,7 @@ export default function LoyaltyDashboard() {
   const [pointsName, setPointsName] = useState("Punkte");
   const [pointsPerInterval, setPointsPerInterval] = useState(1);
   const [intervalMinutes, setIntervalMinutes] = useState(5);
+  const [regularsThreshold, setRegularsThreshold] = useState(0);
 
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [entriesPage, setEntriesPage] = useState(1);
@@ -35,6 +36,7 @@ export default function LoyaltyDashboard() {
         setPointsName(settings.points_name || "Punkte");
         setPointsPerInterval(settings.points_per_interval || 1);
         setIntervalMinutes(settings.interval_minutes || 5);
+        setRegularsThreshold(settings.regulars_threshold || 0);
       })
       .catch((err) => setError(err.message || "Fehler beim Laden"))
       .finally(() => setLoading(false));
@@ -62,6 +64,7 @@ export default function LoyaltyDashboard() {
         points_name: pointsName,
         points_per_interval: pointsPerInterval,
         interval_minutes: intervalMinutes,
+        regulars_threshold: regularsThreshold,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -138,7 +141,7 @@ export default function LoyaltyDashboard() {
             />
           </div>
 
-          <div className="sm:col-span-2">
+          <div>
             <label className="block text-sm font-medium mb-1">Intervall (Minuten)</label>
             <p className="text-xs text-gray-400 mb-2">
               Wie oft Punkte vergeben werden, solange dein Stream live ist.
@@ -148,7 +151,22 @@ export default function LoyaltyDashboard() {
               min={1}
               value={intervalMinutes}
               onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value)))}
-              className="w-full sm:w-40 p-2 rounded bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-2 rounded bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Regulars-Schwelle (Punkte)</label>
+            <p className="text-xs text-gray-400 mb-2">
+              Ab dieser Punktzahl gelten Zuschauer als "Regular" und werden automatisch von Automod
+              ausgenommen (0 = deaktiviert).
+            </p>
+            <input
+              type="number"
+              min={0}
+              value={regularsThreshold}
+              onChange={(e) => setRegularsThreshold(Math.max(0, Number(e.target.value)))}
+              className="w-full p-2 rounded bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
         </div>
@@ -185,6 +203,9 @@ export default function LoyaltyDashboard() {
                   #{(entriesPage - 1) * 10 + index + 1}
                 </span>
                 {entry.viewer_login}
+                {regularsThreshold > 0 && entry.points >= regularsThreshold && (
+                  <span className="ml-2 text-xs text-yellow-400">⭐ Regular</span>
+                )}
               </span>
               <span className="flex items-center gap-3">
                 <span className="font-semibold text-green-400">{entry.points}</span>

@@ -20,7 +20,7 @@ func NewAutomodRepository(db *sql.DB) repository.AutomodRepository {
 const automodSettingsColumns = `
 	user_twitch_id, enabled, blocked_words, link_filter_enabled, allowed_domains,
 	caps_filter_enabled, symbol_filter_enabled, emote_filter_enabled, emote_threshold, repetition_filter_enabled,
-	exempt_vips, exempt_users, created_at, updated_at
+	exempt_vips, exempt_regulars, exempt_users, created_at, updated_at
 `
 
 func scanAutomodSettings(row interface{ Scan(dest ...interface{}) error }) (*domain.AutomodSettings, error) {
@@ -28,7 +28,7 @@ func scanAutomodSettings(row interface{ Scan(dest ...interface{}) error }) (*dom
 	err := row.Scan(
 		&s.UserTwitchID, &s.Enabled, &s.BlockedWords, &s.LinkFilterEnabled, &s.AllowedDomains,
 		&s.CapsFilterEnabled, &s.SymbolFilterEnabled, &s.EmoteFilterEnabled, &s.EmoteThreshold, &s.RepetitionFilterEnabled,
-		&s.ExemptVips, &s.ExemptUsers, &s.CreatedAt, &s.UpdatedAt,
+		&s.ExemptVips, &s.ExemptRegulars, &s.ExemptUsers, &s.CreatedAt, &s.UpdatedAt,
 	)
 	return s, err
 }
@@ -52,8 +52,8 @@ func (r *automodRepository) UpsertSettings(ctx context.Context, s *domain.Automo
 		INSERT INTO automod_settings
 		(user_twitch_id, enabled, blocked_words, link_filter_enabled, allowed_domains,
 		 caps_filter_enabled, symbol_filter_enabled, emote_filter_enabled, emote_threshold, repetition_filter_enabled,
-		 exempt_vips, exempt_users, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		 exempt_vips, exempt_regulars, exempt_users, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		ON CONFLICT (user_twitch_id)
 		DO UPDATE SET
 			enabled = EXCLUDED.enabled,
@@ -66,6 +66,7 @@ func (r *automodRepository) UpsertSettings(ctx context.Context, s *domain.Automo
 			emote_threshold = EXCLUDED.emote_threshold,
 			repetition_filter_enabled = EXCLUDED.repetition_filter_enabled,
 			exempt_vips = EXCLUDED.exempt_vips,
+			exempt_regulars = EXCLUDED.exempt_regulars,
 			exempt_users = EXCLUDED.exempt_users,
 			updated_at = EXCLUDED.updated_at
 	`
@@ -74,7 +75,7 @@ func (r *automodRepository) UpsertSettings(ctx context.Context, s *domain.Automo
 		ctx, query,
 		s.UserTwitchID, s.Enabled, s.BlockedWords, s.LinkFilterEnabled, s.AllowedDomains,
 		s.CapsFilterEnabled, s.SymbolFilterEnabled, s.EmoteFilterEnabled, s.EmoteThreshold, s.RepetitionFilterEnabled,
-		s.ExemptVips, s.ExemptUsers, s.CreatedAt, s.UpdatedAt,
+		s.ExemptVips, s.ExemptRegulars, s.ExemptUsers, s.CreatedAt, s.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("fehler beim Speichern der Automod-Settings: %w", err)

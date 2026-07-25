@@ -97,6 +97,21 @@ func (s *LoyaltyService) GetLeaderboardForBot(ctx context.Context, userTwitchID 
 	return entries, settings.PointsName, nil
 }
 
+// GetRegularsForBot backs the `!regulars` chat command - returns the
+// currently-qualifying logins, or an empty slice if Regulars is disabled
+// (RegularsThreshold <= 0).
+func (s *LoyaltyService) GetRegularsForBot(ctx context.Context, userTwitchID string) ([]string, error) {
+	settings, err := s.loyaltyRepo.GetSettings(ctx, userTwitchID)
+	if err != nil {
+		return nil, err
+	}
+	if settings.RegularsThreshold <= 0 {
+		return []string{}, nil
+	}
+
+	return s.loyaltyRepo.GetViewerLoginsAboveThreshold(ctx, userTwitchID, settings.RegularsThreshold)
+}
+
 // RunAccrualTick is called on every scheduler tick. It loads due, enabled
 // channels, batch-checks live status (same pattern as
 // ScheduledMessageService.RunDueMessages), then for live channels fetches

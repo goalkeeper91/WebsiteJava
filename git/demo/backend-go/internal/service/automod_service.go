@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 
 	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/infrastructure/redis"
@@ -12,12 +14,14 @@ import (
 type AutomodService struct {
 	automodRepo  repository.AutomodRepository
 	redisService *redis.RedisService
+	loyaltyRepo  repository.LoyaltyRepository
 }
 
-func NewAutomodService(automodRepo repository.AutomodRepository, redisService *redis.RedisService) *AutomodService {
+func NewAutomodService(automodRepo repository.AutomodRepository, redisService *redis.RedisService, loyaltyRepo repository.LoyaltyRepository) *AutomodService {
 	return &AutomodService{
 		automodRepo:  automodRepo,
 		redisService: redisService,
+		loyaltyRepo:  loyaltyRepo,
 	}
 }
 
@@ -51,9 +55,75 @@ func (s *AutomodService) UpdateSettings(ctx context.Context, userTwitchID string
 
 // GetAllEnabledSettingsForBot is the bot-internal endpoint's data source -
 // no user-session auth at this layer, the handler gates it via the shared
-// internal secret instead (same as bot_announce_handler.go).
+// internal secret instead (same as bot_announce_handler.go). For channels
+// with ExemptRegulars on, this also merges in the logins of viewers whose
+// Loyalty points cross the channel's Regulars threshold - purely at
+// response time, never persisted, so the streamer's own manually-curated
+// exempt_users list in the DB is untouched.
 func (s *AutomodService) GetAllEnabledSettingsForBot(ctx context.Context) ([]*domain.AutomodSettings, error) {
-	return s.automodRepo.GetAllEnabledSettings(ctx)
+	settingsList, err := s.automodRepo.GetAllEnabledSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, settings := range settingsList {
+		if !settings.ExemptRegulars {
+			continue
+		}
+		regulars := s.regularsForChannel(ctx, settings.UserTwitchID)
+		if len(regulars) == 0 {
+			continue
+		}
+		settings.ExemptUsers = mergeExemptUsers(settings.ExemptUsers, regulars)
+	}
+
+	return settingsList, nil
+}
+
+// regularsForChannel returns the logins currently qualifying as Regulars for
+// userTwitchID, or nil if Loyalty is disabled/has no threshold set.
+func (s *AutomodService) regularsForChannel(ctx context.Context, userTwitchID string) []string {
+	loyaltySettings, err := s.loyaltyRepo.GetSettings(ctx, userTwitchID)
+	if err != nil {
+		log.Printf("⚠️ Fehler beim Laden der Loyalty-Settings für Regulars-Merge (%s): %v", userTwitchID, err)
+		return nil
+	}
+	if !loyaltySettings.Enabled || loyaltySettings.RegularsThreshold <= 0 {
+		return nil
+	}
+
+	logins, err := s.loyaltyRepo.GetViewerLoginsAboveThreshold(ctx, userTwitchID, loyaltySettings.RegularsThreshold)
+	if err != nil {
+		log.Printf("⚠️ Fehler beim Laden der Regulars für %s: %v", userTwitchID, err)
+		return nil
+	}
+	return logins
+}
+
+// mergeExemptUsers returns a new list combining existing with additions,
+// deduplicated case-insensitively - existing is never mutated.
+func mergeExemptUsers(existing domain.StringArray, additions []string) domain.StringArray {
+	seen := make(map[string]struct{}, len(existing)+len(additions))
+	merged := make(domain.StringArray, 0, len(existing)+len(additions))
+
+	for _, login := range existing {
+		key := strings.ToLower(login)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		merged = append(merged, login)
+	}
+	for _, login := range additions {
+		key := strings.ToLower(login)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		merged = append(merged, login)
+	}
+
+	return merged
 }
 
 // RecordViolation is called by the bot right after it detects a violation -

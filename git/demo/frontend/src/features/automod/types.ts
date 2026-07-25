@@ -12,6 +12,7 @@ export interface AutomodSettings {
   emote_threshold: number;
   repetition_filter_enabled: boolean;
   exempt_vips: boolean;
+  exempt_regulars: boolean;
   exempt_users: string[];
   created_at: string;
   updated_at: string;
@@ -28,6 +29,7 @@ export interface UpdateAutomodSettingsRequest {
   emote_threshold?: number;
   repetition_filter_enabled?: boolean;
   exempt_vips?: boolean;
+  exempt_regulars?: boolean;
   exempt_users?: string[];
 }
 

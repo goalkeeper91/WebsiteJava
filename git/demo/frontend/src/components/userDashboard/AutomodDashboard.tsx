@@ -42,6 +42,7 @@ export default function AutomodDashboard() {
   const [emoteThreshold, setEmoteThreshold] = useState(6);
   const [repetitionFilterEnabled, setRepetitionFilterEnabled] = useState(false);
   const [exemptVips, setExemptVips] = useState(true);
+  const [exemptRegulars, setExemptRegulars] = useState(true);
   const [exemptUsersText, setExemptUsersText] = useState("");
 
   const [events, setEvents] = useState<AutomodEvent[]>([]);
@@ -62,6 +63,7 @@ export default function AutomodDashboard() {
         setEmoteThreshold(settings.emote_threshold || 6);
         setRepetitionFilterEnabled(settings.repetition_filter_enabled);
         setExemptVips(settings.exempt_vips);
+        setExemptRegulars(settings.exempt_regulars);
         setExemptUsersText((settings.exempt_users || []).join("\n"));
       })
       .catch((err) => setError(err.message || "Fehler beim Laden"))
@@ -96,6 +98,7 @@ export default function AutomodDashboard() {
         emote_threshold: emoteThreshold,
         repetition_filter_enabled: repetitionFilterEnabled,
         exempt_vips: exemptVips,
+        exempt_regulars: exemptRegulars,
         exempt_users: linesToArray(exemptUsersText),
       });
       setSaved(true);
@@ -263,11 +266,27 @@ export default function AutomodDashboard() {
             />
           </label>
 
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <span className="text-sm text-gray-200">Regulars automatisch ausnehmen</span>
+              <p className="text-xs text-gray-400">
+                Zuschauer, die die Loyalty-Punkte-Schwelle erreichen, werden nie automoderiert.
+                Schwelle wird im Loyalty-Tab festgelegt.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={exemptRegulars}
+              onChange={(e) => setExemptRegulars(e.target.checked)}
+              className="w-5 h-5 rounded bg-gray-700 border-gray-600 text-green-600 focus:ring-2 focus:ring-green-500"
+            />
+          </label>
+
           <div>
             <label className="block text-sm font-medium mb-1">Vertraute Nutzer</label>
             <p className="text-xs text-gray-400 mb-2">
-              Ein Twitch-Nutzername pro Zeile - diese Zuschauer werden nie automoderiert (Ersatz
-              für "Regulars", solange es keine Watchtime-Erkennung gibt).
+              Ein Twitch-Nutzername pro Zeile - diese Zuschauer werden nie automoderiert (unabhängig
+              von den Regulars oben).
             </p>
             <textarea
               value={exemptUsersText}
