@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="025-create-automod-events" author="Marcel">
+        <comment>
+            Append-only Verstoß-Log fürs Dashboard ("was hat der Automod
+            erwischt?") - getrennt von automod_violations, das bleibt die
+            reine Eskalations-Zähler-Tabelle (ein Datensatz pro Offender,
+            wird überschrieben). Hier entsteht bei jedem Verstoß eine neue Zeile.
+        </comment>
+
+        <createTable tableName="automod_events">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="offender_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="offender_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_excerpt" type="VARCHAR(300)"/>
+            <column name="timeout_seconds" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_automod_events_channel_created" tableName="automod_events">
+            <column name="user_twitch_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="automod_events"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

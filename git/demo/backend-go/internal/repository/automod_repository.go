@@ -21,4 +21,12 @@ type AutomodRepository interface {
 	// counter for this channel+offender pair, atomically, and returns the
 	// new count.
 	RecordViolation(ctx context.Context, userTwitchID, offenderTwitchID string) (violationCount int, err error)
+
+	// LogEvent appends one row to the automod_events log (separate from the
+	// violation counter above).
+	LogEvent(ctx context.Context, event *domain.AutomodEvent) error
+
+	// GetEvents returns the most recent automod_events rows for a channel,
+	// newest first.
+	GetEvents(ctx context.Context, userTwitchID string, limit, offset int) ([]*domain.AutomodEvent, int64, error)
 }

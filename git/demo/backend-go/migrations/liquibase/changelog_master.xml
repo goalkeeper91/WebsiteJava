@@ -28,5 +28,8 @@
     <include file="changesets/021-create-scheduled-messages.xml" relativeToChangelogFile="true"/>
     <include file="changesets/022-add-command-link-to-scheduled-messages.xml" relativeToChangelogFile="true"/>
     <include file="changesets/023-create-automod.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/024-add-automod-spam-filters.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/025-create-automod-events.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/026-add-automod-emote-threshold.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

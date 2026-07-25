@@ -57,11 +57,27 @@ func (s *AutomodService) GetAllEnabledSettingsForBot(ctx context.Context) ([]*do
 }
 
 // RecordViolation is called by the bot right after it detects a violation -
-// it returns the timeout duration to apply for this occurrence.
-func (s *AutomodService) RecordViolation(ctx context.Context, broadcasterTwitchID, offenderTwitchID string) (int, error) {
+// it advances the escalation counter, logs the event for the dashboard's
+// violation history, and returns the timeout duration to apply.
+func (s *AutomodService) RecordViolation(
+	ctx context.Context,
+	broadcasterTwitchID, offenderTwitchID, offenderName, reason, messageExcerpt string,
+) (int, error) {
 	count, err := s.automodRepo.RecordViolation(ctx, broadcasterTwitchID, offenderTwitchID)
 	if err != nil {
 		return 0, err
 	}
-	return domain.NextTimeoutSeconds(count), nil
+	timeoutSeconds := domain.NextTimeoutSeconds(count)
+
+	event := domain.NewAutomodEvent(broadcasterTwitchID, offenderTwitchID, offenderName, reason, messageExcerpt, timeoutSeconds)
+	if err := s.automodRepo.LogEvent(ctx, event); err != nil {
+		fmt.Printf("⚠️ Fehler beim Protokollieren des Automod-Events: %v\n", err)
+	}
+
+	return timeoutSeconds, nil
+}
+
+// GetEvents is dashboard-facing - the streamer's own violation history.
+func (s *AutomodService) GetEvents(ctx context.Context, userTwitchID string, limit, offset int) ([]*domain.AutomodEvent, int64, error) {
+	return s.automodRepo.GetEvents(ctx, userTwitchID, limit, offset)
 }

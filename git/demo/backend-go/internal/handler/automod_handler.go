@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -36,6 +37,7 @@ func NewAutomodHandler(
 func (h *AutomodHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/dashboard/automod", h.GetSettings).Methods("GET")
 	router.HandleFunc("/api/dashboard/automod", h.UpdateSettings).Methods("PUT")
+	router.HandleFunc("/api/dashboard/automod/events", h.GetEvents).Methods("GET")
 
 	router.HandleFunc("/api/bot/automod-settings", h.GetSettingsForBot).Methods("GET")
 	router.HandleFunc("/api/bot/automod-violation", h.RecordViolation).Methods("POST")
@@ -83,6 +85,43 @@ func (h *AutomodHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 	h.respondJSON(w, http.StatusOK, settings)
 }
 
+func (h *AutomodHandler) GetEvents(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	events, total, err := h.automodService.GetEvents(r.Context(), user.ID, pageSize, offset)
+	if err != nil {
+		log.Printf("Automod Fehler (Events laden): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize != 0 {
+		totalPages++
+	}
+
+	h.respondJSON(w, http.StatusOK, PaginatedResponse{
+		Data:       events,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	})
+}
+
 // ============================================================
 // BOT-INTERN (Shared-Secret-Auth, kein Browser-Login)
 // ============================================================
@@ -105,6 +144,9 @@ func (h *AutomodHandler) GetSettingsForBot(w http.ResponseWriter, r *http.Reques
 type RecordViolationRequest struct {
 	BroadcasterTwitchID string `json:"broadcaster_twitch_id"`
 	OffenderTwitchID    string `json:"offender_twitch_id"`
+	OffenderName        string `json:"offender_name"`
+	Reason              string `json:"reason"`
+	MessageExcerpt      string `json:"message_excerpt"`
 }
 
 func (h *AutomodHandler) RecordViolation(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +164,9 @@ func (h *AutomodHandler) RecordViolation(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	timeoutSeconds, err := h.automodService.RecordViolation(r.Context(), req.BroadcasterTwitchID, req.OffenderTwitchID)
+	timeoutSeconds, err := h.automodService.RecordViolation(
+		r.Context(), req.BroadcasterTwitchID, req.OffenderTwitchID, req.OffenderName, req.Reason, req.MessageExcerpt,
+	)
 	if err != nil {
 		log.Printf("Automod Fehler (Verstoß erfassen): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="024-add-automod-spam-filters" author="Marcel">
+        <comment>
+            Generische Spam-Filter (Caps/Symbole/Emotes/Wiederholung, jenseits
+            von Blockliste/Links) plus Ausnahmen über Mods/Broadcaster hinaus:
+            VIPs (Twitch-natives Badge) und eine manuell gepflegte Liste
+            vertrauter Nutzernamen als praktischer Ersatz für echte,
+            watchtime-basierte "Regulars" (die noch nicht existieren).
+        </comment>
+
+        <addColumn tableName="automod_settings">
+            <column name="caps_filter_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="symbol_filter_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emote_filter_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repetition_filter_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exempt_vips" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exempt_users" type="JSONB" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="automod_settings" columnName="caps_filter_enabled"/>
+            <dropColumn tableName="automod_settings" columnName="symbol_filter_enabled"/>
+            <dropColumn tableName="automod_settings" columnName="emote_filter_enabled"/>
+            <dropColumn tableName="automod_settings" columnName="repetition_filter_enabled"/>
+            <dropColumn tableName="automod_settings" columnName="exempt_vips"/>
+            <dropColumn tableName="automod_settings" columnName="exempt_users"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
