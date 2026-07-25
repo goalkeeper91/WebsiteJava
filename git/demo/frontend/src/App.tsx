@@ -29,8 +29,15 @@ const SiteLayout = () => (
   <div className='grid grid-rows-[auto_1fr_auto] w-full min-h-screen bg-black-100 text-white overflow-x-hidden'>
     <Header />
     <LoginPopup />
-    <main className='w-full pt-17'>
-      <div className='w-full max-w-full'>
+    {/* min-w-0: grid items default to min-width:auto, so without this any
+        sufficiently wide descendant (a table, a long unbreakable string...)
+        pushes this track wider than the viewport - the overflow-x-hidden
+        above then hides the resulting scrollbar but silently CLIPS that
+        content instead of letting it shrink/wrap, which is invisible in a
+        scrollWidth-based check but very much visible (and broken) on a
+        real phone. */}
+    <main className='w-full min-w-0 pt-17'>
+      <div className='w-full max-w-full min-w-0'>
         <Outlet />
       </div>
     </main>

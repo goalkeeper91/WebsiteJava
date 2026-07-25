@@ -82,45 +82,47 @@ export default function ClipHistoryPanel() {
             Noch keine Clips erkannt. Sobald die Erkennung live ist, tauchen deine Highlights hier auf.
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-900 text-gray-400">
-              <tr>
-                <th className="text-left px-4 py-3">Titel</th>
-                <th className="text-left px-4 py-3">Spiel</th>
-                <th className="text-left px-4 py-3">Dauer</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Erstellt</th>
-                <th className="text-left px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {clips.map((clip) => (
-                <tr key={clip.id} className="border-t border-gray-700">
-                  <td className="px-4 py-3">{clip.clip_title || "Ohne Titel"}</td>
-                  <td className="px-4 py-3 text-gray-400">{clip.game_name || "–"}</td>
-                  <td className="px-4 py-3 text-gray-400">{clip.duration_seconds}s</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_STYLES[clip.status]}`}>
-                      {clip.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">
-                    {new Date(clip.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={clip.clip_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-1"
-                    >
-                      Ansehen <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-900 text-gray-400">
+                <tr>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Titel</th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Spiel</th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Dauer</th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Status</th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Erstellt</th>
+                  <th className="text-left px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {clips.map((clip) => (
+                  <tr key={clip.id} className="border-t border-gray-700">
+                    <td className="px-4 py-3 whitespace-nowrap">{clip.clip_title || "Ohne Titel"}</td>
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{clip.game_name || "–"}</td>
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{clip.duration_seconds}s</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_STYLES[clip.status]}`}>
+                        {clip.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
+                      {new Date(clip.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <a
+                        href={clip.clip_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-1"
+                      >
+                        Ansehen <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

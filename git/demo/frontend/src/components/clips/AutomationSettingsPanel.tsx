@@ -131,7 +131,7 @@ export default function AutomationSettingsPanel() {
 
   return (
     <div className="bg-gray-800 rounded-xl p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-400" />
           <h2 className="text-xl font-bold">Automation-Einstellungen</h2>
