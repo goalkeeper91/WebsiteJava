@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="027-create-loyalty" author="Marcel">
+        <createTable tableName="loyalty_settings">
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="points_name" type="VARCHAR(50)" defaultValue="Punkte">
+                <constraints nullable="false"/>
+            </column>
+            <column name="points_per_interval" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="interval_minutes" type="INTEGER" defaultValueNumeric="5">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_accrual_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Deckt die Due-Query des Schedulers ab (enabled = true AND next_accrual_at <= NOW()). -->
+        <createIndex indexName="idx_loyalty_settings_due" tableName="loyalty_settings">
+            <column name="enabled"/>
+            <column name="next_accrual_at"/>
+        </createIndex>
+
+        <createTable tableName="loyalty_points">
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewer_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewer_login" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="points" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="loyalty_points"
+                        columnNames="user_twitch_id, viewer_twitch_id"
+                        constraintName="pk_loyalty_points"/>
+
+        <!-- Deckt die Bestenliste ab (ORDER BY points DESC pro Kanal). -->
+        <createIndex indexName="idx_loyalty_points_leaderboard" tableName="loyalty_points">
+            <column name="user_twitch_id"/>
+            <column name="points" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="loyalty_points"/>
+            <dropTable tableName="loyalty_settings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

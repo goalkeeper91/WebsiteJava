@@ -85,6 +85,9 @@ func main() {
 	// Automod
 	automodRepo := postgres.NewAutomodRepository(db)
 
+	// Loyalty/Watchtime
+	loyaltyRepo := postgres.NewLoyaltyRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -148,6 +151,9 @@ func main() {
 	)
 
 	automodService := service.NewAutomodService(automodRepo, redisService)
+
+	loyaltyChattersClient := twitch.NewChattersClient(cfg.Twitch.ClientID)
+	loyaltyService := service.NewLoyaltyService(loyaltyRepo, tokenRepo, scheduledMessageAppToken, loyaltyChattersClient)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -250,6 +256,8 @@ func main() {
 			"channel:manage:broadcast",
 			// Automod: Nachrichten löschen + Timeout verhängen
 			"moderator:manage:chat_messages", "moderator:manage:banned_users",
+			// Loyalty/Watchtime: Chatter-Liste für Punkte-Vergabe
+			"moderator:read:chatters",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
@@ -327,6 +335,7 @@ func main() {
 	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
 	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
 	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
+	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -367,6 +376,7 @@ func main() {
 	clipLogHandler.RegisterRoutes(router)
 	scheduledMessageHandler.RegisterRoutes(router)
 	automodHandler.RegisterRoutes(router)
+	loyaltyHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
@@ -415,6 +425,11 @@ func main() {
 	scheduledMessageScheduler := service.NewScheduledMessageScheduler(scheduledMessageService, 30*time.Second)
 	go scheduledMessageScheduler.Start()
 	defer scheduledMessageScheduler.Stop()
+
+	// Loyalty scheduler - checks every 60s for channels due for a points accrual tick
+	loyaltyScheduler := service.NewLoyaltyScheduler(loyaltyService, 60*time.Second)
+	go loyaltyScheduler.Start()
+	defer loyaltyScheduler.Stop()
 
 	log.Println("✅ Background Services gestartet")
 
