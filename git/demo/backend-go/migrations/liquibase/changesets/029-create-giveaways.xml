@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="029-create-giveaways" author="Marcel">
+        <createTable tableName="giveaways">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="open">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sub_bonus" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="winner_twitch_id" type="VARCHAR(255)"/>
+            <column name="winner_login" type="VARCHAR(255)"/>
+            <column name="started_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Deckt das Auflösen des offenen Giveaways pro Kanal ab. -->
+        <createIndex indexName="idx_giveaways_channel_status" tableName="giveaways">
+            <column name="user_twitch_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <createTable tableName="giveaway_entries">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="giveaway_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_giveaway_entries_giveaway" references="giveaways(id)" deleteCascade="true"/>
+            </column>
+            <column name="viewer_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewer_login" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entries" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entered_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Verhindert Farmen zusätzlicher Lose durch wiederholtes Eintragen. -->
+        <addUniqueConstraint tableName="giveaway_entries"
+                              columnNames="giveaway_id, viewer_twitch_id"
+                              constraintName="uq_giveaway_entries_viewer"/>
+
+        <rollback>
+            <dropTable tableName="giveaway_entries"/>
+            <dropTable tableName="giveaways"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

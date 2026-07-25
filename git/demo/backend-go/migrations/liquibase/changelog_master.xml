@@ -33,5 +33,6 @@
     <include file="changesets/026-add-automod-emote-threshold.xml" relativeToChangelogFile="true"/>
     <include file="changesets/027-create-loyalty.xml" relativeToChangelogFile="true"/>
     <include file="changesets/028-add-regulars.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/029-create-giveaways.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

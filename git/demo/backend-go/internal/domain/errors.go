@@ -81,6 +81,13 @@ var (
 	ErrIntervalTooShort         = errors.New("intervall muss mindestens 60 sekunden betragen")
 )
 
+// Giveaway Errors
+var (
+	ErrGiveawayAlreadyOpen = errors.New("es läuft bereits ein giveaway für diesen kanal")
+	ErrNoOpenGiveaway      = errors.New("kein offenes giveaway für diesen kanal")
+	ErrNoGiveawayEntries   = errors.New("das giveaway hat noch keine teilnehmer")
+)
+
 // General Errors
 var (
 	ErrUnauthorized   = errors.New("nicht autorisiert")

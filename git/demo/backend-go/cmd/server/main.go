@@ -88,6 +88,9 @@ func main() {
 	// Loyalty/Watchtime
 	loyaltyRepo := postgres.NewLoyaltyRepository(db)
 
+	// Giveaways
+	giveawayRepo := postgres.NewGiveawayRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -154,6 +157,8 @@ func main() {
 
 	loyaltyChattersClient := twitch.NewChattersClient(cfg.Twitch.ClientID)
 	loyaltyService := service.NewLoyaltyService(loyaltyRepo, tokenRepo, scheduledMessageAppToken, loyaltyChattersClient)
+
+	giveawayService := service.NewGiveawayService(giveawayRepo)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -336,6 +341,7 @@ func main() {
 	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
 	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
+	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -377,6 +383,7 @@ func main() {
 	scheduledMessageHandler.RegisterRoutes(router)
 	automodHandler.RegisterRoutes(router)
 	loyaltyHandler.RegisterRoutes(router)
+	giveawayHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)

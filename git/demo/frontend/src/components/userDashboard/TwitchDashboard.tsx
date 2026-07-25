@@ -6,8 +6,9 @@ import VoteSessionManager from "../VoteSessionManager";
 import ScheduledMessagesDashboard from "./ScheduledMessagesDashboard";
 import AutomodDashboard from "./AutomodDashboard";
 import LoyaltyDashboard from "./LoyaltyDashboard";
+import GiveawaysDashboard from "./GiveawaysDashboard";
 
-type View = "commands" | "builtin" | "votes" | "scheduled" | "automod" | "loyalty";
+type View = "commands" | "builtin" | "votes" | "scheduled" | "automod" | "loyalty" | "giveaways";
 
 export default function TwitchDashboard() {
   const [currentView, setCurrentView] = useState<View>("commands");
@@ -77,6 +78,16 @@ export default function TwitchDashboard() {
         >
           Loyalty
         </button>
+        <button
+          onClick={() => setCurrentView("giveaways")}
+          className={`px-4 py-2 rounded-lg transition-colors font-medium flex-shrink-0 whitespace-nowrap ${
+            currentView === "giveaways"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+          Giveaways
+        </button>
       </div>
 
       <div>
@@ -86,6 +97,7 @@ export default function TwitchDashboard() {
         {currentView === "scheduled" && <ScheduledMessagesDashboard />}
         {currentView === "automod" && <AutomodDashboard />}
         {currentView === "loyalty" && <LoyaltyDashboard />}
+        {currentView === "giveaways" && <GiveawaysDashboard />}
       </div>
     </div>
   );
