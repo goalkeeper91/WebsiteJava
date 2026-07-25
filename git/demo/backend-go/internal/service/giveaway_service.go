@@ -20,8 +20,10 @@ func NewGiveawayService(giveawayRepo repository.GiveawayRepository) *GiveawaySer
 
 // StartGiveaway is bot-facing - fails if a giveaway is already open for this
 // channel (only one at a time, enforced here rather than by a DB
-// constraint, since giveaways is an episodic record table).
-func (s *GiveawayService) StartGiveaway(ctx context.Context, userTwitchID string, subBonus bool) (*domain.Giveaway, error) {
+// constraint, since giveaways is an episodic record table). keyword is
+// normalized (trimmed, lowercased) before validation and storage so chat
+// message matching is later a plain string comparison.
+func (s *GiveawayService) StartGiveaway(ctx context.Context, userTwitchID, keyword string, subBonus bool) (*domain.Giveaway, error) {
 	existing, err := s.giveawayRepo.GetOpenGiveaway(ctx, userTwitchID)
 	if err != nil {
 		return nil, err
@@ -30,7 +32,12 @@ func (s *GiveawayService) StartGiveaway(ctx context.Context, userTwitchID string
 		return nil, domain.ErrGiveawayAlreadyOpen
 	}
 
-	giveaway := domain.NewGiveaway(userTwitchID, subBonus)
+	normalizedKeyword := domain.NormalizeGiveawayKeyword(keyword)
+	if err := domain.ValidateGiveawayKeyword(normalizedKeyword); err != nil {
+		return nil, err
+	}
+
+	giveaway := domain.NewGiveaway(userTwitchID, normalizedKeyword, subBonus)
 	if err := s.giveawayRepo.CreateGiveaway(ctx, giveaway); err != nil {
 		return nil, fmt.Errorf("fehler beim Starten des Giveaways: %w", err)
 	}
@@ -128,6 +135,13 @@ func (s *GiveawayService) GetStatus(ctx context.Context, userTwitchID string) (*
 	}
 
 	return giveaway, count, nil
+}
+
+// GetOpenGiveawaysForBot backs the bot's startup keyword-cache warmup - no
+// session auth at this layer, the handler gates it via the shared internal
+// secret instead (same as AutomodService.GetAllEnabledSettingsForBot).
+func (s *GiveawayService) GetOpenGiveawaysForBot(ctx context.Context) ([]*domain.Giveaway, error) {
+	return s.giveawayRepo.GetAllOpenGiveaways(ctx)
 }
 
 // GetHistory is dashboard-facing, paginated.

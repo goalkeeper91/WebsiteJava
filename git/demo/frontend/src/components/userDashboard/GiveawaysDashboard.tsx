@@ -58,9 +58,10 @@ export default function GiveawaysDashboard() {
       <div>
         <h1 className="text-2xl font-bold">Giveaways</h1>
         <p className="text-sm text-gray-400 mt-1">
-          Verlosungen werden per Chat-Command gesteuert: <code className="text-gray-300">!giveaway start</code>{" "}
-          startet, Zuschauer tippen <code className="text-gray-300">!giveaway</code> zum Teilnehmen,{" "}
-          <code className="text-gray-300">!giveaway draw</code> zieht einen zufälligen Gewinner.
+          <code className="text-gray-300">!giveaway start &lt;codewort&gt;</code> startet eine Verlosung,{" "}
+          <code className="text-gray-300">!giveaway draw</code> zieht einen zufälligen Gewinner. Teilnehmen ist{" "}
+          <span className="text-gray-300">kein</span> Chat-Command — Zuschauer tippen einfach das Codewort in den
+          Chat.
         </p>
       </div>
 
@@ -75,6 +76,9 @@ export default function GiveawaysDashboard() {
         {current ? (
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="text-green-400 font-semibold">● Läuft</span>
+            <span className="text-gray-300">
+              Codewort: <code className="text-white">{current.keyword}</code>
+            </span>
             <span className="text-gray-300">{entryCount} Teilnehmer</span>
             <span className="text-gray-400">{current.sub_bonus ? "Sub-Bonus aktiv" : "Kein Sub-Bonus"}</span>
           </div>
@@ -110,6 +114,9 @@ export default function GiveawaysDashboard() {
                 )}
               </span>
               <span className="flex items-center gap-3 text-xs text-gray-500">
+                <span>
+                  Codewort: <code className="text-gray-400">{giveaway.keyword}</code>
+                </span>
                 <span>{giveaway.entry_count} Teilnehmer</span>
                 <span>{formatRelative(giveaway.started_at)}</span>
               </span>

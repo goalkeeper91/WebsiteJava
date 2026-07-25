@@ -34,5 +34,6 @@
     <include file="changesets/027-create-loyalty.xml" relativeToChangelogFile="true"/>
     <include file="changesets/028-add-regulars.xml" relativeToChangelogFile="true"/>
     <include file="changesets/029-create-giveaways.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/030-add-giveaway-keyword.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

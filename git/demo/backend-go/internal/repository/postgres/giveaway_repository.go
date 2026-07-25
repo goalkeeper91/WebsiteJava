@@ -18,7 +18,7 @@ func NewGiveawayRepository(db *sql.DB) repository.GiveawayRepository {
 }
 
 const giveawayColumns = `
-	id, user_twitch_id, status, sub_bonus, winner_twitch_id, winner_login,
+	id, user_twitch_id, status, keyword, sub_bonus, winner_twitch_id, winner_login,
 	started_at, ended_at, created_at, updated_at
 `
 
@@ -28,7 +28,7 @@ func scanGiveaway(row interface{ Scan(dest ...interface{}) error }) (*domain.Giv
 	var endedAt sql.NullTime
 
 	err := row.Scan(
-		&g.ID, &g.UserTwitchID, &g.Status, &g.SubBonus, &winnerTwitchID, &winnerLogin,
+		&g.ID, &g.UserTwitchID, &g.Status, &g.Keyword, &g.SubBonus, &winnerTwitchID, &winnerLogin,
 		&g.StartedAt, &endedAt, &g.CreatedAt, &g.UpdatedAt,
 	)
 	if err != nil {
@@ -50,13 +50,13 @@ func scanGiveaway(row interface{ Scan(dest ...interface{}) error }) (*domain.Giv
 
 func (r *giveawayRepository) CreateGiveaway(ctx context.Context, g *domain.Giveaway) error {
 	query := `
-		INSERT INTO giveaways (user_twitch_id, status, sub_bonus, started_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO giveaways (user_twitch_id, status, keyword, sub_bonus, started_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
 	err := r.db.QueryRowContext(
-		ctx, query, g.UserTwitchID, g.Status, g.SubBonus, g.StartedAt, g.CreatedAt, g.UpdatedAt,
+		ctx, query, g.UserTwitchID, g.Status, g.Keyword, g.SubBonus, g.StartedAt, g.CreatedAt, g.UpdatedAt,
 	).Scan(&g.ID)
 	if err != nil {
 		return fmt.Errorf("fehler beim Erstellen des Giveaways: %w", err)
@@ -83,6 +83,30 @@ func (r *giveawayRepository) GetOpenGiveaway(ctx context.Context, userTwitchID s
 	}
 
 	return g, nil
+}
+
+// GetAllOpenGiveaways returns every currently-open giveaway across all
+// channels - backs the bot's startup cache warmup (a bot restart mid-giveaway
+// otherwise wouldn't know which keywords are currently live).
+func (r *giveawayRepository) GetAllOpenGiveaways(ctx context.Context) ([]*domain.Giveaway, error) {
+	query := `SELECT ` + giveawayColumns + ` FROM giveaways WHERE status = 'open'`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden offener Giveaways: %w", err)
+	}
+	defer rows.Close()
+
+	giveaways := make([]*domain.Giveaway, 0)
+	for rows.Next() {
+		g, err := scanGiveaway(rows)
+		if err != nil {
+			return nil, fmt.Errorf("fehler beim Scannen offener Giveaways: %w", err)
+		}
+		giveaways = append(giveaways, g)
+	}
+
+	return giveaways, nil
 }
 
 func (r *giveawayRepository) AddEntry(ctx context.Context, giveawayID int64, viewerTwitchID, viewerLogin string, entries int) (bool, error) {
@@ -191,7 +215,7 @@ func scanGiveawayWithEntryCount(row interface{ Scan(dest ...interface{}) error }
 	var endedAt sql.NullTime
 
 	err := row.Scan(
-		&g.ID, &g.UserTwitchID, &g.Status, &g.SubBonus, &winnerTwitchID, &winnerLogin,
+		&g.ID, &g.UserTwitchID, &g.Status, &g.Keyword, &g.SubBonus, &winnerTwitchID, &winnerLogin,
 		&g.StartedAt, &endedAt, &g.CreatedAt, &g.UpdatedAt, &g.EntryCount,
 	)
 	if err != nil {

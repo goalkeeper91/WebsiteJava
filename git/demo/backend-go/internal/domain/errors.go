@@ -83,9 +83,10 @@ var (
 
 // Giveaway Errors
 var (
-	ErrGiveawayAlreadyOpen = errors.New("es läuft bereits ein giveaway für diesen kanal")
-	ErrNoOpenGiveaway      = errors.New("kein offenes giveaway für diesen kanal")
-	ErrNoGiveawayEntries   = errors.New("das giveaway hat noch keine teilnehmer")
+	ErrGiveawayAlreadyOpen    = errors.New("es läuft bereits ein giveaway für diesen kanal")
+	ErrNoOpenGiveaway         = errors.New("kein offenes giveaway für diesen kanal")
+	ErrNoGiveawayEntries      = errors.New("das giveaway hat noch keine teilnehmer")
+	ErrGiveawayKeywordInvalid = errors.New("codewort muss zwischen 2 und 50 zeichen lang sein")
 )
 
 // General Errors

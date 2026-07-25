@@ -13,6 +13,10 @@ type GiveawayRepository interface {
 	// if none is open.
 	GetOpenGiveaway(ctx context.Context, userTwitchID string) (*domain.Giveaway, error)
 
+	// GetAllOpenGiveaways returns every currently-open giveaway across all
+	// channels - backs the bot's startup keyword-cache warmup.
+	GetAllOpenGiveaways(ctx context.Context) ([]*domain.Giveaway, error)
+
 	// AddEntry records a viewer's participation - a repeat attempt for the
 	// same giveaway+viewer is a no-op (inserted=false), so typing the entry
 	// command again never farms extra tickets.

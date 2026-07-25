@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="030-add-giveaway-keyword" author="Marcel">
+        <comment>
+            Teilnahme läuft nicht mehr über den festen !giveaway-Befehl,
+            sondern über ein frei wählbares Codewort ohne !-Präfix - !-Befehle
+            bleiben Mods/Broadcaster für Start/Ziehen/Status vorbehalten.
+        </comment>
+
+        <addColumn tableName="giveaways">
+            <column name="keyword" type="VARCHAR(50)" defaultValue="giveaway">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="giveaways" columnName="keyword"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

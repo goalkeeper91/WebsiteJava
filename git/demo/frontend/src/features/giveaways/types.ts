@@ -4,6 +4,7 @@ export interface Giveaway {
   id: number;
   user_twitch_id: string;
   status: "open" | "closed";
+  keyword: string;
   sub_bonus: boolean;
   winner_twitch_id?: string;
   winner_login?: string;

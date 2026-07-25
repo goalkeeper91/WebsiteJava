@@ -42,6 +42,7 @@ func (h *GiveawayHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/bot/giveaways/enter", h.EnterForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/draw", h.DrawForBot).Methods("POST")
 	router.HandleFunc("/api/bot/giveaways/status", h.GetStatusForBot).Methods("GET")
+	router.HandleFunc("/api/bot/giveaways/open", h.GetOpenForBot).Methods("GET")
 }
 
 // ============================================================
@@ -110,6 +111,7 @@ func (h *GiveawayHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 
 type StartGiveawayRequest struct {
 	BroadcasterTwitchID string `json:"broadcaster_id"`
+	Keyword             string `json:"keyword"`
 	SubBonus            bool   `json:"sub_bonus"`
 }
 
@@ -128,9 +130,13 @@ func (h *GiveawayHandler) StartForBot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	giveaway, err := h.giveawayService.StartGiveaway(r.Context(), req.BroadcasterTwitchID, req.SubBonus)
+	giveaway, err := h.giveawayService.StartGiveaway(r.Context(), req.BroadcasterTwitchID, req.Keyword, req.SubBonus)
 	if err == domain.ErrGiveawayAlreadyOpen {
 		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+	if err == domain.ErrGiveawayKeywordInvalid {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err != nil {
@@ -233,6 +239,21 @@ func (h *GiveawayHandler) GetStatusForBot(w http.ResponseWriter, r *http.Request
 		"giveaway":    giveaway,
 		"entry_count": entryCount,
 	})
+}
+
+func (h *GiveawayHandler) GetOpenForBot(w http.ResponseWriter, r *http.Request) {
+	if !requireInternalSecret(w, r, h.internalSecret) {
+		return
+	}
+
+	giveaways, err := h.giveawayService.GetOpenGiveawaysForBot(r.Context())
+	if err != nil {
+		log.Printf("Giveaway Fehler (Bot-Cache-Reload): %v", err)
+		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, giveaways)
 }
 
 // ============================================================
