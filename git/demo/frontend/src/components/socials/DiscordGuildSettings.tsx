@@ -137,7 +137,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <button
           onClick={onBack}
           className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
@@ -311,7 +311,7 @@ const DiscordGuildSettings: React.FC<DiscordGuildSettingsProps> = ({ guildId, on
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleSave}
             disabled={saving}

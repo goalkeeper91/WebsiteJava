@@ -31,7 +31,7 @@ export default function CreateCommandModal({ onClose, onCreated }: CreateCommand
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
       <div className="bg-gray-800 p-6 rounded w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">Neues Command erstellen</h2>
 

@@ -11,7 +11,12 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import AdminBadge from "../admin/AdminBadge";
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
   const location = useLocation();
   const { username, isAdmin } = useAuth();
 
@@ -31,7 +36,12 @@ export default function DashboardSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-gray-800 border-r border-gray-700 min-h-screen p-4">
+    <aside
+      className={`w-64 bg-gray-800 border-r border-gray-700 min-h-screen p-4 flex flex-col
+        fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out
+        md:static md:translate-x-0 md:z-auto
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+    >
       {/* User Info */}
       <div className="mb-6 p-3 bg-gray-900 rounded-lg">
         <div className="flex items-center gap-2 mb-1">
@@ -59,6 +69,7 @@ export default function DashboardSidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 active
                   ? "bg-gray-900 text-white"
@@ -83,6 +94,7 @@ export default function DashboardSidebar() {
         <div className="mt-6 pt-6 border-t border-gray-700">
           <Link
             to="/admin"
+            onClick={onClose}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-purple-400 hover:bg-purple-900/20 hover:text-purple-300 transition-colors"
           >
             <Shield className="w-5 h-5" />
@@ -95,6 +107,7 @@ export default function DashboardSidebar() {
       <div className="mt-auto pt-6">
         <Link
           to="/dashboard/settings"
+          onClick={onClose}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
         >
           <Settings className="w-5 h-5" />

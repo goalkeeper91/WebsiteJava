@@ -21,7 +21,7 @@ const DashboardOverview: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header with Tab Navigation */}
       <div className="bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -32,10 +32,10 @@ const DashboardOverview: React.FC = () => {
           </div>
 
           {/* Tab Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setActiveTab("twitch")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all flex-shrink-0 ${
                 activeTab === "twitch"
                   ? "bg-gray-900 text-white border-t-2 border-purple-500"
                   : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200"
@@ -47,7 +47,7 @@ const DashboardOverview: React.FC = () => {
 
             <button
               onClick={() => setActiveTab("discord")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all flex-shrink-0 ${
                 activeTab === "discord"
                   ? "bg-gray-900 text-white border-t-2 border-indigo-500"
                   : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200"
@@ -59,7 +59,7 @@ const DashboardOverview: React.FC = () => {
 
             <button
               onClick={() => setActiveTab("subathon")}
-              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all flex-shrink-0 ${
                 activeTab === "subathon"
                   ? "bg-gray-900 text-white border-t-2 border-purple-500"
                   : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200"

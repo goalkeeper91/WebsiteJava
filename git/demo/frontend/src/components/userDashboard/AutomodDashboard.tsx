@@ -318,7 +318,7 @@ export default function AutomodDashboard() {
         </div>
 
         {!eventsLoading && eventsTotalPages > 1 && (
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
+          <div className="flex flex-wrap justify-between items-center gap-2 mt-4 pt-4 border-t border-gray-700">
             <button
               disabled={eventsPage <= 1}
               onClick={() => setEventsPage((p) => p - 1)}

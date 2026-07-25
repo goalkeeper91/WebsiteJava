@@ -217,7 +217,7 @@ export default function CommandsDashboard() {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-700">
+        <div className="flex flex-wrap justify-between items-center gap-2 mt-6 pt-6 border-t border-gray-700">
           <button
             disabled={page === 0}
             onClick={() => setPage((p) => p - 1)}

@@ -160,7 +160,7 @@ export default function VoteSessionManager() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Vote Sessions</h1>
           <p className="text-gray-400">
@@ -169,7 +169,7 @@ export default function VoteSessionManager() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition-colors flex-shrink-0"
         >
           <Plus className="w-5 h-5" />
           Neue Session
@@ -245,9 +245,9 @@ export default function VoteSessionManager() {
                 key={session.id}
                 className="bg-gray-900 rounded-lg p-4 hover:bg-gray-850 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="font-semibold">{session.title}</h3>
                       {getStatusBadge(session.status)}
                       {session.winner && (
@@ -262,7 +262,7 @@ export default function VoteSessionManager() {
                         {session.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                       <span>
                         Kategorie: <span className="text-gray-400">{session.category}</span>
                       </span>
@@ -293,7 +293,7 @@ export default function VoteSessionManager() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-700">
+          <div className="flex flex-wrap justify-between items-center gap-2 mt-6 pt-6 border-t border-gray-700">
             <button
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
