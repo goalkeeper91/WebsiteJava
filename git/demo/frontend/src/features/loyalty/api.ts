@@ -1,12 +1,11 @@
 // features/loyalty/api.ts
+import { apiFetch } from '../../lib/apiFetch';
 import type { LoyaltySettings, UpdateLoyaltySettingsRequest, LeaderboardEntry, PaginatedResponse } from './types';
 
 const BASE_URL = '/api/dashboard/loyalty';
 
 export async function getLoyaltySettings(): Promise<LoyaltySettings> {
-  const res = await fetch(BASE_URL, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(BASE_URL);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden der Loyalty-Einstellungen');
@@ -16,10 +15,9 @@ export async function getLoyaltySettings(): Promise<LoyaltySettings> {
 }
 
 export async function updateLoyaltySettings(data: UpdateLoyaltySettingsRequest): Promise<LoyaltySettings> {
-  const res = await fetch(BASE_URL, {
+  const res = await apiFetch(BASE_URL, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -37,9 +35,7 @@ export async function getLoyaltyLeaderboard(page = 1, pageSize = 20): Promise<Pa
     page_size: pageSize.toString(),
   });
 
-  const res = await fetch(`${BASE_URL}/leaderboard?${params}`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}/leaderboard?${params}`);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden der Loyalty-Bestenliste');

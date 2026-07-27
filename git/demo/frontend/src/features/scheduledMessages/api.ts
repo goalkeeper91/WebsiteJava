@@ -1,4 +1,5 @@
 // features/scheduledMessages/api.ts
+import { apiFetch } from '../../lib/apiFetch';
 import type {
   ScheduledMessage,
   CreateScheduledMessageRequest,
@@ -17,9 +18,7 @@ export async function getScheduledMessages(
     page_size: pageSize.toString(),
   });
 
-  const res = await fetch(`${BASE_URL}?${params}`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}?${params}`);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden der automatisierten Nachrichten');
@@ -31,10 +30,9 @@ export async function getScheduledMessages(
 export async function createScheduledMessage(
   data: CreateScheduledMessageRequest
 ): Promise<ScheduledMessage> {
-  const res = await fetch(BASE_URL, {
+  const res = await apiFetch(BASE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -50,10 +48,9 @@ export async function updateScheduledMessage(
   id: number,
   data: UpdateScheduledMessageRequest
 ): Promise<ScheduledMessage> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await apiFetch(`${BASE_URL}/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -66,9 +63,8 @@ export async function updateScheduledMessage(
 }
 
 export async function deleteScheduledMessage(id: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await apiFetch(`${BASE_URL}/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -77,10 +73,9 @@ export async function deleteScheduledMessage(id: number): Promise<void> {
 }
 
 export async function toggleScheduledMessage(id: number, enabled: boolean): Promise<ScheduledMessage> {
-  const res = await fetch(`${BASE_URL}/${id}/toggle`, {
+  const res = await apiFetch(`${BASE_URL}/${id}/toggle`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ enabled }),
   });
 

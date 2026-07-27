@@ -17,17 +17,20 @@ type ScheduledMessageHandler struct {
 	messageService *service.ScheduledMessageService
 	sessionStore   *sessions.CookieStore
 	sessionName    string
+	teamService    *service.TeamService
 }
 
 func NewScheduledMessageHandler(
 	messageService *service.ScheduledMessageService,
 	sessionStore *sessions.CookieStore,
 	sessionName string,
+	teamService *service.TeamService,
 ) *ScheduledMessageHandler {
 	return &ScheduledMessageHandler{
 		messageService: messageService,
 		sessionStore:   sessionStore,
 		sessionName:    sessionName,
+		teamService:    teamService,
 	}
 }
 
@@ -66,8 +69,8 @@ type ToggleScheduledMessageRequest struct {
 // ============================================================
 
 func (h *ScheduledMessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -83,7 +86,7 @@ func (h *ScheduledMessageHandler) GetMessages(w http.ResponseWriter, r *http.Req
 
 	offset := (page - 1) * pageSize
 
-	messages, total, err := h.messageService.GetMessages(r.Context(), user.ID, pageSize, offset)
+	messages, total, err := h.messageService.GetMessages(r.Context(), channelID, pageSize, offset)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -104,8 +107,8 @@ func (h *ScheduledMessageHandler) GetMessages(w http.ResponseWriter, r *http.Req
 }
 
 func (h *ScheduledMessageHandler) GetMessage(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -115,7 +118,7 @@ func (h *ScheduledMessageHandler) GetMessage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	message, err := h.messageService.GetMessageByID(r.Context(), user.ID, id)
+	message, err := h.messageService.GetMessageByID(r.Context(), channelID, id)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -125,8 +128,8 @@ func (h *ScheduledMessageHandler) GetMessage(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ScheduledMessageHandler) CreateMessage(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -139,9 +142,9 @@ func (h *ScheduledMessageHandler) CreateMessage(w http.ResponseWriter, r *http.R
 	var message *domain.ScheduledMessage
 	var err error
 	if req.CommandID != nil {
-		message, err = h.messageService.CreateCommandSchedule(r.Context(), user.ID, *req.CommandID, req.IntervalSeconds)
+		message, err = h.messageService.CreateCommandSchedule(r.Context(), channelID, *req.CommandID, req.IntervalSeconds)
 	} else {
-		message, err = h.messageService.CreateMessage(r.Context(), user.ID, req.Message, req.IntervalSeconds)
+		message, err = h.messageService.CreateMessage(r.Context(), channelID, req.Message, req.IntervalSeconds)
 	}
 	if err != nil {
 		h.handleError(w, err)
@@ -152,8 +155,8 @@ func (h *ScheduledMessageHandler) CreateMessage(w http.ResponseWriter, r *http.R
 }
 
 func (h *ScheduledMessageHandler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -170,7 +173,7 @@ func (h *ScheduledMessageHandler) UpdateMessage(w http.ResponseWriter, r *http.R
 	}
 
 	message, err := h.messageService.UpdateMessage(
-		r.Context(), user.ID, id, req.Message, req.IntervalSeconds, req.Enabled, req.OnlyWhenLive,
+		r.Context(), channelID, id, req.Message, req.IntervalSeconds, req.Enabled, req.OnlyWhenLive,
 	)
 	if err != nil {
 		h.handleError(w, err)
@@ -181,8 +184,8 @@ func (h *ScheduledMessageHandler) UpdateMessage(w http.ResponseWriter, r *http.R
 }
 
 func (h *ScheduledMessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -192,7 +195,7 @@ func (h *ScheduledMessageHandler) DeleteMessage(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := h.messageService.DeleteMessage(r.Context(), user.ID, id); err != nil {
+	if err := h.messageService.DeleteMessage(r.Context(), channelID, id); err != nil {
 		h.handleError(w, err)
 		return
 	}
@@ -201,8 +204,8 @@ func (h *ScheduledMessageHandler) DeleteMessage(w http.ResponseWriter, r *http.R
 }
 
 func (h *ScheduledMessageHandler) ToggleMessage(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -218,7 +221,7 @@ func (h *ScheduledMessageHandler) ToggleMessage(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	message, err := h.messageService.ToggleMessage(r.Context(), user.ID, id, req.Enabled)
+	message, err := h.messageService.ToggleMessage(r.Context(), channelID, id, req.Enabled)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -234,23 +237,6 @@ func (h *ScheduledMessageHandler) ToggleMessage(w http.ResponseWriter, r *http.R
 func (h *ScheduledMessageHandler) parseID(r *http.Request) (int64, error) {
 	vars := mux.Vars(r)
 	return strconv.ParseInt(vars["id"], 10, 64)
-}
-
-func (h *ScheduledMessageHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
 }
 
 func (h *ScheduledMessageHandler) handleError(w http.ResponseWriter, err error) {

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="031-create-channel-team-members" author="Marcel">
+        <createTable tableName="channel_team_members">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="owner_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false" foreignKeyName="fk_team_owner" references="users(twitch_id)" deleteCascade="true"/>
+            </column>
+            <!-- Kein FK auf users(twitch_id): die eingeladene Person muss sich
+                 vor der Einladung noch nie eingeloggt haben, die Twitch-ID
+                 wird direkt per Helix aufgelöst (siehe TeamService.InviteMember). -->
+            <column name="member_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Anzeige-Cache, bis die Person selbst einloggt; wird nicht
+                 automatisch aktualisiert, falls sich der Twitch-Login später ändert. -->
+            <column name="member_login" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="channel_team_members"
+                              columnNames="owner_twitch_id, member_twitch_id"
+                              constraintName="uq_team_owner_member"/>
+
+        <createIndex indexName="idx_team_owner" tableName="channel_team_members">
+            <column name="owner_twitch_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_team_member" tableName="channel_team_members">
+            <column name="member_twitch_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="channel_team_members"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

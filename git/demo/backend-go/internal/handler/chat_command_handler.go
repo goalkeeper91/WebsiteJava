@@ -17,17 +17,20 @@ type ChatCommandHandler struct {
 	commandService *service.ChatCommandService
 	sessionStore   *sessions.CookieStore
 	sessionName    string
+	teamService    *service.TeamService
 }
 
 func NewChatCommandHandler(
 	commandService *service.ChatCommandService,
 	sessionStore *sessions.CookieStore,
 	sessionName string,
+	teamService *service.TeamService,
 ) *ChatCommandHandler {
 	return &ChatCommandHandler{
 		commandService: commandService,
 		sessionStore:   sessionStore,
 		sessionName:    sessionName,
+		teamService:    teamService,
 	}
 }
 
@@ -73,8 +76,8 @@ type ToggleCommandRequest struct {
 // ============================================================
 
 func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -100,14 +103,14 @@ func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request)
 
 	switch {
 	case search != "":
-		commands, total, err = h.commandService.SearchCommands(ctx, user.ID, search, pageSize, offset)
+		commands, total, err = h.commandService.SearchCommands(ctx, channelID, search, pageSize, offset)
 	case enabledStr != "":
 		enabled := enabledStr == "true"
-		commands, total, err = h.commandService.GetCommandsByStatus(ctx, user.ID, enabled, pageSize, offset)
+		commands, total, err = h.commandService.GetCommandsByStatus(ctx, channelID, enabled, pageSize, offset)
 	case commandType == "simple" || commandType == "advanced":
-		commands, total, err = h.commandService.GetCommandsByType(ctx, user.ID, domain.CommandType(commandType), pageSize, offset)
+		commands, total, err = h.commandService.GetCommandsByType(ctx, channelID, domain.CommandType(commandType), pageSize, offset)
 	default:
-		commands, total, err = h.commandService.GetCommands(ctx, user.ID, pageSize, offset)
+		commands, total, err = h.commandService.GetCommands(ctx, channelID, pageSize, offset)
 	}
 
 	if err != nil {
@@ -130,8 +133,8 @@ func (h *ChatCommandHandler) GetCommands(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ChatCommandHandler) GetCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -142,7 +145,7 @@ func (h *ChatCommandHandler) GetCommand(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	command, err := h.commandService.GetCommandByID(r.Context(), user.ID, id)
+	command, err := h.commandService.GetCommandByID(r.Context(), channelID, id)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -153,8 +156,8 @@ func (h *ChatCommandHandler) GetCommand(w http.ResponseWriter, r *http.Request) 
 
 // CreateCommand creates a simple text command (free tier)
 func (h *ChatCommandHandler) CreateCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -166,7 +169,7 @@ func (h *ChatCommandHandler) CreateCommand(w http.ResponseWriter, r *http.Reques
 
 	command, err := h.commandService.CreateCommand(
 		r.Context(),
-		user.ID,
+		channelID,
 		req.Trigger,
 		req.Response,
 		req.Cooldown,
@@ -181,8 +184,8 @@ func (h *ChatCommandHandler) CreateCommand(w http.ResponseWriter, r *http.Reques
 
 // CreateAdvancedCommand creates an n8n-powered command (pro/premium)
 func (h *ChatCommandHandler) CreateAdvancedCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -199,7 +202,7 @@ func (h *ChatCommandHandler) CreateAdvancedCommand(w http.ResponseWriter, r *htt
 
 	command, err := h.commandService.CreateAdvancedCommand(
 		r.Context(),
-		user.ID,
+		channelID,
 		req.Trigger,
 		req.WorkflowID,
 		req.Cooldown,
@@ -213,8 +216,8 @@ func (h *ChatCommandHandler) CreateAdvancedCommand(w http.ResponseWriter, r *htt
 }
 
 func (h *ChatCommandHandler) UpdateCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -233,7 +236,7 @@ func (h *ChatCommandHandler) UpdateCommand(w http.ResponseWriter, r *http.Reques
 
 	command, err := h.commandService.UpdateCommand(
 		r.Context(),
-		user.ID,
+		channelID,
 		id,
 		req.Trigger,
 		req.Response,
@@ -249,8 +252,8 @@ func (h *ChatCommandHandler) UpdateCommand(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ChatCommandHandler) DeleteCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -261,7 +264,7 @@ func (h *ChatCommandHandler) DeleteCommand(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.commandService.DeleteCommand(r.Context(), user.ID, id); err != nil {
+	if err := h.commandService.DeleteCommand(r.Context(), channelID, id); err != nil {
 		h.handleError(w, err)
 		return
 	}
@@ -270,8 +273,8 @@ func (h *ChatCommandHandler) DeleteCommand(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ChatCommandHandler) ToggleCommand(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -288,7 +291,7 @@ func (h *ChatCommandHandler) ToggleCommand(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	command, err := h.commandService.ToggleCommand(r.Context(), user.ID, id, req.Enabled)
+	command, err := h.commandService.ToggleCommand(r.Context(), channelID, id, req.Enabled)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -300,23 +303,6 @@ func (h *ChatCommandHandler) ToggleCommand(w http.ResponseWriter, r *http.Reques
 // ============================================================
 // HELPERS
 // ============================================================
-
-func (h *ChatCommandHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
-}
 
 func (h *ChatCommandHandler) handleError(w http.ResponseWriter, err error) {
 	switch err {

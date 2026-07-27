@@ -91,6 +91,9 @@ func main() {
 	// Giveaways
 	giveawayRepo := postgres.NewGiveawayRepository(db)
 
+	// Team-Zugriff (Twitch-Mods bekommen delegierten Dashboard-Zugriff)
+	teamMemberRepo := postgres.NewTeamMemberRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -159,6 +162,8 @@ func main() {
 	loyaltyService := service.NewLoyaltyService(loyaltyRepo, tokenRepo, scheduledMessageAppToken, loyaltyChattersClient)
 
 	giveawayService := service.NewGiveawayService(giveawayRepo, redisService)
+
+	teamService := service.NewTeamService(teamMemberRepo, userRepo, scheduledMessageAppToken)
 
 	commandService := service.NewChatCommandService(
 		commandRepo,
@@ -324,7 +329,7 @@ func main() {
 
 	// Twitch
 	authHandler := handler.NewAuthHandler(authService, sessionStore, cfg.Session.Name, cfg.Frontend.URL)
-	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name)
+	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name, teamService)
 	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name)
 	contactHandler := handler.NewContactHandler(contactRepo)
 	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
@@ -338,10 +343,11 @@ func main() {
 	botAnnounceHandler := handler.NewBotAnnounceHandler(redisService, cfg.Security.BotInternalSecret)
 	automationSettingsHandler := handler.NewAutomationSettingsHandler(automationSettingsService, sessionStore, cfg.Session.Name)
 	clipLogHandler := handler.NewClipLogHandler(clipLogService, sessionStore, cfg.Session.Name)
-	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name)
-	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
-	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
-	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, redisService)
+	scheduledMessageHandler := handler.NewScheduledMessageHandler(scheduledMessageService, sessionStore, cfg.Session.Name, teamService)
+	automodHandler := handler.NewAutomodHandler(automodService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, teamService)
+	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, teamService)
+	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, redisService, teamService)
+	teamHandler := handler.NewTeamHandler(teamService, sessionStore, cfg.Session.Name)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -384,6 +390,7 @@ func main() {
 	automodHandler.RegisterRoutes(router)
 	loyaltyHandler.RegisterRoutes(router)
 	giveawayHandler.RegisterRoutes(router)
+	teamHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)

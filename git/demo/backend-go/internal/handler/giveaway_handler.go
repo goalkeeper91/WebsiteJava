@@ -21,6 +21,7 @@ type GiveawayHandler struct {
 	sessionName     string
 	internalSecret  string
 	redisService    *redis.RedisService
+	teamService     *service.TeamService
 }
 
 func NewGiveawayHandler(
@@ -29,6 +30,7 @@ func NewGiveawayHandler(
 	sessionName string,
 	internalSecret string,
 	redisService *redis.RedisService,
+	teamService *service.TeamService,
 ) *GiveawayHandler {
 	return &GiveawayHandler{
 		giveawayService: giveawayService,
@@ -36,6 +38,7 @@ func NewGiveawayHandler(
 		sessionName:     sessionName,
 		internalSecret:  internalSecret,
 		redisService:    redisService,
+		teamService:     teamService,
 	}
 }
 
@@ -59,12 +62,12 @@ func (h *GiveawayHandler) RegisterRoutes(router *mux.Router) {
 // ============================================================
 
 func (h *GiveawayHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
-	giveaway, entryCount, err := h.giveawayService.GetStatus(r.Context(), user.ID)
+	giveaway, entryCount, err := h.giveawayService.GetStatus(r.Context(), channelID)
 	if err != nil {
 		log.Printf("Giveaway Fehler (Status): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -78,8 +81,8 @@ func (h *GiveawayHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GiveawayHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -93,7 +96,7 @@ func (h *GiveawayHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * pageSize
 
-	giveaways, total, err := h.giveawayService.GetHistory(r.Context(), user.ID, pageSize, offset)
+	giveaways, total, err := h.giveawayService.GetHistory(r.Context(), channelID, pageSize, offset)
 	if err != nil {
 		log.Printf("Giveaway Fehler (Historie): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -119,8 +122,8 @@ func (h *GiveawayHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 // Both post a chat announcement via SendBotAnnounce, since this codepath
 // never runs the bot's own ctx.send confirmation.
 func (h *GiveawayHandler) StartForDashboard(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -130,7 +133,7 @@ func (h *GiveawayHandler) StartForDashboard(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	giveaway, err := h.giveawayService.StartGiveaway(r.Context(), user.ID, req.Keyword, req.SubBonus)
+	giveaway, err := h.giveawayService.StartGiveaway(r.Context(), channelID, req.Keyword, req.SubBonus)
 	if err == domain.ErrGiveawayAlreadyOpen {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
@@ -147,7 +150,7 @@ func (h *GiveawayHandler) StartForDashboard(w http.ResponseWriter, r *http.Reque
 
 	if h.redisService != nil {
 		message := fmt.Sprintf("🎉 Giveaway gestartet! Tippt \"%s\" in den Chat zum Teilnehmen.", giveaway.Keyword)
-		if err := h.redisService.SendBotAnnounce(message, user.ID); err != nil {
+		if err := h.redisService.SendBotAnnounce(message, channelID); err != nil {
 			log.Printf("Giveaway Fehler (Ankündigung Start): %v", err)
 		}
 	}
@@ -158,12 +161,12 @@ func (h *GiveawayHandler) StartForDashboard(w http.ResponseWriter, r *http.Reque
 // DrawForDashboard mirrors DrawForBot but is session-auth-gated for
 // dashboard use.
 func (h *GiveawayHandler) DrawForDashboard(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
-	giveaway, err := h.giveawayService.DrawWinner(r.Context(), user.ID)
+	giveaway, err := h.giveawayService.DrawWinner(r.Context(), channelID)
 	if err == domain.ErrNoOpenGiveaway || err == domain.ErrNoGiveawayEntries {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
@@ -180,7 +183,7 @@ func (h *GiveawayHandler) DrawForDashboard(w http.ResponseWriter, r *http.Reques
 			winnerLogin = *giveaway.WinnerLogin
 		}
 		message := fmt.Sprintf("🎉 Der Gewinner ist @%s! Herzlichen Glückwunsch!", winnerLogin)
-		if err := h.redisService.SendBotAnnounce(message, user.ID); err != nil {
+		if err := h.redisService.SendBotAnnounce(message, channelID); err != nil {
 			log.Printf("Giveaway Fehler (Ankündigung Ziehung): %v", err)
 		}
 	}
@@ -192,12 +195,12 @@ func (h *GiveawayHandler) DrawForDashboard(w http.ResponseWriter, r *http.Reques
 // a streamer end one with zero (or unwanted) entries instead of being stuck
 // until someone enters or forever hiding the start form.
 func (h *GiveawayHandler) CancelForDashboard(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
-	giveaway, err := h.giveawayService.CancelGiveaway(r.Context(), user.ID)
+	giveaway, err := h.giveawayService.CancelGiveaway(r.Context(), channelID)
 	if err == domain.ErrNoOpenGiveaway {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
@@ -209,7 +212,7 @@ func (h *GiveawayHandler) CancelForDashboard(w http.ResponseWriter, r *http.Requ
 	}
 
 	if h.redisService != nil {
-		if err := h.redisService.SendBotAnnounce("🚫 Das Giveaway wurde abgebrochen.", user.ID); err != nil {
+		if err := h.redisService.SendBotAnnounce("🚫 Das Giveaway wurde abgebrochen.", channelID); err != nil {
 			log.Printf("Giveaway Fehler (Ankündigung Abbruch): %v", err)
 		}
 	}
@@ -400,23 +403,6 @@ func (h *GiveawayHandler) GetOpenForBot(w http.ResponseWriter, r *http.Request) 
 // ============================================================
 // HELPERS
 // ============================================================
-
-func (h *GiveawayHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
-}
 
 func (h *GiveawayHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

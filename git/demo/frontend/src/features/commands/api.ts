@@ -1,4 +1,5 @@
 // features/commands/api.ts
+import { apiFetch } from '../../lib/apiFetch';
 import type { ChatCommand, CreateCommandRequest, UpdateCommandRequest } from './types';
 
 const BASE_URL = '/api/dashboard/commands';
@@ -17,9 +18,7 @@ export async function getCommands(
   if (search) params.append('search', search);
   if (enabled !== undefined) params.append('enabled', enabled.toString());
 
-  const res = await fetch(`${BASE_URL}?${params}`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}?${params}`);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden der Commands');
@@ -29,9 +28,7 @@ export async function getCommands(
 }
 
 export async function getCommand(id: number): Promise<ChatCommand> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}/${id}`);
 
   if (!res.ok) {
     throw new Error('Command nicht gefunden');
@@ -41,12 +38,11 @@ export async function getCommand(id: number): Promise<ChatCommand> {
 }
 
 export async function createCommand(data: CreateCommandRequest): Promise<ChatCommand> {
-  const res = await fetch(BASE_URL, {
+  const res = await apiFetch(BASE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -59,12 +55,11 @@ export async function createCommand(data: CreateCommandRequest): Promise<ChatCom
 }
 
 export async function updateCommand(id: number, data: UpdateCommandRequest): Promise<ChatCommand> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await apiFetch(`${BASE_URL}/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -77,9 +72,8 @@ export async function updateCommand(id: number, data: UpdateCommandRequest): Pro
 }
 
 export async function deleteCommand(id: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await apiFetch(`${BASE_URL}/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -88,12 +82,11 @@ export async function deleteCommand(id: number): Promise<void> {
 }
 
 export async function toggleCommand(id: number, enabled: boolean): Promise<ChatCommand> {
-  const res = await fetch(`${BASE_URL}/${id}/toggle`, {
+  const res = await apiFetch(`${BASE_URL}/${id}/toggle`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify({ enabled }),
   });
 

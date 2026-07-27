@@ -1,12 +1,11 @@
 // features/giveaways/api.ts
+import { apiFetch } from '../../lib/apiFetch';
 import type { Giveaway, GiveawayStatusResponse, PaginatedResponse, StartGiveawayRequest } from './types';
 
 const BASE_URL = '/api/dashboard/giveaways';
 
 export async function getGiveawayStatus(): Promise<GiveawayStatusResponse> {
-  const res = await fetch(`${BASE_URL}/status`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}/status`);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden des Giveaway-Status');
@@ -21,9 +20,7 @@ export async function getGiveawayHistory(page = 1, pageSize = 20): Promise<Pagin
     page_size: pageSize.toString(),
   });
 
-  const res = await fetch(`${BASE_URL}/history?${params}`, {
-    credentials: 'include',
-  });
+  const res = await apiFetch(`${BASE_URL}/history?${params}`);
 
   if (!res.ok) {
     throw new Error('Fehler beim Laden der Giveaway-Historie');
@@ -33,10 +30,9 @@ export async function getGiveawayHistory(page = 1, pageSize = 20): Promise<Pagin
 }
 
 export async function startGiveaway(data: StartGiveawayRequest): Promise<Giveaway> {
-  const res = await fetch(`${BASE_URL}/start`, {
+  const res = await apiFetch(`${BASE_URL}/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -49,9 +45,8 @@ export async function startGiveaway(data: StartGiveawayRequest): Promise<Giveawa
 }
 
 export async function drawGiveawayWinner(): Promise<Giveaway> {
-  const res = await fetch(`${BASE_URL}/draw`, {
+  const res = await apiFetch(`${BASE_URL}/draw`, {
     method: 'POST',
-    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -63,9 +58,8 @@ export async function drawGiveawayWinner(): Promise<Giveaway> {
 }
 
 export async function cancelGiveaway(): Promise<Giveaway> {
-  const res = await fetch(`${BASE_URL}/cancel`, {
+  const res = await apiFetch(`${BASE_URL}/cancel`, {
     method: 'POST',
-    credentials: 'include',
   });
 
   if (!res.ok) {

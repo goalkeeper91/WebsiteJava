@@ -18,6 +18,7 @@ type AutomodHandler struct {
 	sessionStore   *sessions.CookieStore
 	sessionName    string
 	internalSecret string
+	teamService    *service.TeamService
 }
 
 func NewAutomodHandler(
@@ -25,12 +26,14 @@ func NewAutomodHandler(
 	sessionStore *sessions.CookieStore,
 	sessionName string,
 	internalSecret string,
+	teamService *service.TeamService,
 ) *AutomodHandler {
 	return &AutomodHandler{
 		automodService: automodService,
 		sessionStore:   sessionStore,
 		sessionName:    sessionName,
 		internalSecret: internalSecret,
+		teamService:    teamService,
 	}
 }
 
@@ -48,12 +51,12 @@ func (h *AutomodHandler) RegisterRoutes(router *mux.Router) {
 // ============================================================
 
 func (h *AutomodHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
-	settings, err := h.automodService.GetSettings(r.Context(), user.ID)
+	settings, err := h.automodService.GetSettings(r.Context(), channelID)
 	if err != nil {
 		log.Printf("Automod Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -64,8 +67,8 @@ func (h *AutomodHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AutomodHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -75,7 +78,7 @@ func (h *AutomodHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	settings, err := h.automodService.UpdateSettings(r.Context(), user.ID, input)
+	settings, err := h.automodService.UpdateSettings(r.Context(), channelID, input)
 	if err != nil {
 		log.Printf("Automod Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -86,8 +89,8 @@ func (h *AutomodHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *AutomodHandler) GetEvents(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -101,7 +104,7 @@ func (h *AutomodHandler) GetEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * pageSize
 
-	events, total, err := h.automodService.GetEvents(r.Context(), user.ID, pageSize, offset)
+	events, total, err := h.automodService.GetEvents(r.Context(), channelID, pageSize, offset)
 	if err != nil {
 		log.Printf("Automod Fehler (Events laden): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -179,23 +182,6 @@ func (h *AutomodHandler) RecordViolation(w http.ResponseWriter, r *http.Request)
 // ============================================================
 // HELPERS
 // ============================================================
-
-func (h *AutomodHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
-}
 
 func (h *AutomodHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

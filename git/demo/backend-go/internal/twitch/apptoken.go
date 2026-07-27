@@ -146,3 +146,55 @@ func (c *TwitchAppTokenClient) GetLiveStreams(ctx context.Context, userIDs []str
 
 	return result, nil
 }
+
+// TwitchUser ist das Ergebnis einer Login->ID-Auflösung, wie sie Twitch
+// "Get Users" zurückgibt.
+type TwitchUser struct {
+	ID    string
+	Login string
+}
+
+// GetUserByLogin löst einen Twitch-Login zur numerischen User-ID auf - nutzt
+// dasselbe App-Access-Token wie GetLiveStreams, sodass die aufgelöste Person
+// sich vor der Auflösung noch nie auf der Plattform eingeloggt haben muss
+// (Twitch kennt sie ohnehin). Gibt (nil, nil) zurück, wenn der Login nicht
+// existiert - kein Fehler, einfach "nicht gefunden".
+func (c *TwitchAppTokenClient) GetUserByLogin(ctx context.Context, login string) (*TwitchUser, error) {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		"https://api.twitch.tv/helix/users?login="+url.QueryEscape(strings.ToLower(login)), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Client-Id", c.clientID)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Get-Users-Aufruf: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("twitch get users error: status=%d", resp.StatusCode)
+	}
+
+	var usersResp struct {
+		Data []struct {
+			ID    string `json:"id"`
+			Login string `json:"login"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&usersResp); err != nil {
+		return nil, fmt.Errorf("fehler beim Decodieren der Users-Antwort: %w", err)
+	}
+	if len(usersResp.Data) == 0 {
+		return nil, nil
+	}
+
+	return &TwitchUser{ID: usersResp.Data[0].ID, Login: usersResp.Data[0].Login}, nil
+}

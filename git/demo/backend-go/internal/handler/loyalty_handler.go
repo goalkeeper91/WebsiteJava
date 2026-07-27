@@ -18,6 +18,7 @@ type LoyaltyHandler struct {
 	sessionStore   *sessions.CookieStore
 	sessionName    string
 	internalSecret string
+	teamService    *service.TeamService
 }
 
 func NewLoyaltyHandler(
@@ -25,12 +26,14 @@ func NewLoyaltyHandler(
 	sessionStore *sessions.CookieStore,
 	sessionName string,
 	internalSecret string,
+	teamService *service.TeamService,
 ) *LoyaltyHandler {
 	return &LoyaltyHandler{
 		loyaltyService: loyaltyService,
 		sessionStore:   sessionStore,
 		sessionName:    sessionName,
 		internalSecret: internalSecret,
+		teamService:    teamService,
 	}
 }
 
@@ -49,12 +52,12 @@ func (h *LoyaltyHandler) RegisterRoutes(router *mux.Router) {
 // ============================================================
 
 func (h *LoyaltyHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
-	settings, err := h.loyaltyService.GetSettings(r.Context(), user.ID)
+	settings, err := h.loyaltyService.GetSettings(r.Context(), channelID)
 	if err != nil {
 		log.Printf("Loyalty Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -65,8 +68,8 @@ func (h *LoyaltyHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LoyaltyHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -76,7 +79,7 @@ func (h *LoyaltyHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	settings, err := h.loyaltyService.UpdateSettings(r.Context(), user.ID, input)
+	settings, err := h.loyaltyService.UpdateSettings(r.Context(), channelID, input)
 	if err != nil {
 		log.Printf("Loyalty Fehler: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -87,8 +90,8 @@ func (h *LoyaltyHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *LoyaltyHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -102,7 +105,7 @@ func (h *LoyaltyHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) 
 	}
 	offset := (page - 1) * pageSize
 
-	entries, total, err := h.loyaltyService.GetLeaderboard(r.Context(), user.ID, pageSize, offset)
+	entries, total, err := h.loyaltyService.GetLeaderboard(r.Context(), channelID, pageSize, offset)
 	if err != nil {
 		log.Printf("Loyalty Fehler (Bestenliste laden): %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -207,23 +210,6 @@ func (h *LoyaltyHandler) GetRegularsForBot(w http.ResponseWriter, r *http.Reques
 // ============================================================
 // HELPERS
 // ============================================================
-
-func (h *LoyaltyHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
-}
 
 func (h *LoyaltyHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
