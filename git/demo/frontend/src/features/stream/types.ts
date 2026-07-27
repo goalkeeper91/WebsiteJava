@@ -36,20 +36,36 @@ export interface DashboardStats {
   // Statistiken
   followsToday: number;
   subsThisWeek: number;
+  bitsToday: number;
   avgViewers: number;
 }
 
-export type ActivityType = "FOLLOW" | "SUB" | "RAID" | "CHEER" | "HOST";
+export interface CommercialRequest {
+  length: 30 | 60 | 90 | 120 | 150 | 180;
+}
 
+export interface CommercialResult {
+  length: number;
+  message: string;
+  retryAfter: number;
+}
+
+// Muss exakt zu Go's domain.ActivityType passen (internal/domain/stream_activity.go).
+export type ActivityType = "FOLLOW" | "SUBSCRIBE" | "RAID" | "CHEER" | "GIFT_SUB" | "HOSTING" | "RESUBSCRIBE";
+
+// Feldnamen und Typen müssen exakt zu Go's domain.StreamActivity JSON passen
+// (internal/domain/stream_activity.go) - snake_case + ISO-Timestamp-String,
+// wie in jedem anderen Feature dieser App (z.B. Giveaway.started_at).
 export interface Activity {
+  id: number;
   type: ActivityType;
   username: string;
-  displayName: string;
-  timestamp: number;
+  display_name: string;
+  timestamp: string;
 
   // Optional fields je nach Type
-  viewers?: number;     // for RAID
-  bits?: number;        // for CHEER
-  tier?: string;        // for SUB
-  message?: string;     // for CHEER
+  viewers?: number; // for RAID
+  bits?: number; // for CHEER
+  tier?: string; // for SUBSCRIBE/GIFT_SUB
+  message?: string; // for CHEER
 }

@@ -17,16 +17,21 @@ const (
 )
 
 type StreamActivity struct {
-	ID           int64        `json:"id"`
-	TwitchUserID string       `json:"twitch_user_id"`
-	Type         ActivityType `json:"type"`
-	Username     string       `json:"username"`
-	DisplayName  string       `json:"display_name"`
-	Viewers      *int         `json:"viewers,omitempty"`
-	Bits         *int         `json:"bits,omitempty"`
-	Tier         *string      `json:"tier,omitempty"`
-	Message      *string      `json:"message,omitempty"`
-	Timestamp    time.Time    `json:"timestamp"`
+	ID             int64        `json:"id"`
+	TwitchUserID   string       `json:"twitch_user_id"`
+	Type           ActivityType `json:"type"`
+	Username       string       `json:"username"`
+	DisplayName    string       `json:"display_name"`
+	Viewers        *int         `json:"viewers,omitempty"`
+	Bits           *int         `json:"bits,omitempty"`
+	Tier           *string      `json:"tier,omitempty"`
+	Message        *string      `json:"message,omitempty"`
+	Timestamp      time.Time    `json:"timestamp"`
+	// EventMessageID is the Twitch-Eventsub-Message-Id header of the
+	// notification that created this row - only set for EventSub-sourced
+	// activities. Guards against Twitch's at-least-once delivery guarantee
+	// (unique index, nullable so non-EventSub activities are unaffected).
+	EventMessageID *string `json:"event_message_id,omitempty"`
 }
 
 func NewStreamActivity(

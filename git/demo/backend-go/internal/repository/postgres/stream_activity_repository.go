@@ -17,11 +17,15 @@ func NewStreamActivityRepository(db *sql.DB) repository.StreamActivityRepository
 	return &streamActivityRepository{db: db}
 }
 
+// Create is a no-op (activity.ID stays 0, no error) if event_message_id is
+// set and already exists - guards against Twitch's at-least-once EventSub
+// delivery without the caller having to check for duplicates itself.
 func (r *streamActivityRepository) Create(ctx context.Context, activity *domain.StreamActivity) error {
 	query := `
 		INSERT INTO stream_activities
-		(twitch_user_id, type, username, display_name, viewers, bits, tier, message, timestamp)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		(twitch_user_id, type, username, display_name, viewers, bits, tier, message, timestamp, event_message_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		ON CONFLICT (event_message_id) DO NOTHING
 		RETURNING id
 	`
 
@@ -37,8 +41,12 @@ func (r *streamActivityRepository) Create(ctx context.Context, activity *domain.
 		activity.Tier,
 		activity.Message,
 		activity.Timestamp,
+		activity.EventMessageID,
 	).Scan(&activity.ID)
 
+	if err == sql.ErrNoRows {
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("fehler beim Erstellen der Activity: %w", err)
 	}

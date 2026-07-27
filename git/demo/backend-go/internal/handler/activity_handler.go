@@ -16,17 +16,20 @@ type ActivityHandler struct {
 	activityService *service.ActivityService
 	sessionStore    *sessions.CookieStore
 	sessionName     string
+	teamService     *service.TeamService
 }
 
 func NewActivityHandler(
 	activityService *service.ActivityService,
 	sessionStore *sessions.CookieStore,
 	sessionName string,
+	teamService *service.TeamService,
 ) *ActivityHandler {
 	return &ActivityHandler{
 		activityService: activityService,
 		sessionStore:    sessionStore,
 		sessionName:     sessionName,
+		teamService:     teamService,
 	}
 }
 
@@ -35,8 +38,8 @@ func (h *ActivityHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *ActivityHandler) GetRecentActivities(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
+	_, channelID, ok := resolveEffectiveTwitchID(w, r, h.sessionStore, h.sessionName, h.teamService)
+	if !ok {
 		return
 	}
 
@@ -48,7 +51,7 @@ func (h *ActivityHandler) GetRecentActivities(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	activities, err := h.activityService.GetRecentActivities(r.Context(), user.ID, limit)
+	activities, err := h.activityService.GetRecentActivities(r.Context(), channelID, limit)
 	if err != nil {
 		log.Printf("Fehler beim Laden der Activities: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -56,23 +59,6 @@ func (h *ActivityHandler) GetRecentActivities(w http.ResponseWriter, r *http.Req
 	}
 
 	h.respondJSON(w, http.StatusOK, activities)
-}
-
-func (h *ActivityHandler) requireUser(w http.ResponseWriter, r *http.Request) *UserSession {
-	session, err := h.sessionStore.Get(r, h.sessionName)
-	if err != nil {
-		log.Printf("Fehler beim Laden der Session: %v", err)
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	userID, ok := session.Values["user_id"].(string)
-	if !ok || userID == "" {
-		http.Error(w, "Nicht authentifiziert", http.StatusUnauthorized)
-		return nil
-	}
-
-	return &UserSession{ID: userID}
 }
 
 func (h *ActivityHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {

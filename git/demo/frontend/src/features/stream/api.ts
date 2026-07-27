@@ -1,17 +1,18 @@
+import { apiFetch } from "../../lib/apiFetch";
 import type {
   StreamInfo,
   LiveStream,
   DashboardStats,
   Category,
   UpdateStreamInfoRequest,
+  CommercialRequest,
+  CommercialResult,
 } from "./types";
 
 const API_BASE = "/api/dashboard/stream";
 
 export async function fetchStreamInfo(): Promise<StreamInfo> {
-  const res = await fetch(`${API_BASE}/info`, {
-    credentials: "include",
-  });
+  const res = await apiFetch(`${API_BASE}/info`);
 
   if (!res.ok) {
     throw new Error("Fehler beim Laden der Stream-Info");
@@ -23,9 +24,8 @@ export async function fetchStreamInfo(): Promise<StreamInfo> {
 export async function updateStreamInfo(
   data: UpdateStreamInfoRequest
 ): Promise<StreamInfo> {
-  const res = await fetch(`${API_BASE}/info`, {
+  const res = await apiFetch(`${API_BASE}/info`, {
     method: "PATCH",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
@@ -39,9 +39,7 @@ export async function updateStreamInfo(
 }
 
 export async function fetchLiveStatus(): Promise<LiveStream> {
-  const res = await fetch(`${API_BASE}/live`, {
-    credentials: "include",
-  });
+  const res = await apiFetch(`${API_BASE}/live`);
 
   if (!res.ok) {
     throw new Error("Fehler beim Laden des Live-Status");
@@ -51,9 +49,7 @@ export async function fetchLiveStatus(): Promise<LiveStream> {
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const res = await fetch(`${API_BASE}/stats`, {
-    credentials: "include",
-  });
+  const res = await apiFetch(`${API_BASE}/stats`);
 
   if (!res.ok) {
     throw new Error("Fehler beim Laden der Statistiken");
@@ -63,15 +59,26 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function searchCategories(query: string): Promise<Category[]> {
-  const res = await fetch(
-    `${API_BASE}/categories/search?query=${encodeURIComponent(query)}`,
-    {
-      credentials: "include",
-    }
+  const res = await apiFetch(
+    `${API_BASE}/categories/search?query=${encodeURIComponent(query)}`
   );
 
   if (!res.ok) {
     throw new Error("Fehler beim Suchen der Kategorien");
+  }
+
+  return res.json();
+}
+
+export async function startCommercial(data: CommercialRequest): Promise<CommercialResult> {
+  const res = await apiFetch(`${API_BASE}/commercial`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Konnte keine Werbepause starten");
   }
 
   return res.json();

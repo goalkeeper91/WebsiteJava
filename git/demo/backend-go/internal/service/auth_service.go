@@ -217,6 +217,33 @@ func (s *AuthService) RefreshToken(ctx context.Context, twitchUserID string) err
 	return nil
 }
 
+// GetFreshAccessToken returns a broadcaster's access token, proactively
+// refreshing it first if it's within 5 minutes of expiry. Unlike
+// TokenRefreshService.refreshAllTokens (which only proactively refreshes
+// bot-flagged accounts on a slow background tick), this exists for the
+// Live-Dashboard's much more frequent (5-30s polling) broadcaster-token
+// Helix calls, where hitting an expired token mid-request would otherwise
+// just fail with no retry anywhere in this codebase.
+func (s *AuthService) GetFreshAccessToken(ctx context.Context, twitchUserID string) (string, error) {
+	authToken, err := s.tokenRepo.GetByTwitchUserID(ctx, twitchUserID)
+	if err != nil {
+		return "", fmt.Errorf("fehler beim Laden des Auth Tokens: %w", err)
+	}
+
+	expiryTime := authToken.UpdatedAt.Add(time.Duration(authToken.ExpiresIn) * time.Second)
+	if time.Until(expiryTime) < 5*time.Minute {
+		if err := s.RefreshToken(ctx, twitchUserID); err != nil {
+			return "", fmt.Errorf("fehler beim proaktiven Token-Refresh: %w", err)
+		}
+		authToken, err = s.tokenRepo.GetByTwitchUserID(ctx, twitchUserID)
+		if err != nil {
+			return "", fmt.Errorf("fehler beim Laden des erneuerten Auth Tokens: %w", err)
+		}
+	}
+
+	return authToken.AccessToken, nil
+}
+
 func (s *AuthService) getTwitchUser(ctx context.Context, accessToken string) (*TwitchUserResponse, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.twitch.tv/helix/users", nil)
 	if err != nil {

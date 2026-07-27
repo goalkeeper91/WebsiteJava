@@ -20,5 +20,10 @@ type UserRepository interface {
 
     GetBotUsers(ctx context.Context) ([]*domain.User, error)
 
+	// GetAllNonBotUsers backs the activity-eventsub reconciliation loop -
+	// every broadcaster (not the bot account itself) potentially needs
+	// follow/sub/gift/cheer/raid subscriptions.
+	GetAllNonBotUsers(ctx context.Context) ([]*domain.User, error)
+
 	GetFirstBotUser(ctx context.Context) (*domain.User, error)
 }

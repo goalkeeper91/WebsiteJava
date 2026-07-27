@@ -229,6 +229,49 @@ func (r *userRepository) GetBotUsers(ctx context.Context) ([]*domain.User, error
 	return users, nil
 }
 
+func (r *userRepository) GetAllNonBotUsers(ctx context.Context) ([]*domain.User, error) {
+	query := `
+		SELECT twitch_id, username, email, discord_id, is_admin, is_bot, created_at, updated_at
+		FROM users
+		WHERE is_bot = false
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden der Nutzer: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		user := &domain.User{}
+		var discordID sql.NullString
+
+		err := rows.Scan(
+			&user.TwitchID,
+			&user.Username,
+			&user.Email,
+			&discordID,
+			&user.IsAdmin,
+			&user.IsBot,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("fehler beim Scannen: %w", err)
+		}
+
+		if discordID.Valid {
+			user.DiscordID = &discordID.String
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func (r *userRepository) GetFirstBotUser(ctx context.Context) (*domain.User, error) {
 	query := `
 		SELECT twitch_id, username, email, discord_id, is_admin, is_bot, created_at, updated_at

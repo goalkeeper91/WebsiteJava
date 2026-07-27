@@ -1,20 +1,24 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MessageSquare, Hash, Radio } from "lucide-react";
+import { Home, MessageSquare, Hash, Radio } from "lucide-react";
+import LiveDashboardHome from "./LiveDashboardHome";
 import TwitchDashboard from "./TwitchDashboard";
 import DiscordDashboard from "./DiscordDashboard";
 import SubathonPage from "./SubathonPage";
 
-type DashboardTab = "twitch" | "discord" | "subathon";
+type DashboardTab = "home" | "twitch" | "discord" | "subathon";
+
+const TAB_FROM_QUERY: Record<string, DashboardTab> = {
+  home: "home",
+  twitch: "twitch",
+  discord: "discord",
+  subathon: "subathon",
+};
 
 const DashboardOverview: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    searchParams.get("tab") === "discord"
-      ? "discord"
-      : searchParams.get("tab") === "subathon"
-      ? "subathon"
-      : "twitch"
+    TAB_FROM_QUERY[searchParams.get("tab") || ""] || "home"
   );
 
   return (
@@ -33,6 +37,18 @@ const DashboardOverview: React.FC = () => {
 
           {/* Tab Buttons */}
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <button
+              onClick={() => setActiveTab("home")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all flex-shrink-0 ${
+                activeTab === "home"
+                  ? "bg-gray-900 text-white border-t-2 border-amber-500"
+                  : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-gray-200"
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              <span>Live-Dashboard</span>
+            </button>
+
             <button
               onClick={() => setActiveTab("twitch")}
               className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-medium transition-all flex-shrink-0 ${
@@ -74,6 +90,7 @@ const DashboardOverview: React.FC = () => {
 
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto">
+        {activeTab === "home" && <LiveDashboardHome />}
         {activeTab === "twitch" && <TwitchDashboard />}
         {activeTab === "discord" && <DiscordDashboard />}
         {activeTab === "subathon" && <SubathonPage />}

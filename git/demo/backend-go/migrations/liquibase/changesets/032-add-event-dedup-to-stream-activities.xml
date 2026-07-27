@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="032-add-event-dedup-to-stream-activities" author="Marcel">
+        <!-- Nullable: nur EventSub-erzeugte Activities tragen eine Twitch
+             Message-ID, schützt gegen Twitchs "at-least-once"-Zustellung. -->
+        <addColumn tableName="stream_activities">
+            <column name="event_message_id" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <!-- Unique-Index auf einer nullable Spalte: Postgres erlaubt beliebig
+             viele NULLs, erzwingt Eindeutigkeit nur für gesetzte Werte. -->
+        <createIndex indexName="uq_stream_activities_event_message_id" tableName="stream_activities" unique="true">
+            <column name="event_message_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="uq_stream_activities_event_message_id" tableName="stream_activities"/>
+            <dropColumn tableName="stream_activities" columnName="event_message_id"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

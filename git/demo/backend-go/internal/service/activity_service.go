@@ -21,6 +21,11 @@ func NewActivityService(activityRepo repository.StreamActivityRepository) *Activ
 	}
 }
 
+// eventMessageID is only set for EventSub-sourced activities (see
+// ActivityWebhookHandler) - guards against Twitch's at-least-once delivery
+// via the unique index on stream_activities.event_message_id. Redis-sourced
+// activities (HandleActivityEvent below) pass nil, since that path has no
+// Twitch message ID and no duplicate-delivery risk to guard against.
 func (s *ActivityService) CreateActivity(
 	ctx context.Context,
 	twitchUserID string,
@@ -28,6 +33,7 @@ func (s *ActivityService) CreateActivity(
 	username, displayName string,
 	viewers, bits *int,
 	tier, message *string,
+	eventMessageID *string,
 ) (*domain.StreamActivity, error) {
 	activity := domain.NewStreamActivity(twitchUserID, activityType, username, displayName)
 
@@ -43,6 +49,7 @@ func (s *ActivityService) CreateActivity(
 	if message != nil {
 		activity.SetMessage(*message)
 	}
+	activity.EventMessageID = eventMessageID
 
 	if err := s.activityRepo.Create(ctx, activity); err != nil {
 		return nil, fmt.Errorf("fehler beim Erstellen der Activity: %w", err)
@@ -91,6 +98,7 @@ func (h *ActivityEventHandler) HandleActivityEvent(event *redis.BotEvent) error 
 		event.Bits,
 		event.Tier,
 		event.Message,
+		nil,
 	)
 
 	if err != nil {

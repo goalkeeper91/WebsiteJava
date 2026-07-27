@@ -216,6 +216,13 @@ func main() {
 		log.Printf("⚠️ Warnung: SUBATHON_EVENTSUB_SECRET nicht gesetzt - Subathon-Webhook-Signaturen koennen nicht verifiziert werden")
 	}
 
+	// Live-Dashboard - Activity-Feed EventSub webhook transport (follow/sub/gift-sub/cheer/raid)
+	activityWebhookSecret := getEnv("ACTIVITY_EVENTSUB_SECRET", "")
+	activityCallbackURL := getEnv("ACTIVITY_CALLBACK_URL", "https://goalkeeper91.de/api/activity/eventsub/callback")
+	if activityWebhookSecret == "" {
+		log.Printf("⚠️ Warnung: ACTIVITY_EVENTSUB_SECRET nicht gesetzt - Activity-Webhook-Signaturen koennen nicht verifiziert werden")
+	}
+
 	discordAuthService := service.NewDiscordAuthService(
 		discordConnRepo,
 		discordClientID,
@@ -268,6 +275,8 @@ func main() {
 			"moderator:manage:chat_messages", "moderator:manage:banned_users",
 			// Loyalty/Watchtime: Chatter-Liste für Punkte-Vergabe
 			"moderator:read:chatters",
+			// Live-Dashboard: Werbepause auslösen
+			"channel:edit:commercial",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
@@ -285,6 +294,10 @@ func main() {
 
 	// Inject authService into tokenRefreshService
 	tokenRefreshService.SetAuthService(baseAuthService)
+
+	// Live-Dashboard: Chat, Live-Stats, Titel/Kategorie, Werbepause
+	channelClient := twitch.NewChannelClient(cfg.Twitch.ClientID)
+	streamDashboardService := service.NewStreamDashboardService(baseAuthService, channelClient, scheduledMessageAppToken, activityRepo)
 
 	// Clip-Erzeugung (Phase C): braucht baseAuthService für Token-Refresh
 	// Phase D: Caption via selbstgehostetem Ollama, Discord-Post über den bestehenden Bot
@@ -330,7 +343,8 @@ func main() {
 	// Twitch
 	authHandler := handler.NewAuthHandler(authService, sessionStore, cfg.Session.Name, cfg.Frontend.URL)
 	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name, teamService)
-	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name)
+	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name, teamService)
+	streamDashboardHandler := handler.NewStreamDashboardHandler(streamDashboardService, sessionStore, cfg.Session.Name, teamService)
 	contactHandler := handler.NewContactHandler(contactRepo)
 	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
 	botStatsHandler := handler.NewBotStatsHandler(redisService, sessionStore, cfg.Session.Name)
@@ -359,6 +373,9 @@ func main() {
 	// Subathon Timer
 	subathonHandler := handler.NewSubathonHandler(subathonService, sessionStore, cfg.Session.Name)
 	subathonWebhookHandler := handler.NewSubathonWebhookHandler(subathonService, subathonWebhookSecret)
+
+	// Live-Dashboard: Activity-Feed EventSub webhook
+	activityWebhookHandler := handler.NewActivityWebhookHandler(activityService, activityWebhookSecret)
 
 	// ============================================================
 	// ROUTER
@@ -391,6 +408,7 @@ func main() {
 	loyaltyHandler.RegisterRoutes(router)
 	giveawayHandler.RegisterRoutes(router)
 	teamHandler.RegisterRoutes(router)
+	streamDashboardHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)
@@ -402,6 +420,9 @@ func main() {
 	// Subathon Timer routes
 	subathonHandler.RegisterRoutes(router)
 	subathonWebhookHandler.RegisterRoutes(router)
+
+	// Live-Dashboard Activity-Feed webhook route
+	activityWebhookHandler.RegisterRoutes(router)
 
 	// ============================================================
 	// BACKGROUND SERVICES
@@ -421,6 +442,11 @@ func main() {
 	// and retries any events that failed to persist (see subathon_eventsub_manager.go)
 	subathonEventSubManager := service.NewSubathonEventSubManager(subathonService, tokenRepo, cfg.Twitch.ClientID, subathonWebhookSecret, subathonCallbackURL)
 	go subathonEventSubManager.Start(context.Background())
+
+	// Live-Dashboard Activity EventSub manager - keeps follow/sub/gift-sub/
+	// cheer/raid webhook subscriptions active per user (see activity_eventsub_manager.go)
+	activityEventSubManager := service.NewActivityEventSubManager(userRepo, tokenRepo, cfg.Twitch.ClientID, activityWebhookSecret, activityCallbackURL)
+	go activityEventSubManager.Start(context.Background())
 
 	// Clip trigger listener (Phase C)
 	clipTriggerListener := service.NewClipTriggerListener(redisService, clipCreationService)

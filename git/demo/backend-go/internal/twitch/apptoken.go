@@ -82,10 +82,12 @@ func (c *TwitchAppTokenClient) getToken(ctx context.Context) (string, error) {
 
 // LiveStream ist ein aktiver Stream, wie ihn Twitch "Get Streams" zurückgibt.
 type LiveStream struct {
-	UserID    string
-	UserLogin string
-	Title     string
-	GameName  string
+	UserID      string
+	UserLogin   string
+	Title       string
+	GameName    string
+	ViewerCount int
+	StartedAt   string
 }
 
 // GetLiveStreams prüft, welche der übergebenen Twitch User-IDs gerade live
@@ -124,10 +126,12 @@ func (c *TwitchAppTokenClient) GetLiveStreams(ctx context.Context, userIDs []str
 
 	var streamsResp struct {
 		Data []struct {
-			UserID    string `json:"user_id"`
-			UserLogin string `json:"user_login"`
-			Title     string `json:"title"`
-			GameName  string `json:"game_name"`
+			UserID      string `json:"user_id"`
+			UserLogin   string `json:"user_login"`
+			Title       string `json:"title"`
+			GameName    string `json:"game_name"`
+			ViewerCount int    `json:"viewer_count"`
+			StartedAt   string `json:"started_at"`
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&streamsResp); err != nil {
@@ -137,10 +141,12 @@ func (c *TwitchAppTokenClient) GetLiveStreams(ctx context.Context, userIDs []str
 	result := make(map[string]LiveStream, len(streamsResp.Data))
 	for _, s := range streamsResp.Data {
 		result[s.UserID] = LiveStream{
-			UserID:    s.UserID,
-			UserLogin: s.UserLogin,
-			Title:     s.Title,
-			GameName:  s.GameName,
+			UserID:      s.UserID,
+			UserLogin:   s.UserLogin,
+			Title:       s.Title,
+			GameName:    s.GameName,
+			ViewerCount: s.ViewerCount,
+			StartedAt:   s.StartedAt,
 		}
 	}
 
@@ -197,4 +203,58 @@ func (c *TwitchAppTokenClient) GetUserByLogin(ctx context.Context, login string)
 	}
 
 	return &TwitchUser{ID: usersResp.Data[0].ID, Login: usersResp.Data[0].Login}, nil
+}
+
+// Category ist eine Twitch-Spiel-/Kategorie, wie sie "Search Categories"
+// zurückgibt.
+type Category struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	BoxArtURL string `json:"boxArtUrl"`
+}
+
+// SearchCategories sucht Twitch-Kategorien/Spiele per Freitext - für den
+// Kategorie-Editor im Live-Dashboard. Nicht Broadcaster-spezifisch, daher
+// App-Access-Token wie GetLiveStreams/GetUserByLogin.
+func (c *TwitchAppTokenClient) SearchCategories(ctx context.Context, query string) ([]Category, error) {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		"https://api.twitch.tv/helix/search/categories?query="+url.QueryEscape(query), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Client-Id", c.clientID)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Kategorie-Suche-Aufruf: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("twitch search categories error: status=%d", resp.StatusCode)
+	}
+
+	var categoriesResp struct {
+		Data []struct {
+			ID        string `json:"id"`
+			Name      string `json:"name"`
+			BoxArtURL string `json:"box_art_url"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&categoriesResp); err != nil {
+		return nil, fmt.Errorf("fehler beim Decodieren der Kategorie-Antwort: %w", err)
+	}
+
+	categories := make([]Category, 0, len(categoriesResp.Data))
+	for _, c := range categoriesResp.Data {
+		categories = append(categories, Category{ID: c.ID, Name: c.Name, BoxArtURL: c.BoxArtURL})
+	}
+
+	return categories, nil
 }

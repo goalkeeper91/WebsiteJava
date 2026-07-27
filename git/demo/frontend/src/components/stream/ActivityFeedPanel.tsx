@@ -1,68 +1,48 @@
 import { useState, useEffect } from "react";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { apiFetch } from "../../lib/apiFetch";
 import type { Activity } from "../../features/stream/types";
 
 const API_BASE = "/api/dashboard/stream";
-
-// WebSocket URL - anpassen an deine Environment
-const WS_URL = window.location.protocol === "https:"
-  ? `wss://${window.location.host}/ws/activities`
-  : `ws://${window.location.host}/ws/activities`;
+const POLL_INTERVAL_MS = 15000;
 
 export default function ActivityFeedPanel() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load initial activities
   useEffect(() => {
-    loadInitialActivities();
-  }, []);
-
-  async function loadInitialActivities() {
-    try {
-      const res = await fetch(`${API_BASE}/activities?limit=50`, {
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setActivities(data);
+    const loadActivities = async () => {
+      try {
+        const res = await apiFetch(`${API_BASE}/activities?limit=50`);
+        if (res.ok) {
+          const data = await res.json();
+          setActivities(data || []);
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Activities:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Fehler beim Laden der Activities:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+    };
 
-  // WebSocket Connection
-  const { isConnected } = useWebSocket({
-    url: WS_URL,
-    onMessage: (activity: Activity) => {
-      console.log("Neue Activity:", activity);
-
-      // Füge neue Activity am Anfang hinzu
-      setActivities((prev) => [activity, ...prev].slice(0, 100)); // Max 100 behalten
-    },
-    onOpen: () => {
-      console.log("Activity Feed WebSocket verbunden");
-    },
-    onClose: () => {
-      console.log("Activity Feed WebSocket getrennt");
-    },
-  });
+    loadActivities();
+    const interval = setInterval(loadActivities, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   function getActivityIcon(type: Activity["type"]): string {
     switch (type) {
       case "FOLLOW":
         return "💜";
-      case "SUB":
+      case "SUBSCRIBE":
+      case "RESUBSCRIBE":
         return "⭐";
+      case "GIFT_SUB":
+        return "🎁";
       case "RAID":
         return "🎉";
       case "CHEER":
         return "💎";
-      case "HOST":
+      case "HOSTING":
         return "📺";
       default:
         return "✨";
@@ -72,25 +52,28 @@ export default function ActivityFeedPanel() {
   function getActivityText(activity: Activity): string {
     switch (activity.type) {
       case "FOLLOW":
-        return `${activity.displayName} folgt dir!`;
-      case "SUB":
-        return `${activity.displayName} hat subscribed!${
+        return `${activity.display_name} folgt dir!`;
+      case "SUBSCRIBE":
+      case "RESUBSCRIBE":
+        return `${activity.display_name} hat subscribed!${
           activity.tier === "2000" ? " (Tier 2)" :
           activity.tier === "3000" ? " (Tier 3)" : ""
         }`;
+      case "GIFT_SUB":
+        return `${activity.display_name} hat ein Sub verschenkt!`;
       case "RAID":
-        return `${activity.displayName} raided mit ${activity.viewers} Viewern!`;
+        return `${activity.display_name} raided mit ${activity.viewers} Viewern!`;
       case "CHEER":
-        return `${activity.displayName} cheered ${activity.bits} Bits!`;
-      case "HOST":
-        return `${activity.displayName} hostet deinen Stream!`;
+        return `${activity.display_name} cheered ${activity.bits} Bits!`;
+      case "HOSTING":
+        return `${activity.display_name} hostet deinen Stream!`;
       default:
-        return `${activity.displayName} - ${activity.type}`;
+        return `${activity.display_name} - ${activity.type}`;
     }
   }
 
-  function getTimeAgo(timestamp: number): string {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  function getTimeAgo(timestamp: string): string {
+    const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
 
     if (seconds < 60) return "Gerade eben";
     if (seconds < 3600) return `vor ${Math.floor(seconds / 60)} Min`;
@@ -119,29 +102,19 @@ export default function ActivityFeedPanel() {
         <h2 className="text-lg font-bold flex items-center gap-2">
           <span className="text-yellow-400">⚡</span> Aktivitäten
         </h2>
-
-        {/* Connection Status Indicator */}
-        <div className="flex items-center gap-2 text-xs">
-          <div className={`w-2 h-2 rounded-full ${
-            isConnected ? "bg-green-500" : "bg-red-500"
-          }`}></div>
-          <span className="text-gray-400">
-            {isConnected ? "Live" : "Offline"}
-          </span>
-        </div>
       </div>
 
       {activities.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p className="text-sm">Noch keine Aktivitäten</p>
-          <p className="text-xs mt-2">Events erscheinen hier live</p>
+          <p className="text-xs mt-2">Events erscheinen hier</p>
         </div>
       ) : (
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {activities.map((activity, idx) => (
             <div
-              key={`${activity.username}-${activity.timestamp}-${idx}`}
-              className="bg-gray-900 rounded p-3 flex items-center gap-3 hover:bg-gray-850 transition-colors animate-fade-in"
+              key={`${activity.id}-${idx}`}
+              className="bg-gray-900 rounded p-3 flex items-center gap-3 hover:bg-gray-850 transition-colors"
             >
               <span className="text-2xl flex-shrink-0">
                 {getActivityIcon(activity.type)}

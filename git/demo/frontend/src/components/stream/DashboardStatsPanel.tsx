@@ -27,8 +27,8 @@ export default function DashboardStatsPanel() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-gray-800 rounded-lg p-4 animate-pulse">
             <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
             <div className="h-8 bg-gray-700 rounded w-3/4"></div>
@@ -39,7 +39,7 @@ export default function DashboardStatsPanel() {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       {/* Viewer Count */}
       <div className="bg-gray-800 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
@@ -91,6 +91,17 @@ export default function DashboardStatsPanel() {
             +{stats.subsThisWeek} diese Woche
           </p>
         )}
+      </div>
+
+      {/* Bits */}
+      <div className="bg-gray-800 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-2xl">💎</span>
+          <p className="text-xs text-gray-400">Bits heute</p>
+        </div>
+        <p className="text-2xl font-bold">
+          {stats?.bitsToday.toLocaleString()}
+        </p>
       </div>
 
       {/* Average Viewers */}
