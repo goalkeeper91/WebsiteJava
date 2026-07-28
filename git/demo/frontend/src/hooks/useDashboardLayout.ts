@@ -29,7 +29,9 @@ function loadLayout(username: string | null): Layout {
 // freely arrangeable widgets - persisted to localStorage per logged-in user
 // (confirmed with the user: no cross-device sync needed for this, so no
 // backend involved at all).
-export function useDashboardLayout(defaults: Record<string, { x: number; y: number; width: number }>) {
+export function useDashboardLayout(
+  defaults: Record<string, { x: number; y: number; width: number; height?: number }>
+) {
   const { username } = useAuth();
   const [layout, setLayout] = useState<Layout>(() => loadLayout(username));
 
@@ -53,6 +55,7 @@ export function useDashboardLayout(defaults: Record<string, { x: number; y: numb
           x: fallback.x,
           y: fallback.y,
           width: fallback.width,
+          height: fallback.height,
           visible: true,
           zIndex: 1,
         }

@@ -14,6 +14,7 @@ interface WidgetDef {
   id: string;
   title: string;
   width: number;
+  height?: number;
   defaultPos: { x: number; y: number };
   render: () => React.ReactNode;
 }
@@ -31,9 +32,10 @@ export default function LiveDashboardHome() {
       id: "chat",
       title: "Twitch Chat",
       width: 360,
+      height: 400,
       defaultPos: { x: 740, y: 20 },
       render: () => (
-        <div className="h-[400px]">
+        <div className="h-full">
           <TwitchChatEmbed channel={channel!} />
         </div>
       ),
@@ -44,7 +46,7 @@ export default function LiveDashboardHome() {
   ];
 
   const defaults = Object.fromEntries(
-    widgets.map((w) => [w.id, { x: w.defaultPos.x, y: w.defaultPos.y, width: w.width }])
+    widgets.map((w) => [w.id, { x: w.defaultPos.x, y: w.defaultPos.y, width: w.width, height: w.height }])
   );
   const { getEntry, updatePosition, updateSize, toggleVisible, bringToFront, resetLayout } =
     useDashboardLayout(defaults);
