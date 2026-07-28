@@ -40,18 +40,18 @@ export default function DashboardStatsPanel() {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      {/* Viewer Count */}
+      {/* Viewer Count / Follower heute */}
       <div className="bg-gray-800 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-2xl">👥</span>
           <p className="text-xs text-gray-400">
-            {stats?.isLive ? "Aktuelle Viewer" : "Follower"}
+            {stats?.isLive ? "Aktuelle Viewer" : "Follower heute"}
           </p>
         </div>
         <p className="text-2xl font-bold">
           {stats?.isLive
             ? stats.currentViewers.toLocaleString()
-            : stats?.followerCount.toLocaleString()
+            : (stats?.followsToday ?? 0).toLocaleString()
           }
         </p>
         {stats?.isLive && stats.uptime && (
