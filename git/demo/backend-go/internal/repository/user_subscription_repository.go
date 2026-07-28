@@ -12,6 +12,10 @@ type UserSubscriptionRepository interface {
 
 	GetByUserIDWithTier(ctx context.Context, userID string) (*domain.UserSubscription, error)
 
+	// GetByPaddleCustomerID resolves a webhook event back to a local user
+	// when the event only carries the Paddle customer ID (not customData).
+	GetByPaddleCustomerID(ctx context.Context, paddleCustomerID string) (*domain.UserSubscription, error)
+
 	Update(ctx context.Context, userID string, input domain.UserSubscriptionUpdateInput) error
 
 	Cancel(ctx context.Context, userID string) error

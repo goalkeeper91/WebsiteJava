@@ -17,6 +17,7 @@ type Config struct {
 	Session  SessionConfig
 	Discord  DiscordConfig
 	Frontend FrontendConfig
+	Paddle   PaddleConfig
 }
 
 type ServerConfig struct {
@@ -59,6 +60,38 @@ type SessionConfig struct {
 type FrontendConfig struct {
 	URL            string
 	AllowedOrigins []string
+}
+
+// PaddleConfig is intentionally not required at startup (like DiscordConfig) -
+// the webhook handler and portal-link endpoint simply error at call time if
+// unset, so dev/staging environments without a Paddle account still boot.
+type PaddleConfig struct {
+	APIBaseURL            string
+	APIKey                string
+	WebhookSecret         string
+	ClientSideToken       string
+	ProPriceIDMonthly     string
+	ProPriceIDYearly      string
+	PremiumPriceIDMonthly string
+	PremiumPriceIDYearly  string
+}
+
+// TierForPriceID maps a Paddle price_id back to a local tier + billing cycle.
+// Returns ok=false for an unrecognized price_id (e.g. a price removed from
+// the .env after being deleted in Paddle's dashboard).
+func (p *PaddleConfig) TierForPriceID(priceID string) (tierID, billingCycle string, ok bool) {
+	switch priceID {
+	case p.ProPriceIDMonthly:
+		return "pro", "monthly", true
+	case p.ProPriceIDYearly:
+		return "pro", "yearly", true
+	case p.PremiumPriceIDMonthly:
+		return "premium", "monthly", true
+	case p.PremiumPriceIDYearly:
+		return "premium", "yearly", true
+	default:
+		return "", "", false
+	}
 }
 
 type DiscordConfig struct {
@@ -122,6 +155,16 @@ func Load() (*Config, error) {
     		AdminGuildID:        getEnv("DISCORD_ADMIN_GUILD_ID", ""),
     		AdminContactChannel: getEnv("DISCORD_ADMIN_CONTACT_CHANNEL", ""),
     	},
+		Paddle: PaddleConfig{
+			APIBaseURL:            getEnv("PADDLE_API_BASE_URL", "https://api.paddle.com"),
+			APIKey:                getEnv("PADDLE_API_KEY", ""),
+			WebhookSecret:         getEnv("PADDLE_WEBHOOK_SECRET", ""),
+			ClientSideToken:       getEnv("PADDLE_CLIENT_SIDE_TOKEN", ""),
+			ProPriceIDMonthly:     getEnv("PADDLE_PRICE_PRO_MONTHLY", ""),
+			ProPriceIDYearly:      getEnv("PADDLE_PRICE_PRO_YEARLY", ""),
+			PremiumPriceIDMonthly: getEnv("PADDLE_PRICE_PREMIUM_MONTHLY", ""),
+			PremiumPriceIDYearly:  getEnv("PADDLE_PRICE_PREMIUM_YEARLY", ""),
+		},
 	}
 
 	if err := cfg.Validate(); err != nil {

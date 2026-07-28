@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="034-rename-stripe-to-paddle-columns" author="Marcel">
+        <!-- Beide Spalten sind seit ihrer Einfuehrung (Migration 013) immer NULL -
+             nie ein Zahlungsanbieter angebunden gewesen, daher reine Umbenennung
+             ohne Datenmigration. Paddle (nicht Stripe) ist der gewaehlte Anbieter
+             fuer die SaaS-Umstellung (siehe Plan). -->
+        <renameColumn tableName="user_subscriptions" oldColumnName="stripe_customer_id" newColumnName="paddle_customer_id" columnDataType="VARCHAR(100)"/>
+        <renameColumn tableName="user_subscriptions" oldColumnName="stripe_subscription_id" newColumnName="paddle_subscription_id" columnDataType="VARCHAR(100)"/>
+
+        <!-- Schutz gegen aus der Reihenfolge geratene/verspaetet zugestellte
+             Paddle-Webhooks (Paddle garantiert weder Reihenfolge noch
+             Einmal-Zustellung) - ein eingehendes Event wird verworfen, wenn es
+             aelter ist als der zuletzt hier vermerkte Zeitstempel. -->
+        <addColumn tableName="user_subscriptions">
+            <column name="last_paddle_event_at" type="TIMESTAMP"/>
+        </addColumn>
+
+        <!-- Dedup-Log fuer Paddle-Webhook-Events, 1:1 das Unique-Index-Muster
+             aus stream_activities.event_message_id (Migration 032). -->
+        <createTable tableName="paddle_events">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="event_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="received_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="paddle_events"/>
+            <dropColumn tableName="user_subscriptions" columnName="last_paddle_event_at"/>
+            <renameColumn tableName="user_subscriptions" oldColumnName="paddle_subscription_id" newColumnName="stripe_subscription_id" columnDataType="VARCHAR(100)"/>
+            <renameColumn tableName="user_subscriptions" oldColumnName="paddle_customer_id" newColumnName="stripe_customer_id" columnDataType="VARCHAR(100)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

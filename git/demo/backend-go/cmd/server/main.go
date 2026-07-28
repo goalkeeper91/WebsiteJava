@@ -20,6 +20,7 @@ import (
 	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/handler"
 	"demo/backend-go/internal/infrastructure/redis"
+	"demo/backend-go/internal/paddle"
 	"demo/backend-go/internal/repository/postgres"
 	"demo/backend-go/internal/security"
 	"demo/backend-go/internal/service"
@@ -74,6 +75,7 @@ func main() {
 	workflowTemplateRepo := postgres.NewWorkflowTemplateRepository(db)
 	voteRepo := postgres.NewVoteRepository(db)
 	analyticsRepo := postgres.NewUsageAnalyticsRepository(db)
+	paddleEventRepo := postgres.NewPaddleEventRepository(db)
 
 	// Clip-Automatisierung
 	automationSettingsRepo := postgres.NewAutomationSettingsRepository(db)
@@ -129,6 +131,9 @@ func main() {
 	channelService := service.NewTwitchChannelService(channelRepo, redisService)
 
 	// SaaS layer (subscription first – andere Services hängen davon ab)
+	paddleClient := paddle.NewClient(cfg.Paddle.APIBaseURL, cfg.Paddle.APIKey)
+	paddleService := service.NewPaddleService(userSubscriptionRepo, paddleEventRepo, cfg.Paddle)
+
 	subscriptionService := service.NewSubscriptionService(
 		userSubscriptionRepo,
 		subscriptionTierRepo,
@@ -352,7 +357,8 @@ func main() {
 	botStatsHandler := handler.NewBotStatsHandler(redisService, sessionStore, cfg.Session.Name)
 
 	// SaaS / n8n
-	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, sessionStore, cfg.Session.Name)
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, paddleClient, sessionStore, cfg.Session.Name)
+	paddleWebhookHandler := handler.NewPaddleWebhookHandler(paddleService)
 	n8nHandler := handler.NewN8NHandler(n8nService, sessionStore, cfg.Session.Name)
 	voteHandler := handler.NewVoteHandler(voteService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret)
 	workflowTemplateHandler := handler.NewWorkflowTemplateHandler(workflowTemplateService, sessionStore, cfg.Session.Name)
@@ -399,6 +405,7 @@ func main() {
 
 	// SaaS / n8n routes
 	subscriptionHandler.RegisterRoutes(router)
+	paddleWebhookHandler.RegisterRoutes(router)
 	n8nHandler.RegisterRoutes(router)
 	voteHandler.RegisterRoutes(router)
 	workflowTemplateHandler.RegisterRoutes(router)

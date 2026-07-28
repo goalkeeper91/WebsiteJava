@@ -10,6 +10,10 @@ const (
 	SubscriptionExpired  SubscriptionStatus = "expired"
 	SubscriptionCanceled SubscriptionStatus = "canceled"
 	SubscriptionTrialing SubscriptionStatus = "trialing"
+	// SubscriptionPastDue is Paddle's retry state after a failed renewal
+	// charge - treated as still active (grace period) while Paddle's own
+	// dunning keeps retrying, see IsActive().
+	SubscriptionPastDue SubscriptionStatus = "past_due"
 
 	BillingMonthly BillingCycle = "monthly"
 	BillingYearly  BillingCycle = "yearly"
@@ -24,8 +28,9 @@ type UserSubscription struct {
 	StartedAt            time.Time          `json:"startedAt" db:"started_at"`
 	ExpiresAt            *time.Time         `json:"expiresAt" db:"expires_at"`
 	CanceledAt           *time.Time         `json:"canceledAt" db:"canceled_at"`
-	StripeCustomerID     *string            `json:"-" db:"stripe_customer_id"`
-	StripeSubscriptionID *string            `json:"-" db:"stripe_subscription_id"`
+	PaddleCustomerID     *string            `json:"-" db:"paddle_customer_id"`
+	PaddleSubscriptionID *string            `json:"-" db:"paddle_subscription_id"`
+	LastPaddleEventAt    *time.Time         `json:"-" db:"last_paddle_event_at"`
 	CreatedAt            time.Time          `json:"createdAt" db:"created_at"`
 	UpdatedAt            time.Time          `json:"updatedAt" db:"updated_at"`
 
@@ -38,8 +43,8 @@ type UserSubscriptionCreateInput struct {
 	TierID               TierID
 	BillingCycle         *BillingCycle
 	ExpiresAt            *time.Time
-	StripeCustomerID     *string
-	StripeSubscriptionID *string
+	PaddleCustomerID     *string
+	PaddleSubscriptionID *string
 }
 
 type UserSubscriptionUpdateInput struct {
@@ -48,8 +53,9 @@ type UserSubscriptionUpdateInput struct {
 	BillingCycle         *BillingCycle
 	ExpiresAt            *time.Time
 	CanceledAt           *time.Time
-	StripeCustomerID     *string
-	StripeSubscriptionID *string
+	PaddleCustomerID     *string
+	PaddleSubscriptionID *string
+	LastPaddleEventAt    *time.Time
 }
 
 func NewUserSubscription(userID string, tierID TierID) *UserSubscription {
@@ -65,7 +71,20 @@ func NewUserSubscription(userID string, tierID TierID) *UserSubscription {
 }
 
 func (s *UserSubscription) IsActive() bool {
-	if s.Status != SubscriptionActive && s.Status != SubscriptionTrialing {
+	switch s.Status {
+	case SubscriptionActive, SubscriptionTrialing, SubscriptionPastDue:
+		// active/trialing: normal case. past_due: Paddle's own retry/dunning
+		// is still in progress - don't cut access while a renewal charge
+		// might yet succeed.
+	case SubscriptionCanceled:
+		// Stays active only until an already-paid-for period ends (Paddle
+		// cancellation, ExpiresAt set). The app's own manual free-downgrade
+		// cancel never sets ExpiresAt - nothing to honor, inactive right
+		// away, same as before this method knew about Paddle.
+		if s.ExpiresAt == nil {
+			return false
+		}
+	default:
 		return false
 	}
 	if s.ExpiresAt != nil && time.Now().After(*s.ExpiresAt) {

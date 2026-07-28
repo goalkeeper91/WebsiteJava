@@ -22,11 +22,11 @@ func (r *UserSubscriptionRepository) Create(ctx context.Context, input domain.Us
 	query := `
 		INSERT INTO user_subscriptions
 		(user_id, tier_id, status, billing_cycle, started_at, expires_at,
-		 stripe_customer_id, stripe_subscription_id, created_at, updated_at)
+		 paddle_customer_id, paddle_subscription_id, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, NOW(), NOW())
 		RETURNING id, user_id, tier_id, status, billing_cycle,
 		          started_at, expires_at, canceled_at,
-		          stripe_customer_id, stripe_subscription_id,
+		          paddle_customer_id, paddle_subscription_id,
 		          created_at, updated_at
 	`
 
@@ -38,8 +38,8 @@ func (r *UserSubscriptionRepository) Create(ctx context.Context, input domain.Us
 		domain.SubscriptionActive,
 		input.BillingCycle,
 		input.ExpiresAt,
-		input.StripeCustomerID,
-		input.StripeSubscriptionID,
+		input.PaddleCustomerID,
+		input.PaddleSubscriptionID,
 	).Scan(
 		&sub.ID,
 		&sub.UserID,
@@ -49,8 +49,8 @@ func (r *UserSubscriptionRepository) Create(ctx context.Context, input domain.Us
 		&sub.StartedAt,
 		&sub.ExpiresAt,
 		&sub.CanceledAt,
-		&sub.StripeCustomerID,
-		&sub.StripeSubscriptionID,
+		&sub.PaddleCustomerID,
+		&sub.PaddleSubscriptionID,
 		&sub.CreatedAt,
 		&sub.UpdatedAt,
 	)
@@ -65,7 +65,7 @@ func (r *UserSubscriptionRepository) GetByUserID(ctx context.Context, userID str
 	query := `
 		SELECT id, user_id, tier_id, status, billing_cycle,
 		       started_at, expires_at, canceled_at,
-		       stripe_customer_id, stripe_subscription_id,
+		       paddle_customer_id, paddle_subscription_id,
 		       created_at, updated_at
 		FROM user_subscriptions
 		WHERE user_id = $1
@@ -81,8 +81,8 @@ func (r *UserSubscriptionRepository) GetByUserID(ctx context.Context, userID str
 		&sub.StartedAt,
 		&sub.ExpiresAt,
 		&sub.CanceledAt,
-		&sub.StripeCustomerID,
-		&sub.StripeSubscriptionID,
+		&sub.PaddleCustomerID,
+		&sub.PaddleSubscriptionID,
 		&sub.CreatedAt,
 		&sub.UpdatedAt,
 	)
@@ -100,7 +100,7 @@ func (r *UserSubscriptionRepository) GetByUserIDWithTier(ctx context.Context, us
 	query := `
 		SELECT s.id, s.user_id, s.tier_id, s.status, s.billing_cycle,
 		       s.started_at, s.expires_at, s.canceled_at,
-		       s.stripe_customer_id, s.stripe_subscription_id,
+		       s.paddle_customer_id, s.paddle_subscription_id,
 		       s.created_at, s.updated_at,
 		       t.id, t.name, t.price_monthly, t.price_yearly,
 		       t.max_commands, t.max_workflows, t.max_votes_per_month,
@@ -123,8 +123,8 @@ func (r *UserSubscriptionRepository) GetByUserIDWithTier(ctx context.Context, us
 		&sub.StartedAt,
 		&sub.ExpiresAt,
 		&sub.CanceledAt,
-		&sub.StripeCustomerID,
-		&sub.StripeSubscriptionID,
+		&sub.PaddleCustomerID,
+		&sub.PaddleSubscriptionID,
 		&sub.CreatedAt,
 		&sub.UpdatedAt,
 		&tier.ID,
@@ -153,6 +153,41 @@ func (r *UserSubscriptionRepository) GetByUserIDWithTier(ctx context.Context, us
 	return &sub, nil
 }
 
+func (r *UserSubscriptionRepository) GetByPaddleCustomerID(ctx context.Context, paddleCustomerID string) (*domain.UserSubscription, error) {
+	query := `
+		SELECT id, user_id, tier_id, status, billing_cycle,
+		       started_at, expires_at, canceled_at,
+		       paddle_customer_id, paddle_subscription_id,
+		       created_at, updated_at
+		FROM user_subscriptions
+		WHERE paddle_customer_id = $1
+	`
+
+	var sub domain.UserSubscription
+	err := r.db.QueryRowContext(ctx, query, paddleCustomerID).Scan(
+		&sub.ID,
+		&sub.UserID,
+		&sub.TierID,
+		&sub.Status,
+		&sub.BillingCycle,
+		&sub.StartedAt,
+		&sub.ExpiresAt,
+		&sub.CanceledAt,
+		&sub.PaddleCustomerID,
+		&sub.PaddleSubscriptionID,
+		&sub.CreatedAt,
+		&sub.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden der Subscription per Paddle-Kunden-ID: %w", err)
+	}
+
+	return &sub, nil
+}
+
 func (r *UserSubscriptionRepository) Update(ctx context.Context, userID string, input domain.UserSubscriptionUpdateInput) error {
 	query := `
 		UPDATE user_subscriptions
@@ -161,8 +196,9 @@ func (r *UserSubscriptionRepository) Update(ctx context.Context, userID string, 
 		    billing_cycle = COALESCE($4, billing_cycle),
 		    expires_at = COALESCE($5, expires_at),
 		    canceled_at = COALESCE($6, canceled_at),
-		    stripe_customer_id = COALESCE($7, stripe_customer_id),
-		    stripe_subscription_id = COALESCE($8, stripe_subscription_id),
+		    paddle_customer_id = COALESCE($7, paddle_customer_id),
+		    paddle_subscription_id = COALESCE($8, paddle_subscription_id),
+		    last_paddle_event_at = COALESCE($9, last_paddle_event_at),
 		    updated_at = NOW()
 		WHERE user_id = $1
 	`
@@ -175,8 +211,9 @@ func (r *UserSubscriptionRepository) Update(ctx context.Context, userID string, 
 		input.BillingCycle,
 		input.ExpiresAt,
 		input.CanceledAt,
-		input.StripeCustomerID,
-		input.StripeSubscriptionID,
+		input.PaddleCustomerID,
+		input.PaddleSubscriptionID,
+		input.LastPaddleEventAt,
 	)
 	if err != nil {
 		return fmt.Errorf("fehler beim Update der Subscription: %w", err)

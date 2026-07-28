@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="035-update-tier-prices" author="Marcel">
+        <!-- Reflects the real prices set up in the Paddle dashboard for the
+             Pro/Premium products - migration 013's seed values (5/50, 15/150)
+             were placeholders from before Paddle was integrated. A plain
+             UPDATE, not an edit to migration 013, since that changeset is
+             already applied. -->
+        <update tableName="subscription_tiers">
+            <column name="price_monthly" valueNumeric="7.99"/>
+            <column name="price_yearly" valueNumeric="79.99"/>
+            <where>id = 'pro'</where>
+        </update>
+
+        <update tableName="subscription_tiers">
+            <column name="price_monthly" valueNumeric="21.99"/>
+            <column name="price_yearly" valueNumeric="199.99"/>
+            <where>id = 'premium'</where>
+        </update>
+
+        <rollback>
+            <update tableName="subscription_tiers">
+                <column name="price_monthly" valueNumeric="5"/>
+                <column name="price_yearly" valueNumeric="50"/>
+                <where>id = 'pro'</where>
+            </update>
+            <update tableName="subscription_tiers">
+                <column name="price_monthly" valueNumeric="15"/>
+                <column name="price_yearly" valueNumeric="150"/>
+                <where>id = 'premium'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
