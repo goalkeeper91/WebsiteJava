@@ -89,9 +89,19 @@ async function ensurePaddleInitialized(): Promise<void> {
 // just in the opposite direction (tier -> price_id instead of price_id ->
 // tier). Price IDs aren't secret - Paddle.js needs them client-side to open
 // a checkout - so they're plain build-time env vars, same as the client token.
+//
+// Uses literal import.meta.env.VITE_X accesses rather than a computed key -
+// Vite only reliably inlines the literal member-expression form at build
+// time, a dynamic import.meta.env[key] lookup is not guaranteed to resolve.
 export function getPaddlePriceID(tier: "pro" | "premium", cycle: "monthly" | "yearly"): string | undefined {
-  const key = `VITE_PADDLE_PRICE_${tier.toUpperCase()}_${cycle.toUpperCase()}`;
-  return (import.meta.env as Record<string, string | undefined>)[key];
+  if (tier === "pro") {
+    return cycle === "monthly"
+      ? import.meta.env.VITE_PADDLE_PRICE_PRO_MONTHLY
+      : import.meta.env.VITE_PADDLE_PRICE_PRO_YEARLY;
+  }
+  return cycle === "monthly"
+    ? import.meta.env.VITE_PADDLE_PRICE_PREMIUM_MONTHLY
+    : import.meta.env.VITE_PADDLE_PRICE_PREMIUM_YEARLY;
 }
 
 export async function openPaddleCheckout(priceId: string, twitchUserId: string): Promise<void> {
