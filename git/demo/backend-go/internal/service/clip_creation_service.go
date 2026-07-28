@@ -32,6 +32,7 @@ type ClipCreationService struct {
 	n8nService                  *N8NService
 	discordNotificationService  *DiscordNotificationService
 	captionService              *CaptionService
+	subscriptionSvc             *SubscriptionService
 	clientID                    string
 	httpClient                  *http.Client
 }
@@ -44,6 +45,7 @@ func NewClipCreationService(
 	n8nService *N8NService,
 	discordNotificationService *DiscordNotificationService,
 	captionService *CaptionService,
+	subscriptionSvc *SubscriptionService,
 	clientID string,
 ) *ClipCreationService {
 	return &ClipCreationService{
@@ -54,6 +56,7 @@ func NewClipCreationService(
 		n8nService:                 n8nService,
 		discordNotificationService: discordNotificationService,
 		captionService:             captionService,
+		subscriptionSvc:            subscriptionSvc,
 		clientID:                   clientID,
 		httpClient:                 &http.Client{Timeout: 15 * time.Second},
 	}
@@ -78,6 +81,12 @@ func (s *ClipCreationService) ProcessTrigger(ctx context.Context, userTwitchID, 
 	settings, err := s.settingsRepo.GetByUser(ctx, userTwitchID)
 	if err != nil || settings == nil || !settings.IsEnabled {
 		log.Printf("⏭️ Automatisierung für %s nicht aktiv, überspringe Trigger", userTwitchID)
+		return
+	}
+
+	canUse, err := s.subscriptionSvc.CanUseFeature(ctx, userTwitchID, "clip_automation")
+	if err != nil || !canUse {
+		log.Printf("⏭️ Abo von %s erlaubt Clip-Automatisierung nicht (mehr), überspringe Trigger", userTwitchID)
 		return
 	}
 

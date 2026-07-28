@@ -25,6 +25,12 @@ type AutomationSettingsRepository interface {
 	// GetAllEnabled lädt alle aktiven Automations (für Batch Processing)
 	GetAllEnabled(ctx context.Context) ([]*domain.AutomationSettings, error)
 
+	// GetAllEnabledWithSubscription lädt alle aktiven Automations zusammen mit
+	// der jeweiligen Subscription (inkl. Tier) und Admin-Status des Nutzers -
+	// fuer die laufende Tier-Durchsetzung im Clip-Detector-Poll-Loop (ein
+	// einzelner JOIN statt eines Service-Aufrufs pro Kandidat).
+	GetAllEnabledWithSubscription(ctx context.Context) ([]*domain.AutomationSettingsWithSubscription, error)
+
 	// GetAllEnabledWithAutoPost lädt alle Settings mit Auto-Post enabled
 	GetAllEnabledWithAutoPost(ctx context.Context) ([]*domain.AutomationSettings, error)
 

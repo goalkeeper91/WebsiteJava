@@ -265,3 +265,14 @@ func (as *AutomationSettings) HasPlatform(platform Platform) bool {
 	}
 	return false
 }
+
+// AutomationSettingsWithSubscription bündelt Settings + Subscription (inkl.
+// Tier) + Admin-Status für einen Kandidaten der Clip-Detector-Poll-Schleife -
+// reine Datenbündelung, die eigentliche Berechtigungsprüfung passiert beim
+// Aufrufer über die bereits vorhandenen UserSubscription.IsActive() /
+// SubscriptionTier.HasFeature()-Methoden, nicht hier.
+type AutomationSettingsWithSubscription struct {
+	Settings     *AutomationSettings
+	Subscription *UserSubscription
+	IsAdmin      bool
+}

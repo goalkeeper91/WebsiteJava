@@ -321,6 +321,7 @@ func main() {
 		n8nService,
 		discordNotificationService,
 		captionService,
+		subscriptionService,
 		cfg.Twitch.ClientID,
 	)
 

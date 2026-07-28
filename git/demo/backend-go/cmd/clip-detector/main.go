@@ -82,7 +82,7 @@ func pollOnce(
 	active map[string]*detector.StreamIngestor,
 	redisService *redis.RedisService,
 ) {
-	candidates, err := automationRepo.GetAllEnabled(ctx)
+	candidates, err := automationRepo.GetAllEnabledWithSubscription(ctx)
 	if err != nil {
 		log.Printf("⚠️ Fehler beim Laden der aktivierten Automation-Settings: %v", err)
 		return
@@ -90,9 +90,13 @@ func pollOnce(
 
 	ids := make([]string, 0, len(candidates))
 	for _, c := range candidates {
-		if allowlist[c.UserTwitchID] {
-			ids = append(ids, c.UserTwitchID)
+		if !allowlist[c.Settings.UserTwitchID] {
+			continue
 		}
+		if !c.IsAdmin && !(c.Subscription.IsActive() && c.Subscription.Tier.HasFeature("clip_automation")) {
+			continue
+		}
+		ids = append(ids, c.Settings.UserTwitchID)
 	}
 
 	live, err := appToken.GetLiveStreams(ctx, ids)

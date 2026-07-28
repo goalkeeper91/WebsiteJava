@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -268,6 +269,107 @@ func (r *automationSettingsRepository) GetAllEnabled(ctx context.Context) ([]*do
 	`
 
 	return r.queryMultiple(ctx, query)
+}
+
+func (r *automationSettingsRepository) GetAllEnabledWithSubscription(ctx context.Context) ([]*domain.AutomationSettingsWithSubscription, error) {
+	query := `
+		SELECT a.user_twitch_id, a.is_enabled, a.ai_tone, a.ai_style, a.use_hashtags,
+		       a.max_hashtags, a.min_clip_duration, a.max_clip_duration, a.min_view_count,
+		       a.only_verified_clips, a.target_platforms, a.auto_post_enabled,
+		       a.posting_frequency, a.preferred_posting_times, a.blocked_words,
+		       a.allowed_games, a.notify_on_post, a.notify_on_error,
+		       a.created_at, a.updated_at,
+		       s.id, s.user_id, s.tier_id, s.status, s.billing_cycle,
+		       s.started_at, s.expires_at, s.canceled_at,
+		       s.paddle_customer_id, s.paddle_subscription_id,
+		       s.created_at, s.updated_at,
+		       t.id, t.name, t.price_monthly, t.price_yearly,
+		       t.max_commands, t.max_workflows, t.max_votes_per_month,
+		       t.features, t.is_active, t.created_at,
+		       u.is_admin
+		FROM automation_settings a
+		INNER JOIN user_subscriptions s ON s.user_id = a.user_twitch_id
+		INNER JOIN subscription_tiers t ON s.tier_id = t.id
+		INNER JOIN users u ON u.twitch_id = a.user_twitch_id
+		WHERE a.is_enabled = true
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Query: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*domain.AutomationSettingsWithSubscription
+	for rows.Next() {
+		var settings domain.AutomationSettings
+		var sub domain.UserSubscription
+		var tier domain.SubscriptionTier
+		var featuresJSON []byte
+		var isAdmin bool
+
+		err := rows.Scan(
+			&settings.UserTwitchID,
+			&settings.IsEnabled,
+			&settings.AITone,
+			&settings.AIStyle,
+			&settings.UseHashtags,
+			&settings.MaxHashtags,
+			&settings.MinClipDuration,
+			&settings.MaxClipDuration,
+			&settings.MinViewCount,
+			&settings.OnlyVerifiedClips,
+			&settings.TargetPlatforms,
+			&settings.AutoPostEnabled,
+			&settings.PostingFrequency,
+			&settings.PreferredPostingTimes,
+			&settings.BlockedWords,
+			&settings.AllowedGames,
+			&settings.NotifyOnPost,
+			&settings.NotifyOnError,
+			&settings.CreatedAt,
+			&settings.UpdatedAt,
+			&sub.ID,
+			&sub.UserID,
+			&sub.TierID,
+			&sub.Status,
+			&sub.BillingCycle,
+			&sub.StartedAt,
+			&sub.ExpiresAt,
+			&sub.CanceledAt,
+			&sub.PaddleCustomerID,
+			&sub.PaddleSubscriptionID,
+			&sub.CreatedAt,
+			&sub.UpdatedAt,
+			&tier.ID,
+			&tier.Name,
+			&tier.PriceMonthly,
+			&tier.PriceYearly,
+			&tier.MaxCommands,
+			&tier.MaxWorkflows,
+			&tier.MaxVotesPerMonth,
+			&featuresJSON,
+			&tier.IsActive,
+			&tier.CreatedAt,
+			&isAdmin,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("fehler beim Scan: %w", err)
+		}
+
+		if err := json.Unmarshal(featuresJSON, &tier.Features); err != nil {
+			return nil, fmt.Errorf("fehler beim Parsen der Features: %w", err)
+		}
+
+		sub.Tier = &tier
+		result = append(result, &domain.AutomationSettingsWithSubscription{
+			Settings:     &settings,
+			Subscription: &sub,
+			IsAdmin:      isAdmin,
+		})
+	}
+
+	return result, rows.Err()
 }
 
 func (r *automationSettingsRepository) GetAllEnabledWithAutoPost(ctx context.Context) ([]*domain.AutomationSettings, error) {
