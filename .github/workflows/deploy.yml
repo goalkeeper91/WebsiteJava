@@ -27,6 +27,26 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       #########################################
+      # FRONTEND ENV (Paddle-Billing Build-Zeit-Werte)
+      #########################################
+      # frontend/.env ist bewusst gitignored (enthaelt lokale Werte) - der
+      # Checkout hat sie deshalb nicht, und Vite backt VITE_*-Variablen zur
+      # Build-Zeit ein. Ohne diesen Schritt baut die Pipeline mit leeren
+      # Paddle-Werten, unabhaengig davon, was im .env auf dem Server steht.
+      - name: 🔐 Write Frontend Build Env
+        run: |
+          cat > git/demo/frontend/.env <<EOF
+          VITE_PADDLE_ENVIRONMENT=${{ secrets.PADDLE_ENVIRONMENT }}
+          VITE_PADDLE_CLIENT_TOKEN=${{ secrets.PADDLE_CLIENT_SIDE_TOKEN }}
+          VITE_PADDLE_PRICE_PRO_MONTHLY=${{ secrets.PADDLE_PRICE_PRO_MONTHLY }}
+          VITE_PADDLE_PRICE_PRO_YEARLY=${{ secrets.PADDLE_PRICE_PRO_YEARLY }}
+          VITE_PADDLE_PRICE_PREMIUM_MONTHLY=${{ secrets.PADDLE_PRICE_PREMIUM_MONTHLY }}
+          VITE_PADDLE_PRICE_PREMIUM_YEARLY=${{ secrets.PADDLE_PRICE_PREMIUM_YEARLY }}
+          EOF
+
+          echo "✅ frontend/.env fuer den Build geschrieben"
+
+      #########################################
       # FRONTEND BUILD
       #########################################
       - name: 🏗️ Build Frontend
@@ -34,7 +54,7 @@ jobs:
           cd git/demo/frontend
           npm ci
           npm run build
-          
+
           echo "✅ Frontend Build abgeschlossen"
           ls -la dist/
 
