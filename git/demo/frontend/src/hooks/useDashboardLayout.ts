@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 export interface WidgetLayoutEntry {
   x: number;
   y: number;
+  width: number;
+  height?: number;
   visible: boolean;
   zIndex: number;
 }
@@ -27,7 +29,7 @@ function loadLayout(username: string | null): Layout {
 // freely arrangeable widgets - persisted to localStorage per logged-in user
 // (confirmed with the user: no cross-device sync needed for this, so no
 // backend involved at all).
-export function useDashboardLayout(defaults: Record<string, { x: number; y: number }>) {
+export function useDashboardLayout(defaults: Record<string, { x: number; y: number; width: number }>) {
   const { username } = useAuth();
   const [layout, setLayout] = useState<Layout>(() => loadLayout(username));
 
@@ -45,8 +47,16 @@ export function useDashboardLayout(defaults: Record<string, { x: number; y: numb
 
   const entryOrDefault = useCallback(
     (layoutSnapshot: Layout, id: string): WidgetLayoutEntry => {
-      const fallback = defaults[id] || { x: 0, y: 0 };
-      return layoutSnapshot[id] || { x: fallback.x, y: fallback.y, visible: true, zIndex: 1 };
+      const fallback = defaults[id] || { x: 0, y: 0, width: 340 };
+      return (
+        layoutSnapshot[id] || {
+          x: fallback.x,
+          y: fallback.y,
+          width: fallback.width,
+          visible: true,
+          zIndex: 1,
+        }
+      );
     },
     [defaults]
   );
@@ -58,6 +68,16 @@ export function useDashboardLayout(defaults: Record<string, { x: number; y: numb
       setLayout((prev) => ({
         ...prev,
         [id]: { ...entryOrDefault(prev, id), x, y },
+      }));
+    },
+    [entryOrDefault]
+  );
+
+  const updateSize = useCallback(
+    (id: string, width: number, height: number) => {
+      setLayout((prev) => ({
+        ...prev,
+        [id]: { ...entryOrDefault(prev, id), width, height },
       }));
     },
     [entryOrDefault]
@@ -91,5 +111,5 @@ export function useDashboardLayout(defaults: Record<string, { x: number; y: numb
     setLayout({});
   }, []);
 
-  return { getEntry, updatePosition, toggleVisible, bringToFront, resetLayout };
+  return { getEntry, updatePosition, updateSize, toggleVisible, bringToFront, resetLayout };
 }

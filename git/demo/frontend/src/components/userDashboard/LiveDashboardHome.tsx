@@ -43,8 +43,11 @@ export default function LiveDashboardHome() {
     { id: "activity", title: "Aktivitäten", width: 360, defaultPos: { x: 740, y: 440 }, render: () => <ActivityFeedPanel /> },
   ];
 
-  const defaults = Object.fromEntries(widgets.map((w) => [w.id, w.defaultPos]));
-  const { getEntry, updatePosition, toggleVisible, bringToFront, resetLayout } = useDashboardLayout(defaults);
+  const defaults = Object.fromEntries(
+    widgets.map((w) => [w.id, { x: w.defaultPos.x, y: w.defaultPos.y, width: w.width }])
+  );
+  const { getEntry, updatePosition, updateSize, toggleVisible, bringToFront, resetLayout } =
+    useDashboardLayout(defaults);
   const allIds = widgets.map((w) => w.id);
 
   if (!channel) {
@@ -79,9 +82,11 @@ export default function LiveDashboardHome() {
               x={entry.x}
               y={entry.y}
               zIndex={entry.zIndex}
-              width={widget.width}
+              width={entry.width}
+              height={entry.height}
               containerRef={containerRef}
               onDragEnd={(x, y) => updatePosition(widget.id, x, y)}
+              onResizeEnd={(width, height) => updateSize(widget.id, width, height)}
               onFocus={() => bringToFront(widget.id, allIds)}
               onHide={() => toggleVisible(widget.id)}
             >
