@@ -114,7 +114,7 @@ export default function DashboardStatsPanel() {
           {stats?.avgViewers.toFixed(0)}
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          Letzter Stream
+          {stats?.isLive ? "Aktueller Stream" : "Letzter Stream"}
         </p>
       </div>
     </div>

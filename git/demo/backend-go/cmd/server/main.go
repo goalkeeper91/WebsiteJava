@@ -297,7 +297,9 @@ func main() {
 
 	// Live-Dashboard: Chat, Live-Stats, Titel/Kategorie, Werbepause
 	channelClient := twitch.NewChannelClient(cfg.Twitch.ClientID)
-	streamDashboardService := service.NewStreamDashboardService(baseAuthService, channelClient, scheduledMessageAppToken, activityRepo)
+	streamSessionRepo := postgres.NewStreamSessionRepository(db)
+	streamSessionService := service.NewStreamSessionService(streamSessionRepo, scheduledMessageAppToken, userRepo)
+	streamDashboardService := service.NewStreamDashboardService(baseAuthService, channelClient, scheduledMessageAppToken, activityRepo, streamSessionService)
 
 	// Clip-Erzeugung (Phase C): braucht baseAuthService für Token-Refresh
 	// Phase D: Caption via selbstgehostetem Ollama, Discord-Post über den bestehenden Bot
@@ -470,6 +472,10 @@ func main() {
 	loyaltyScheduler := service.NewLoyaltyScheduler(loyaltyService, 60*time.Second)
 	go loyaltyScheduler.Start()
 	defer loyaltyScheduler.Stop()
+
+	streamSessionScheduler := service.NewStreamSessionScheduler(streamSessionService, 2*time.Minute)
+	go streamSessionScheduler.Start()
+	defer streamSessionScheduler.Stop()
 
 	log.Println("✅ Background Services gestartet")
 

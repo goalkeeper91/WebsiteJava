@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="033-create-stream-sessions" author="Marcel">
+        <!-- Eine Zeile pro Stream statt einer Zeile pro Einzel-Messung: der
+             periodische Viewer-Sampler pflegt viewer_sum/sample_count laufend
+             fort, der Durchschnitt ist dann nur viewer_sum/sample_count -
+             keine Aggregations-Query über viele Samples nötig. -->
+        <createTable tableName="stream_sessions">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="twitch_user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <!-- NULL = Session noch offen (Stream läuft oder Sampler hat das
+                 Ende noch nicht bemerkt). -->
+            <column name="ended_at" type="TIMESTAMP"/>
+            <column name="viewer_sum" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sample_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="peak_viewers" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_stream_sessions_user_ended" tableName="stream_sessions">
+            <column name="twitch_user_id"/>
+            <column name="ended_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="stream_sessions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -20,6 +20,7 @@ type StreamDashboardService struct {
 	channelClient  *twitch.ChannelClient
 	appTokenClient *twitch.TwitchAppTokenClient
 	activityRepo   repository.StreamActivityRepository
+	sessionService *StreamSessionService
 }
 
 func NewStreamDashboardService(
@@ -27,12 +28,14 @@ func NewStreamDashboardService(
 	channelClient *twitch.ChannelClient,
 	appTokenClient *twitch.TwitchAppTokenClient,
 	activityRepo repository.StreamActivityRepository,
+	sessionService *StreamSessionService,
 ) *StreamDashboardService {
 	return &StreamDashboardService{
 		authService:    authService,
 		channelClient:  channelClient,
 		appTokenClient: appTokenClient,
 		activityRepo:   activityRepo,
+		sessionService: sessionService,
 	}
 }
 
@@ -164,9 +167,15 @@ func (s *StreamDashboardService) GetDashboardStats(ctx context.Context, twitchUs
 		}
 	}
 
-	// avgViewers is deliberately stubbed to the current viewer count - a
-	// real rolling average needs a periodic viewer-count sampler and a new
-	// table, out of scope here (see plan's "Nicht Teil dieser Phase").
+	// avgViewers: current stream's running average while live, or the last
+	// completed stream's average while offline - backed by StreamSessionService
+	// (internal/service/stream_session_service.go), which the background
+	// StreamSessionScheduler keeps up to date via periodic viewer-count samples.
+	avgViewers, err := s.sessionService.GetAverageViewers(ctx, twitchUserID, live.IsLive)
+	if err != nil {
+		return nil, fmt.Errorf("fehler beim Laden des Viewer-Durchschnitts: %w", err)
+	}
+
 	return &DashboardStats{
 		IsLive:          live.IsLive,
 		CurrentViewers:  live.ViewerCount,
@@ -176,7 +185,7 @@ func (s *StreamDashboardService) GetDashboardStats(ctx context.Context, twitchUs
 		FollowsToday:    followsToday,
 		SubsThisWeek:    subsThisWeek,
 		BitsToday:       bitsToday,
-		AvgViewers:      live.ViewerCount,
+		AvgViewers:      avgViewers,
 	}, nil
 }
 

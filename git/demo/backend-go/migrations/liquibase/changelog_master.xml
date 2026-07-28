@@ -37,5 +37,6 @@
     <include file="changesets/030-add-giveaway-keyword.xml" relativeToChangelogFile="true"/>
     <include file="changesets/031-create-channel-team-members.xml" relativeToChangelogFile="true"/>
     <include file="changesets/032-add-event-dedup-to-stream-activities.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/033-create-stream-sessions.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
