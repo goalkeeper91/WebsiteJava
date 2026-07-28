@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -22,10 +23,28 @@ type AuthServiceInterface interface {
 }
 
 const (
-	sessionUserKey     = "user_id"
-	sessionStateKey    = "oauth_state"
-	sessionBotStateKey = "oauth_bot_state"
+	sessionUserKey       = "user_id"
+	sessionStateKey      = "oauth_state"
+	sessionBotStateKey   = "oauth_bot_state"
+	sessionReturnToKey   = "oauth_return_to"
+	defaultLoginRedirect = "/dashboard"
 )
+
+// isValidReturnTo guards against open-redirect: only a same-origin relative
+// path is accepted (must start with exactly one '/', never '//' - which
+// browsers treat as protocol-relative - and never contain '://').
+func isValidReturnTo(path string) bool {
+	if path == "" || path[0] != '/' {
+		return false
+	}
+	if strings.HasPrefix(path, "//") {
+		return false
+	}
+	if strings.Contains(path, "://") {
+		return false
+	}
+	return true
+}
 
 type AuthHandler struct {
 	authService  AuthServiceInterface
@@ -69,6 +88,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := h.sessionStore.Get(r, h.sessionName)
 	session.Values[sessionStateKey] = state
+	if returnTo := r.URL.Query().Get("returnTo"); isValidReturnTo(returnTo) {
+		session.Values[sessionReturnToKey] = returnTo
+	}
 	if err := session.Save(r, w); err != nil {
 		log.Printf("Fehler beim Speichern der Session: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -117,6 +139,13 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	session.Values[sessionUserKey] = user.TwitchID
 	session.Values["is_admin"] = user.IsAdmin
 	delete(session.Values, sessionStateKey)
+
+	returnTo := defaultLoginRedirect
+	if stored, ok := session.Values[sessionReturnToKey].(string); ok && isValidReturnTo(stored) {
+		returnTo = stored
+	}
+	delete(session.Values, sessionReturnToKey)
+
 	session.Options.MaxAge = 86400
 
 	if err := session.Save(r, w); err != nil {
@@ -126,7 +155,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("✅ User %s erfolgreich eingeloggt (Admin: %v)", user.Username, user.IsAdmin)
-	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, h.frontendURL+returnTo, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) BotLogin(w http.ResponseWriter, r *http.Request) {

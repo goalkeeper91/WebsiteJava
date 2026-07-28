@@ -17,6 +17,8 @@ import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
 import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
+import Pricing from "./pages/Pricing";
+import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/[user]/Dashboard";
 import { LoginPopup } from './components/popup/LoginFailed';
 import SubathonOverlay from './pages/SubathonOverlay';
@@ -58,6 +60,8 @@ const App = () => {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path='/about' element={<About />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/welcome" element={<Welcome />} />
 
           {/* Legal */}
           <Route path="/legal/impressum" element={<Impressum />} />
