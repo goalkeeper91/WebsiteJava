@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -18,7 +18,10 @@ import (
 	"demo/backend-go/pkg/config"
 )
 
-const pollInterval = 60 * time.Second
+const (
+	pollInterval                  = 60 * time.Second
+	defaultMaxConcurrentIngestors = 20
+)
 
 func main() {
 	cfg, err := config.Load()
@@ -51,12 +54,15 @@ func main() {
 	automationRepo := postgres.NewAutomationSettingsRepository(db)
 	appToken := twitch.NewTwitchAppTokenClient(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
 
-	allowlist := parseAllowlist(getEnv("DETECTOR_ALLOWED_USERS", ""))
-	if len(allowlist) == 0 {
-		log.Println("⚠️ DETECTOR_ALLOWED_USERS ist leer — der Detector überwacht aktuell niemanden (v1-Sicherheitsgate, siehe Phase-B-Plan).")
-	} else {
-		log.Printf("🔒 Detector-Allowlist aktiv für %d Twitch-User-ID(s)", len(allowlist))
+	maxConcurrentIngestors := defaultMaxConcurrentIngestors
+	if raw := getEnv("MAX_CONCURRENT_INGESTORS", ""); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			maxConcurrentIngestors = parsed
+		} else {
+			log.Printf("⚠️ Ungültiger MAX_CONCURRENT_INGESTORS-Wert %q, verwende Default %d", raw, defaultMaxConcurrentIngestors)
+		}
 	}
+	log.Printf("📊 Kapazitätsgrenze: max. %d gleichzeitige Ingestoren", maxConcurrentIngestors)
 
 	active := map[string]*detector.StreamIngestor{}
 
@@ -66,19 +72,19 @@ func main() {
 	defer ticker.Stop()
 
 	for {
-		pollOnce(ctx, automationRepo, appToken, allowlist, active, redisService)
+		pollOnce(ctx, automationRepo, appToken, maxConcurrentIngestors, active, redisService)
 		<-ticker.C
 	}
 }
 
-// pollOnce lädt die aktivierten Automation-Settings, schränkt sie auf die
-// Allowlist ein, prüft den Live-Status via Twitch und startet/stoppt
-// Ingestoren entsprechend.
+// pollOnce lädt die aktivierten Automation-Settings mitsamt Abo-Daten, prüft
+// den Live-Status via Twitch und startet/stoppt Ingestoren entsprechend —
+// begrenzt durch maxConcurrentIngestors.
 func pollOnce(
 	ctx context.Context,
 	automationRepo repository.AutomationSettingsRepository,
 	appToken *twitch.TwitchAppTokenClient,
-	allowlist map[string]bool,
+	maxConcurrentIngestors int,
 	active map[string]*detector.StreamIngestor,
 	redisService *redis.RedisService,
 ) {
@@ -90,9 +96,6 @@ func pollOnce(
 
 	ids := make([]string, 0, len(candidates))
 	for _, c := range candidates {
-		if !allowlist[c.Settings.UserTwitchID] {
-			continue
-		}
 		if !c.IsAdmin && !(c.Subscription.IsActive() && c.Subscription.Tier.HasFeature("clip_automation")) {
 			continue
 		}
@@ -108,6 +111,10 @@ func pollOnce(
 
 	for userTwitchID, stream := range live {
 		if _, alreadyActive := active[userTwitchID]; alreadyActive {
+			continue
+		}
+		if len(active) >= maxConcurrentIngestors {
+			log.Printf("⚠️ Kapazitätsgrenze erreicht (%d/%d) — %s wird in diesem Tick übersprungen", len(active), maxConcurrentIngestors, stream.UserLogin)
 			continue
 		}
 		active[userTwitchID] = detector.StartIngestor(ctx, userTwitchID, stream.UserLogin, redisService)
@@ -129,17 +136,6 @@ func getEnv(key, defaultValue string) string {
 		return v
 	}
 	return defaultValue
-}
-
-func parseAllowlist(raw string) map[string]bool {
-	result := map[string]bool{}
-	for _, id := range strings.Split(raw, ",") {
-		id = strings.TrimSpace(id)
-		if id != "" {
-			result[id] = true
-		}
-	}
-	return result
 }
 
 // noopEventHandler ignoriert die "backend:events"-Nachrichten, die

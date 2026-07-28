@@ -176,9 +176,10 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
-      # Sicherheitsgate v1: nur diese Twitch User-IDs (numerisch, wie users.twitch_id)
-      # werden beobachtet. Siehe Phase-B-Plan zur ToS-Einordnung von streamlink.
-      DETECTOR_ALLOWED_USERS: ${DETECTOR_ALLOWED_USERS:-}
+      # Kapazitätsgrenze (Phase 3): max. gleichzeitig laufende ffmpeg/streamlink-
+      # Ingestoren. Zugriffskontrolle läuft seit Phase 2 über echte Abo-Daten,
+      # nicht mehr über eine manuelle Allowlist.
+      MAX_CONCURRENT_INGESTORS: ${MAX_CONCURRENT_INGESTORS:-20}
     networks:
       - app-network
 
