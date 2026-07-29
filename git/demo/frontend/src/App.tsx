@@ -15,6 +15,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
+import Widerruf from "./pages/legal/Widerruf";
+import Cookies from "./pages/legal/Cookies";
 import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
 import Pricing from "./pages/Pricing";
@@ -67,6 +69,8 @@ const App = () => {
           <Route path="/legal/impressum" element={<Impressum />} />
           <Route path="/legal/datenschutz" element={<Datenschutz />} />
           <Route path="/legal/agb" element={<Agb />} />
+          <Route path="/legal/widerruf" element={<Widerruf />} />
+          <Route path="/legal/cookies" element={<Cookies />} />
 
           {/* Admin Routes - Protected for Admins only */}
           <Route

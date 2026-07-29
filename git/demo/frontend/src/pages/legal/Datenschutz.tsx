@@ -122,7 +122,31 @@ const Datenschutz: React.FC = () => {
           Videos von YouTube werden im erweiterten Datenschutzmodus eingebunden. Betreiber: Google Ireland Limited, Dublin, Irland.
         </p>
 
-        <h2 className="text-2xl font-semibold mb-4">6. Twitch OAuth und API-Nutzung</h2>
+        <h2 className="text-2xl font-semibold mb-4">6. Zahlungsabwicklung über Paddle</h2>
+        <p className="mb-2">
+          Für kostenpflichtige Tarife nutzen wir den Zahlungsdienstleister Paddle.com Market Limited, 30 Old
+          Bailey, London, EC4M 7AU, Vereinigtes Königreich ("Paddle"). Paddle agiert als Merchant of Record, tritt
+          also rechtlich selbst als Verkäufer auf und übernimmt in diesem Zusammenhang eigenständige
+          datenschutzrechtliche Verantwortung (z. B. für Rechnungsstellung, Umsatzsteuer und Zahlungsabwicklung).
+        </p>
+        <p className="mb-2">
+          <strong>Datenkategorien:</strong> Name, E-Mail-Adresse, Rechnungsanschrift (falls angegeben) sowie
+          Zahlungs- und Transaktionsdaten. Ihre Zahlungsdaten (z. B. Kartendaten) werden ausschließlich von Paddle
+          verarbeitet und laufen nicht über unsere eigenen Server.
+        </p>
+        <p className="mb-2">
+          <strong>Zweck:</strong> Abwicklung des Kaufs kostenpflichtiger Tarife, Verwaltung von Abonnements
+          (Verlängerung, Kündigung, Tarifwechsel) über das Paddle-Kundenportal.
+        </p>
+        <p>
+          <strong>Rechtsgrundlage:</strong> Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Weitere Informationen
+          finden Sie in Paddles eigener{" "}
+          <a href="https://www.paddle.com/legal/privacy" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">
+            Datenschutzerklärung
+          </a>.
+        </p>
+
+        <h2 className="text-2xl font-semibold mb-4 mt-6">7. Twitch OAuth und API-Nutzung</h2>
         <p className="mb-2">
           Wir bieten die Anmeldung über den Dienst „Twitch“ an (Twitch Interactive, Inc., USA).
         </p>
