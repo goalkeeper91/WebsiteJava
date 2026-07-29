@@ -230,6 +230,60 @@ func (s *SubscriptionService) Cancel(ctx context.Context, userID string) error {
 	return nil
 }
 
+// AdminListCustomers lädt eine paginierte Kundenliste (alle Nicht-Bot-Nutzer,
+// inkl. Nutzern ohne bisherige Subscription-Zeile) für das Admin-Panel.
+func (s *SubscriptionService) AdminListCustomers(ctx context.Context, page, pageSize int) ([]*domain.AdminCustomerRow, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	return s.subscriptionRepo.ListAllWithUserAndTier(ctx, pageSize, offset)
+}
+
+// AdminSetTier überschreibt manuell den Tarif eines Nutzers (Support-Fall,
+// z.B. Paddle-Webhook kam nicht an) - unabhängig vom Zahlungs-Fluss.
+func (s *SubscriptionService) AdminSetTier(ctx context.Context, userID string, tierID domain.TierID) error {
+	if tierID != domain.TierFree && tierID != domain.TierPro && tierID != domain.TierPremium {
+		return fmt.Errorf("ungültiger Tarif: %s", tierID)
+	}
+
+	if err := s.subscriptionRepo.AdminOverrideTier(ctx, userID, tierID); err != nil {
+		return fmt.Errorf("fehler beim manuellen Tarif-Override: %w", err)
+	}
+
+	return nil
+}
+
+// AdminGetStats berechnet eine grobe MRR-Schätzung + Anzahl aktiver Kunden
+// aus allen existierenden Subscription-Zeilen. IsActive()/BillingCycle
+// werden wiederverwendet statt in SQL dupliziert (gleiches Prinzip wie bei
+// der laufenden Tier-Durchsetzung der Clip-Pipeline).
+func (s *SubscriptionService) AdminGetStats(ctx context.Context) (mrr float64, activeCustomers int, err error) {
+	subs, err := s.subscriptionRepo.GetAllActiveForMRR(ctx)
+	if err != nil {
+		return 0, 0, fmt.Errorf("fehler beim Laden der Subscriptions für MRR: %w", err)
+	}
+
+	for _, sub := range subs {
+		if !sub.IsActive() || sub.Tier == nil {
+			continue
+		}
+		activeCustomers++
+
+		if sub.BillingCycle != nil && *sub.BillingCycle == domain.BillingYearly {
+			mrr += sub.Tier.PriceYearly / 12
+		} else {
+			mrr += sub.Tier.PriceMonthly
+		}
+	}
+
+	return mrr, activeCustomers, nil
+}
+
 // createFreeTier creates a free tier subscription for a new user
 func (s *SubscriptionService) createFreeTier(ctx context.Context, userID string) (*domain.UserSubscription, error) {
 	// Create subscription

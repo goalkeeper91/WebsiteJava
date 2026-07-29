@@ -7,8 +7,9 @@ import TemplateManager from "../../components/admin/tabs/TemplateManager";
 import N8NEditorIntegration from "../../components/admin/tabs/N8NEditorIntegration";
 import BotManager from "../../components/admin/tabs/bots/BotManager";
 import VoteCreatorDashboard from '../../components/dashboard/VoteCreatorDashboard';
+import CustomerSubscriptionManager from "../../components/admin/tabs/customers/CustomerSubscriptionManager";
 
-type AdminTab = "n8n-editor" | "workflows" | "templates" | "votes" | "bots" | "stats";
+type AdminTab = "n8n-editor" | "workflows" | "templates" | "votes" | "bots" | "customers" | "stats";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("n8n-editor");
@@ -19,6 +20,7 @@ export default function AdminDashboard() {
     { id: "templates" as AdminTab, label: "Templates", icon: Package },
     { id: "votes" as AdminTab, label: "Votes", icon: Package },
     { id: "bots" as AdminTab, label: "Bot Management", icon: Users },
+    { id: "customers" as AdminTab, label: "Kunden/Abos", icon: Users },
     { id: "stats" as AdminTab, label: "Statistics", icon: BarChart },
   ];
 
@@ -81,6 +83,7 @@ export default function AdminDashboard() {
         {activeTab === "templates" && <TemplateManager />}
         {activeTab === "votes" && <VoteCreatorDashboard />}
         {activeTab === "bots" && <BotManager />}
+        {activeTab === "customers" && <CustomerSubscriptionManager />}
         {activeTab === "stats" && (
           <div className="bg-gray-800 rounded-xl p-8 text-center">
             <BarChart className="w-16 h-16 mx-auto mb-4 text-gray-600" />

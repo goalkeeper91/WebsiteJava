@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"os"
 	"strconv"
@@ -21,7 +22,27 @@ import (
 const (
 	pollInterval                  = 60 * time.Second
 	defaultMaxConcurrentIngestors = 20
+
+	// statusRedisKey/statusTTL: Snapshot des aktuellen Detector-Zustands für
+	// die Admin-Kundenübersicht (Phase 5) - TTL knapp über pollInterval, damit
+	// ein gestoppter/abgestürzter Detector nach kurzer Zeit als "keine Daten"
+	// statt dauerhaft veraltet "aktiv" erscheint.
+	statusRedisKey = "clip_detector:status"
+	statusTTL      = 90 * time.Second
 )
+
+// detectorStatus ist der JSON-Snapshot, den cmd/server für die Admin-
+// Kundenübersicht ausliest (siehe SubscriptionService.AdminGetStats).
+type detectorStatus struct {
+	ActiveChannels []detectorStatusChannel `json:"active_channels"`
+	MaxConcurrent  int                     `json:"max_concurrent"`
+	UpdatedAt      time.Time               `json:"updated_at"`
+}
+
+type detectorStatusChannel struct {
+	UserTwitchID string `json:"twitch_user_id"`
+	Login        string `json:"login"`
+}
 
 func main() {
 	cfg, err := config.Load()
@@ -128,6 +149,35 @@ func pollOnce(
 		ing.Stop()
 		delete(active, userTwitchID)
 		log.Printf("🔴 Stream nicht mehr live, Ingestion gestoppt: %s", userTwitchID)
+	}
+
+	publishDetectorStatus(ctx, redisService, active, maxConcurrentIngestors)
+}
+
+// publishDetectorStatus schreibt den aktuellen Ingestor-Zustand als
+// TTL-behafteten Redis-Key, damit cmd/server (separater Prozess) für die
+// Admin-Kundenübersicht sehen kann, wie ausgelastet der Detector gerade ist.
+func publishDetectorStatus(ctx context.Context, redisService *redis.RedisService, active map[string]*detector.StreamIngestor, maxConcurrentIngestors int) {
+	channels := make([]detectorStatusChannel, 0, len(active))
+	for _, ing := range active {
+		channels = append(channels, detectorStatusChannel{
+			UserTwitchID: ing.UserTwitchID(),
+			Login:        ing.ChannelLogin(),
+		})
+	}
+
+	payload, err := json.Marshal(detectorStatus{
+		ActiveChannels: channels,
+		MaxConcurrent:  maxConcurrentIngestors,
+		UpdatedAt:      time.Now(),
+	})
+	if err != nil {
+		log.Printf("⚠️ Fehler beim Serialisieren des Detector-Status: %v", err)
+		return
+	}
+
+	if err := redisService.GetClient().Set(ctx, statusRedisKey, payload, statusTTL).Err(); err != nil {
+		log.Printf("⚠️ Fehler beim Veröffentlichen des Detector-Status in Redis: %v", err)
 	}
 }
 

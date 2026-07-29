@@ -58,6 +58,17 @@ func (ing *StreamIngestor) Stop() {
 	ing.cancel()
 }
 
+// UserTwitchID und ChannelLogin geben Auskunft über den beobachteten Kanal -
+// genutzt vom Clip-Detector, um seinen aktuellen Status für die Admin-Kunden-
+// übersicht (Phase 5) als Redis-Snapshot zu veröffentlichen.
+func (ing *StreamIngestor) UserTwitchID() string {
+	return ing.userTwitchID
+}
+
+func (ing *StreamIngestor) ChannelLogin() string {
+	return ing.channelLogin
+}
+
 func (ing *StreamIngestor) run(ctx context.Context) {
 	log.Printf("🎬 Starte Ingestion für %s", ing.channelLogin)
 	defer log.Printf("🛑 Ingestion beendet für %s", ing.channelLogin)

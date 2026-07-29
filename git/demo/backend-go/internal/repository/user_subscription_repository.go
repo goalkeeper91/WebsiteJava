@@ -21,4 +21,21 @@ type UserSubscriptionRepository interface {
 	Cancel(ctx context.Context, userID string) error
 
 	Exists(ctx context.Context, userID string) (bool, error)
+
+	// ListAllWithUserAndTier lädt alle Nicht-Bot-Nutzer (LEFT JOIN gegen
+	// Subscription+Tier - ein Nutzer ohne bisherige Subscription-Zeile hat
+	// AdminCustomerRow.Subscription == nil) für die Admin-Kundenliste,
+	// paginiert. Gibt zusätzlich die Gesamtzahl für die Pagination zurück.
+	ListAllWithUserAndTier(ctx context.Context, limit, offset int) ([]*domain.AdminCustomerRow, int64, error)
+
+	// GetAllActiveForMRR lädt alle existierenden Subscription-Zeilen (inkl.
+	// Tier) ungepaginiert - für die MRR-Berechnung im Service, der IsActive()
+	// und den Tarifpreis pro Zeile in Go auswertet statt die Logik in SQL zu
+	// duplizieren.
+	GetAllActiveForMRR(ctx context.Context) ([]*domain.UserSubscription, error)
+
+	// AdminOverrideTier setzt den Tarif eines Nutzers manuell (Support-Fall),
+	// unabhängig vom Paddle-Webhook-Pfad - legt bei Bedarf eine neue Zeile an.
+	// expires_at wird dabei bewusst genullt (siehe Aufrufer).
+	AdminOverrideTier(ctx context.Context, userID string, tierID domain.TierID) error
 }
