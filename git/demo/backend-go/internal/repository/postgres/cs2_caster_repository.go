@@ -121,7 +121,7 @@ func (r *CS2CasterRepository) ListNotes(ctx context.Context, userTwitchID string
 	}
 	defer rows.Close()
 
-	var notes []*domain.CS2Note
+	notes := make([]*domain.CS2Note, 0)
 	for rows.Next() {
 		var n domain.CS2Note
 		if err := rows.Scan(&n.ID, &n.UserTwitchID, &n.SubjectType, &n.SubjectName, &n.Content, &n.CreatedAt, &n.UpdatedAt); err != nil {
