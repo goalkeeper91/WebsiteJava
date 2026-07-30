@@ -24,6 +24,7 @@ import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/[user]/Dashboard";
 import { LoginPopup } from './components/popup/LoginFailed';
 import SubathonOverlay from './pages/SubathonOverlay';
+import CS2MatchNotesPopup from './pages/CS2MatchNotesPopup';
 
 // Wraps every normal page in the shared header/footer chrome. Routes that
 // need to render bare (no chrome at all - e.g. the OBS overlay, which must
@@ -55,6 +56,10 @@ const App = () => {
       <Routes>
         {/* Bare routes - no header/footer chrome */}
         <Route path='/overlay/subathon' element={<SubathonOverlay />} />
+        {/* Opened via window.open() as a real popup window from the CS2
+            Caster Tools tab - deliberately bare so it reads as a compact
+            moderation-card tool window, not a page inside the site. */}
+        <Route path='/cs2/match-notes-popup' element={<CS2MatchNotesPopup />} />
 
         <Route element={<SiteLayout />}>
           {/* Public Routes */}

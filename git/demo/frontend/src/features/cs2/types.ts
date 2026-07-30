@@ -49,4 +49,6 @@ export interface CS2LiveStatus {
   score_ct: number;
   score_t: number;
   map_name?: string;
+  team_ct_players?: string[];
+  team_t_players?: string[];
 }

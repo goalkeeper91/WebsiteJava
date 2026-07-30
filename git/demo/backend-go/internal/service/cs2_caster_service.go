@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
@@ -94,6 +95,8 @@ type cs2MatchState struct {
 	scoreCT            int
 	scoreT             int
 	mapName            string
+	rosterCT           []string // player names currently on the CT side, sorted
+	rosterT            []string // player names currently on the T side, sorted
 }
 
 // --- GSI payload shapes -----------------------------------------------
@@ -132,7 +135,8 @@ type gsiPlayer struct {
 }
 
 type gsiAllPlayer struct {
-	Name  string           `json:"name"`
+	Name  string            `json:"name"`
+	Team  string            `json:"team"` // "CT" | "T"
 	State gsiAllPlayerState `json:"state"`
 }
 
@@ -181,6 +185,7 @@ func (s *CS2CasterService) IngestGSIPayload(ctx context.Context, token string, r
 	if payload.Player != nil {
 		state.observedPlayerName = payload.Player.Name
 	}
+	updateRoster(state, payload.AllPlayers)
 
 	if payload.Map.Round != state.mapRound {
 		state.mapRound = payload.Map.Round
@@ -204,6 +209,25 @@ func (s *CS2CasterService) IngestGSIPayload(ctx context.Context, token string, r
 	}
 
 	return nil
+}
+
+// updateRoster rebuilds the per-side player-name lists from the current GSI
+// tick's allplayers section - used by the dashboard's match-notes popup to
+// match saved player notes against whoever is actually in the current match.
+func updateRoster(state *cs2MatchState, allPlayers map[string]gsiAllPlayer) {
+	var ct, t []string
+	for _, p := range allPlayers {
+		switch strings.ToUpper(p.Team) {
+		case "CT":
+			ct = append(ct, p.Name)
+		case "T":
+			t = append(t, p.Name)
+		}
+	}
+	sort.Strings(ct)
+	sort.Strings(t)
+	state.rosterCT = ct
+	state.rosterT = t
 }
 
 func (s *CS2CasterService) handleMatchStart(ctx context.Context, userTwitchID string, settings *domain.CS2CasterSettings, state *cs2MatchState, m *gsiMap) {
@@ -350,13 +374,15 @@ func (s *CS2CasterService) handleMapEnd(ctx context.Context, userTwitchID string
 // CS2LiveStatus is a read-only snapshot for the dashboard's live-status
 // panel - nil/zero fields simply mean no GSI session is currently active.
 type CS2LiveStatus struct {
-	Active              bool   `json:"active"`
-	ObservedPlayerName string `json:"observed_player_name,omitempty"`
-	TeamCTName          string `json:"team_ct_name,omitempty"`
-	TeamTName           string `json:"team_t_name,omitempty"`
-	ScoreCT             int    `json:"score_ct"`
-	ScoreT              int    `json:"score_t"`
-	MapName             string `json:"map_name,omitempty"`
+	Active             bool     `json:"active"`
+	ObservedPlayerName string   `json:"observed_player_name,omitempty"`
+	TeamCTName         string   `json:"team_ct_name,omitempty"`
+	TeamTName          string   `json:"team_t_name,omitempty"`
+	ScoreCT            int      `json:"score_ct"`
+	ScoreT             int      `json:"score_t"`
+	MapName            string   `json:"map_name,omitempty"`
+	TeamCTPlayers      []string `json:"team_ct_players,omitempty"`
+	TeamTPlayers       []string `json:"team_t_players,omitempty"`
 }
 
 func (s *CS2CasterService) GetLiveStatus(userTwitchID string) *CS2LiveStatus {
@@ -374,6 +400,8 @@ func (s *CS2CasterService) GetLiveStatus(userTwitchID string) *CS2LiveStatus {
 		ScoreCT:            state.scoreCT,
 		ScoreT:             state.scoreT,
 		MapName:            state.mapName,
+		TeamCTPlayers:      state.rosterCT,
+		TeamTPlayers:       state.rosterT,
 	}
 }
 

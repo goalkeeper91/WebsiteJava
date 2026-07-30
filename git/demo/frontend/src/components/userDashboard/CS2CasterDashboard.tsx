@@ -107,6 +107,14 @@ export default function CS2CasterDashboard() {
     }
   }
 
+  function openMatchNotesPopup() {
+    window.open(
+      "/cs2/match-notes-popup",
+      "cs2_match_notes",
+      "width=460,height=820,resizable=yes,scrollbars=yes"
+    );
+  }
+
   async function handleCopy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -314,7 +322,19 @@ export default function CS2CasterDashboard() {
 
       {/* Notizen */}
       <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-6 space-y-4">
-        <h3 className="font-semibold text-white">Notizen</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold text-white">Notizen</h3>
+          <button
+            onClick={openMatchNotesPopup}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm transition-colors"
+          >
+            🗒 Match-Notizen als Popup öffnen
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 -mt-2">
+          Öffnet ein eigenständiges Fenster mit den Notizen zu den aktuell spielenden Teams/Spielern -
+          ideal zum Ablegen auf einem zweiten Monitor, jederzeit minimier- oder schließbar.
+        </p>
 
         {notesError && (
           <div className="bg-red-900/30 border border-red-500/50 text-red-300 rounded-lg p-3 text-sm">
