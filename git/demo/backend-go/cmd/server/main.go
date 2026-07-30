@@ -96,6 +96,9 @@ func main() {
 	// Team-Zugriff (Twitch-Mods bekommen delegierten Dashboard-Zugriff)
 	teamMemberRepo := postgres.NewTeamMemberRepository(db)
 
+	// CS2 Caster Tools (GSI-Automatisierung + strukturierte Notizen)
+	cs2CasterRepo := postgres.NewCS2CasterRepository(db)
+
 	// ============================================================
 	// REDIS
 	// ============================================================
@@ -282,6 +285,8 @@ func main() {
 			"moderator:read:chatters",
 			// Live-Dashboard: Werbepause auslösen
 			"channel:edit:commercial",
+			// CS2 Caster Tools: Kanalpunkte-Wette bei Map-Start automatisch erstellen/auflösen
+			"channel:manage:predictions",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://id.twitch.tv/oauth2/authorize",
@@ -305,6 +310,9 @@ func main() {
 	streamSessionRepo := postgres.NewStreamSessionRepository(db)
 	streamSessionService := service.NewStreamSessionService(streamSessionRepo, scheduledMessageAppToken, userRepo)
 	streamDashboardService := service.NewStreamDashboardService(baseAuthService, channelClient, scheduledMessageAppToken, activityRepo, streamSessionService)
+
+	// CS2 Caster Tools: braucht baseAuthService (Token-Refresh) + channelClient (Predictions/Titel)
+	cs2CasterService := service.NewCS2CasterService(cs2CasterRepo, baseAuthService, channelClient, redisService)
 
 	// Clip-Erzeugung (Phase C): braucht baseAuthService für Token-Refresh
 	// Phase D: Caption via selbstgehostetem Ollama, Discord-Post über den bestehenden Bot
@@ -372,6 +380,7 @@ func main() {
 	loyaltyHandler := handler.NewLoyaltyHandler(loyaltyService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, teamService)
 	giveawayHandler := handler.NewGiveawayHandler(giveawayService, sessionStore, cfg.Session.Name, cfg.Security.BotInternalSecret, redisService, teamService)
 	teamHandler := handler.NewTeamHandler(teamService, sessionStore, cfg.Session.Name)
+	cs2CasterHandler := handler.NewCS2CasterHandler(cs2CasterService, sessionStore, cfg.Session.Name, teamService)
 
 	// Discord
 	discordAuthHandler := handler.NewDiscordAuthHandler(discordAuthService, discordGuildService, sessionStore, cfg.Session.Name, redisService)
@@ -421,6 +430,7 @@ func main() {
 	giveawayHandler.RegisterRoutes(router)
 	teamHandler.RegisterRoutes(router)
 	streamDashboardHandler.RegisterRoutes(router)
+	cs2CasterHandler.RegisterRoutes(router)
 
 	// Discord routes
 	discordAuthHandler.RegisterRoutes(router)

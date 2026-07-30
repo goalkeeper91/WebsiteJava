@@ -253,3 +253,104 @@ func (c *ChannelClient) StartCommercial(ctx context.Context, broadcasterID, acce
 	d := commercialResp.Data[0]
 	return &CommercialResult{Length: d.Length, Message: d.Message, RetryAfter: d.RetryAfter}, nil
 }
+
+// CreatePrediction opens a Channel Points Prediction ("Kanalpunkte-Wette") -
+// requires channel:manage:predictions. Returns the prediction's own ID plus
+// one outcome ID per requested outcome (same order as outcomeTitles), which
+// the caller must remember to later resolve via EndPrediction.
+func (c *ChannelClient) CreatePrediction(ctx context.Context, broadcasterID, accessToken, title string, outcomeTitles []string, windowSeconds int) (predictionID string, outcomeIDs []string, err error) {
+	outcomes := make([]map[string]string, 0, len(outcomeTitles))
+	for _, t := range outcomeTitles {
+		outcomes = append(outcomes, map[string]string{"title": t})
+	}
+
+	payload, err := json.Marshal(map[string]interface{}{
+		"broadcaster_id":    broadcasterID,
+		"title":             title,
+		"outcomes":          outcomes,
+		"prediction_window": windowSeconds,
+	})
+	if err != nil {
+		return "", nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		"https://api.twitch.tv/helix/predictions", bytes.NewReader(payload))
+	if err != nil {
+		return "", nil, err
+	}
+	req.Header.Set("Client-Id", c.clientID)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", nil, fmt.Errorf("fehler beim Create-Prediction-Aufruf: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", nil, fmt.Errorf("twitch create prediction error: status=%d", resp.StatusCode)
+	}
+
+	var predResp struct {
+		Data []struct {
+			ID       string `json:"id"`
+			Outcomes []struct {
+				ID string `json:"id"`
+			} `json:"outcomes"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&predResp); err != nil {
+		return "", nil, fmt.Errorf("fehler beim Decodieren der Prediction-Antwort: %w", err)
+	}
+	if len(predResp.Data) == 0 {
+		return "", nil, fmt.Errorf("leere Antwort von Twitch")
+	}
+
+	d := predResp.Data[0]
+	ids := make([]string, 0, len(d.Outcomes))
+	for _, o := range d.Outcomes {
+		ids = append(ids, o.ID)
+	}
+	return d.ID, ids, nil
+}
+
+// EndPrediction locks, resolves or cancels an open Prediction. winningOutcomeID
+// is only sent (and only required by Twitch) when status is "RESOLVED".
+func (c *ChannelClient) EndPrediction(ctx context.Context, broadcasterID, accessToken, predictionID, status string, winningOutcomeID *string) error {
+	body := map[string]string{
+		"broadcaster_id": broadcasterID,
+		"id":             predictionID,
+		"status":         status,
+	}
+	if winningOutcomeID != nil {
+		body["winning_outcome_id"] = *winningOutcomeID
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch,
+		"https://api.twitch.tv/helix/predictions", bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Client-Id", c.clientID)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("fehler beim End-Prediction-Aufruf: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("twitch end prediction error: status=%d", resp.StatusCode)
+	}
+
+	return nil
+}

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="036-create-cs2-caster-tools" author="Marcel">
+        <!-- Ein Nutzer bekommt sein gsi_token beim Erstzugriff auf die
+             Einstellungen zugewiesen (lazy-create, wie Free-Tier-Subscriptions) -
+             es identifiziert eingehende GSI-POSTs eindeutig zu diesem Nutzer,
+             da CS2 selbst direkt an unsere oeffentliche URL postet. -->
+        <createTable tableName="cs2_caster_settings">
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="gsi_token" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="predictions_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="multikill_announce_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="map_end_announce_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title_update_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="cs2_caster_settings"
+                baseColumnNames="user_twitch_id"
+                constraintName="fk_cs2_caster_settings_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <!-- subject_type/subject_name matchen case-insensitiv gegen GSI-Team-/
+             Spielernamen, um live die passende Notiz hervorzuheben - kein FK auf
+             eine Team-/Spieler-Tabelle, da CS2 selbst keine solche stabile
+             Entitaet fuehrt (Namen kommen direkt aus dem GSI-Payload). -->
+        <createTable tableName="cs2_notes">
+            <column name="id" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_twitch_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="cs2_notes"
+                baseColumnNames="user_twitch_id"
+                constraintName="fk_cs2_notes_user"
+                referencedTableName="users"
+                referencedColumnNames="twitch_id"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_cs2_notes_lookup" tableName="cs2_notes">
+            <column name="user_twitch_id"/>
+            <column name="subject_type"/>
+            <column name="subject_name"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="cs2_notes"/>
+            <dropTable tableName="cs2_caster_settings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

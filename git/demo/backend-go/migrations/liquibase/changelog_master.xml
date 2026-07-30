@@ -40,5 +40,6 @@
     <include file="changesets/033-create-stream-sessions.xml" relativeToChangelogFile="true"/>
     <include file="changesets/034-rename-stripe-to-paddle-columns.xml" relativeToChangelogFile="true"/>
     <include file="changesets/035-update-tier-prices.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/036-create-cs2-caster-tools.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

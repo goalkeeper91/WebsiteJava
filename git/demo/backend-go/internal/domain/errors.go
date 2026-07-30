@@ -89,6 +89,12 @@ var (
 	ErrGiveawayKeywordInvalid = errors.New("codewort muss zwischen 2 und 50 zeichen lang sein")
 )
 
+// CS2 Caster Tools Errors
+var (
+	ErrCS2InvalidGSIToken = errors.New("unbekanntes gsi-token")
+	ErrCS2NoteNotFound    = errors.New("notiz nicht gefunden")
+)
+
 // General Errors
 var (
 	ErrUnauthorized   = errors.New("nicht autorisiert")

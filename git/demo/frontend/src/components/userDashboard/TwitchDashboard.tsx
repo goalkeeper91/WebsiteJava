@@ -7,10 +7,11 @@ import ScheduledMessagesDashboard from "./ScheduledMessagesDashboard";
 import AutomodDashboard from "./AutomodDashboard";
 import LoyaltyDashboard from "./LoyaltyDashboard";
 import GiveawaysDashboard from "./GiveawaysDashboard";
+import CS2CasterDashboard from "./CS2CasterDashboard";
 import TeamDashboard from "./TeamDashboard";
 import { useTeam } from "../../context/TeamContext";
 
-type View = "commands" | "builtin" | "votes" | "scheduled" | "automod" | "loyalty" | "giveaways" | "team";
+type View = "commands" | "builtin" | "votes" | "scheduled" | "automod" | "loyalty" | "giveaways" | "cs2" | "team";
 
 export default function TwitchDashboard() {
   const [currentView, setCurrentView] = useState<View>("commands");
@@ -91,6 +92,16 @@ export default function TwitchDashboard() {
         >
           Giveaways
         </button>
+        <button
+          onClick={() => setCurrentView("cs2")}
+          className={`px-4 py-2 rounded-lg transition-colors font-medium flex-shrink-0 whitespace-nowrap ${
+            currentView === "cs2"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+          CS2 Caster Tools
+        </button>
         {!actingAsChannel && (
           <button
             onClick={() => setCurrentView("team")}
@@ -113,6 +124,7 @@ export default function TwitchDashboard() {
         {currentView === "automod" && <AutomodDashboard />}
         {currentView === "loyalty" && <LoyaltyDashboard />}
         {currentView === "giveaways" && <GiveawaysDashboard />}
+        {currentView === "cs2" && <CS2CasterDashboard />}
         {currentView === "team" && !actingAsChannel && <TeamDashboard />}
       </div>
     </div>
