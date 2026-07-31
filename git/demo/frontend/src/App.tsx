@@ -22,6 +22,7 @@ import LoyaltyDashboard from './components/userDashboard/LoyaltyDashboard';
 import GiveawaysDashboard from './components/userDashboard/GiveawaysDashboard';
 import CS2CasterDashboard from './components/userDashboard/CS2CasterDashboard';
 import TeamDashboard from './components/userDashboard/TeamDashboard';
+import SettingsPage from './components/userDashboard/SettingsPage';
 import { useTeam } from './context/TeamContext';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
@@ -117,6 +118,7 @@ const App = () => {
             }
           >
             <Route index element={<Navigate to="twitch" replace />} />
+            <Route path='settings' element={<SettingsPage />} />
             <Route path='subscription' element={<SubscriptionDashboard />} />
             <Route path='subathon' element={<SubathonPage />} />
             <Route path='n8n' element={<N8NIntegrationSetup />} />
