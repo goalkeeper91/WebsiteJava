@@ -318,7 +318,7 @@ export default function AutomationSettingsPanel() {
             <span>
               Discord ist aktiv, aber Clips werden nur gepostet, wenn dein Server einen Benachrichtigungs-Kanal
               konfiguriert hat.{" "}
-              <a href="/dashboard?tab=discord" className="underline font-medium hover:text-yellow-100">
+              <a href="/dashboard/discord" className="underline font-medium hover:text-yellow-100">
                 Jetzt unter Dashboard → Discord einrichten
               </a>
               .

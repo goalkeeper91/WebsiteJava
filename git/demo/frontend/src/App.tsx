@@ -9,8 +9,20 @@ import DiscordCallback from './components/socials/DiscordCallback';
 import N8NIntegrationSetup from './components/N8NIntegrationSetup';
 import ClipAutomationPage from './components/ClipAutomationPage';
 import SubscriptionDashboard from './components/SubscriptionDashboard';
-import DashboardOverview from './components/userDashboard/DashboardOverview';
 import SubathonPage from './components/userDashboard/SubathonPage';
+import DiscordDashboard from './components/userDashboard/DiscordDashboard';
+import TwitchLayout from './components/userDashboard/TwitchLayout';
+import LiveDashboardHome from './components/userDashboard/LiveDashboardHome';
+import CommandsDashboard from './components/userDashboard/CommandsDashboard';
+import BuiltinCommandsInfo from './components/userDashboard/BuiltinCommandsInfo';
+import VoteSessionManager from './components/VoteSessionManager';
+import ScheduledMessagesDashboard from './components/userDashboard/ScheduledMessagesDashboard';
+import AutomodDashboard from './components/userDashboard/AutomodDashboard';
+import LoyaltyDashboard from './components/userDashboard/LoyaltyDashboard';
+import GiveawaysDashboard from './components/userDashboard/GiveawaysDashboard';
+import CS2CasterDashboard from './components/userDashboard/CS2CasterDashboard';
+import TeamDashboard from './components/userDashboard/TeamDashboard';
+import { useTeam } from './context/TeamContext';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Impressum from "./pages/legal/Impressum";
 import Datenschutz from "./pages/legal/Datenschutz";
@@ -49,6 +61,14 @@ const SiteLayout = () => (
     <Footer />
   </div>
 );
+
+// Team management only applies to your own channel, not one you're managing
+// on someone else's behalf - deep-linking here while acting as another
+// channel bounces back to the Twitch overview instead of rendering.
+const TeamRoute = () => {
+  const { actingAsChannel } = useTeam();
+  return actingAsChannel ? <Navigate to="/dashboard/twitch" replace /> : <TeamDashboard />;
+};
 
 const App = () => {
   return (
@@ -96,13 +116,28 @@ const App = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<DashboardOverview />} />
+            <Route index element={<Navigate to="twitch" replace />} />
             <Route path='subscription' element={<SubscriptionDashboard />} />
             <Route path='subathon' element={<SubathonPage />} />
             <Route path='n8n' element={<N8NIntegrationSetup />} />
             <Route path='clips' element={<ClipAutomationPage />} />
-            {/* Umfragen sind jetzt Unterbereich des Twitch-Chatbot-Tabs */}
-            <Route path='votes' element={<Navigate to="/dashboard?tab=twitch" replace />} />
+            <Route path='discord' element={<DiscordDashboard />} />
+
+            <Route path='twitch' element={<TwitchLayout />}>
+              <Route index element={<LiveDashboardHome />} />
+              <Route path='commands' element={<CommandsDashboard />} />
+              <Route path='builtin' element={<BuiltinCommandsInfo />} />
+              <Route path='votes' element={<VoteSessionManager />} />
+              <Route path='scheduled' element={<ScheduledMessagesDashboard />} />
+              <Route path='automod' element={<AutomodDashboard />} />
+              <Route path='loyalty' element={<LoyaltyDashboard />} />
+              <Route path='giveaways' element={<GiveawaysDashboard />} />
+              <Route path='cs2' element={<CS2CasterDashboard />} />
+              <Route path='team' element={<TeamRoute />} />
+            </Route>
+
+            {/* Alte Bookmarks/Links auf die vorherige Tab-/Query-basierte Struktur */}
+            <Route path='votes' element={<Navigate to="/dashboard/twitch/votes" replace />} />
           </Route>
 
           {/* Discord OAuth Callback */}
