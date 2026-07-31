@@ -94,14 +94,40 @@ export default function Pricing() {
   return (
     <div className="relative w-full min-h-screen bg-slate-950 text-white">
       <Seo
-        title="Preise"
-        description="Twitch-Bot und Clip-Automatisierung von Goalkeeper91: kostenloser Starter-Tarif sowie Pro und Advanced mit Discord-Integration, Analytics und automatischer Clip-Erstellung."
+        title="Preise & Leistungen"
+        description="Twitch-Bot-Abo (Starter, Pro, Advanced) von Goalkeeper91 sowie individuelle Softwareentwicklung nach persönlichem Angebot - keine Pauschalpreise, jedes Projekt einzeln kalkuliert."
         path="/pricing"
       />
-      <section className="text-center py-16 px-6">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">Preise</h1>
+
+      {/* Intro + Sprungnavigation - orientiert sofort, dass hier zwei getrennte Angebote stehen */}
+      <section className="text-center pt-16 pb-10 px-6">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">Preise & Leistungen</h1>
         <p className="text-gray-300 max-w-2xl mx-auto mb-8">
-          Wähle den Plan, der zu deinem Kanal passt - jederzeit änderbar.
+          Zwei getrennte Angebote: ein fertiges SaaS-Abo für den Twitch Bot mit festen Tarifen, und individuelle
+          Softwareentwicklung als Freelancer - dafür gibt es keine Pauschalpreise, jedes Projekt bekommt ein
+          eigenes Angebot.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <a
+            href="#twitch-bot"
+            className="px-5 py-2 rounded-full border border-gray-700 hover:border-goalyBlue hover:text-goalyBlue transition-colors text-sm font-semibold"
+          >
+            Zum Twitch-Bot-Abo
+          </a>
+          <a
+            href="#individuelle-entwicklung"
+            className="px-5 py-2 rounded-full border border-gray-700 hover:border-goalyBlue hover:text-goalyBlue transition-colors text-sm font-semibold"
+          >
+            Zur individuellen Softwareentwicklung
+          </a>
+        </div>
+      </section>
+
+      <section id="twitch-bot" className="text-center pb-16 px-6 scroll-mt-20">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Twitch Bot - Abo-Tarife</h2>
+        <p className="text-gray-400 max-w-2xl mx-auto mb-8">
+          Fertiges SaaS-Produkt mit festen monatlichen/jährlichen Tarifen - wähle den Plan, der zu deinem Kanal
+          passt, jederzeit änderbar.
         </p>
 
         <div className="inline-flex bg-gray-800 rounded-lg p-1 mb-12">
@@ -142,7 +168,6 @@ export default function Pricing() {
           <p className="text-red-400 text-sm mb-6 max-w-md mx-auto">{checkoutError}</p>
         )}
 
-        <h2 className="sr-only">Tarife im Vergleich</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto px-4">
           {pricingTiers.map((tier) => {
             const priceId = tier.priceId?.[cycle];
@@ -208,6 +233,56 @@ export default function Pricing() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Bewusst visuell abgesetzt (eigener Hintergrund) vom SaaS-Abo oben,
+          damit auf einen Blick klar ist: andere Leistung, andere Abrechnung -
+          kein Tarif-Raster, keine Festpreise, sondern Angebot nach Anfrage. */}
+      <section id="individuelle-entwicklung" className="bg-slate-900 py-16 px-6 scroll-mt-20">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">Individuelle Softwareentwicklung</h2>
+          <p className="text-gray-400 max-w-2xl mx-auto mb-2">
+            Neben dem Twitch-Bot-Abo entwickle ich als Freelancer maßgeschneiderte Software - Web, Mobile,
+            Automatisierung und Streaming-Tools.
+          </p>
+          <p className="text-goalyBlue font-semibold max-w-2xl mx-auto mb-10">
+            Dafür gibt es keine Pauschalpreise: jedes Projekt ist unterschiedlich und bekommt nach einem kurzen
+            Erstgespräch ein individuelles Angebot.
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-6 mb-10 text-left">
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-bold mb-2">Individuelle Softwarelösungen</h3>
+              <p className="text-sm text-gray-400">
+                Von Prototyp bis fertiges Produkt - maßgeschneiderte Anwendungen für Web, Mobile oder Desktop.
+              </p>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-bold mb-2">Automatisierung & Workflows</h3>
+              <p className="text-sm text-gray-400">
+                Bots, Integrationen und Tools, die Prozesse automatisieren - für Twitch, Discord oder interne
+                Abläufe.
+              </p>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-bold mb-2">Streaming & Community Tech</h3>
+              <p className="text-sm text-gray-400">
+                Tools & Overlays, die deine Community stärker binden und neue Features ins Stream-Erlebnis bringen.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/contact"
+            className="inline-block px-8 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition-colors"
+          >
+            Kostenloses Erstgespräch anfragen
+          </Link>
+          <p className="text-gray-500 text-sm mt-4">
+            Mehr Details zu den Leistungen findest du auf der{" "}
+            <Link to="/services" className="underline text-goalyBlue">Services-Seite</Link>.
+          </p>
         </div>
       </section>
     </div>
