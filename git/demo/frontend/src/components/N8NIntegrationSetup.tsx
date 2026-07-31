@@ -241,7 +241,7 @@ export default function N8NIntegrationSetup() {
             <div>
               <strong className="text-white">Workflow Template wählen</strong>
               <p>
-                Gehe zu <a href="/dashboard/workflows" className="text-blue-400 hover:underline">Workflow Templates</a> und wähle ein Template aus (z.B. Hero Voting)
+                Wähle im n8n-Editor ein passendes Template aus (z.B. Hero Voting)
               </p>
             </div>
           </li>

@@ -3,7 +3,7 @@ import {
   Home,
   CreditCard,
   Zap,
-  Package,
+  Radio,
   Settings,
   Shield,
   Film
@@ -30,9 +30,9 @@ export default function DashboardSidebar({ isOpen, onClose }: DashboardSidebarPr
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Overview" },
     { path: "/dashboard/subscription", icon: CreditCard, label: "Subscription", badge: isAdmin ? <AdminBadge /> : null },
+    { path: "/dashboard/subathon", icon: Radio, label: "Subathon Timer" },
     { path: "/dashboard/n8n", icon: Zap, label: "n8n Integration", premium: true },
     { path: "/dashboard/clips", icon: Film, label: "Clip-Automatisierung", premium: true },
-    { path: "/dashboard/workflows", icon: Package, label: "Workflows", premium: true },
   ];
 
   return (
