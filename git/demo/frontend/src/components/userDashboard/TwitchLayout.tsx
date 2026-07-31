@@ -7,7 +7,7 @@ import TwitchBotStatus from "./TwitchBotStatus";
 // Twitch tool page is active.
 export default function TwitchLayout() {
   return (
-    <div className="p-4 sm:p-6 space-y-4">
+    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 space-y-4">
       <TwitchBotStatus />
       <Outlet />
     </div>

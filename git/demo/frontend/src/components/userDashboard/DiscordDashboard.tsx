@@ -21,7 +21,7 @@ const DiscordDashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gray-900 text-white p-6 space-y-6">
       {/* Discord Connection Status */}
       <DiscordConnect />
 

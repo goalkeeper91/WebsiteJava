@@ -132,7 +132,7 @@ export default function SubathonPage() {
 
   if (loading) {
     return (
-      <div className="p-6 animate-pulse space-y-4">
+      <div className="min-h-screen bg-gray-900 text-white p-6 animate-pulse space-y-4">
         <div className="h-8 bg-gray-800 rounded w-1/3"></div>
         <div className="h-64 bg-gray-800 rounded"></div>
       </div>
@@ -141,7 +141,7 @@ export default function SubathonPage() {
 
   if (!state) {
     return (
-      <div className="p-6">
+      <div className="min-h-screen bg-gray-900 text-white p-6">
         <div className="bg-gray-800 rounded-xl p-6 text-red-400">
           {error || "Timer konnte nicht geladen werden."}
         </div>
@@ -150,7 +150,7 @@ export default function SubathonPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gray-900 text-white p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">

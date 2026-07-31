@@ -38,6 +38,7 @@ export default function SettingsPage() {
   const isCanceled = subscription?.status === "canceled";
 
   return (
+    <div className="min-h-screen bg-gray-900 text-white">
     <div className="max-w-2xl mx-auto space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-bold">Einstellungen</h1>
@@ -133,6 +134,7 @@ export default function SettingsPage() {
           </>
         )}
       </div>
+    </div>
     </div>
   );
 }
