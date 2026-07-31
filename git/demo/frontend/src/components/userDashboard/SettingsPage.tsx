@@ -26,7 +26,7 @@ export default function SettingsPage() {
     setPortalLoading(true);
     try {
       const url = await getPortalLink();
-      window.location.href = url;
+      window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
       setPortalError(err instanceof Error ? err.message : "Kundenportal konnte nicht geöffnet werden");
     } finally {
