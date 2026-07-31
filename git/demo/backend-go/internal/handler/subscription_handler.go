@@ -129,7 +129,12 @@ func (h *SubscriptionHandler) GetPortalLink(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	url, err := h.paddleClient.GetOrCreatePortalSession(r.Context(), *sub.PaddleCustomerID)
+	subscriptionID := ""
+	if sub.PaddleSubscriptionID != nil {
+		subscriptionID = *sub.PaddleSubscriptionID
+	}
+
+	url, err := h.paddleClient.GetOrCreatePortalSession(r.Context(), *sub.PaddleCustomerID, subscriptionID)
 	if err != nil {
 		log.Printf("Fehler beim Erstellen der Paddle-Portal-Session: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)

@@ -26,18 +26,34 @@ func NewClient(baseURL, apiKey string) *Client {
 	}
 }
 
+// portalSessionResponse mirrors Paddle's real response shape for
+// "Create a customer portal session" - there is no flat data.url field;
+// links are nested under data.urls.general.overview (portal homepage) and
+// data.urls.subscriptions[].cancel_subscription (deep link straight to a
+// specific subscription's cancellation page).
 type portalSessionResponse struct {
 	Data struct {
-		ID  string `json:"id"`
-		URL string `json:"url"`
+		ID   string `json:"id"`
+		URLs struct {
+			General struct {
+				Overview string `json:"overview"`
+			} `json:"general"`
+			Subscriptions []struct {
+				ID                 string `json:"id"`
+				CancelSubscription string `json:"cancel_subscription"`
+			} `json:"subscriptions"`
+		} `json:"urls"`
 	} `json:"data"`
 }
 
 // GetOrCreatePortalSession mints a fresh, single-use, short-lived Paddle
 // Customer Portal link for the given Paddle customer - per Paddle's docs
 // these URLs must never be cached, so this is always a live API call, never
-// backed by a stored value.
-func (c *Client) GetOrCreatePortalSession(ctx context.Context, customerID string) (string, error) {
+// backed by a stored value. If subscriptionID matches one of the returned
+// per-subscription deep links, that direct cancellation-page link is
+// returned instead of the generic portal overview - saves the customer a
+// click and avoids ambiguity if they ever have more than one subscription.
+func (c *Client) GetOrCreatePortalSession(ctx context.Context, customerID, subscriptionID string) (string, error) {
 	url := fmt.Sprintf("%s/customers/%s/portal-sessions", c.baseURL, customerID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
@@ -62,5 +78,11 @@ func (c *Client) GetOrCreatePortalSession(ctx context.Context, customerID string
 		return "", fmt.Errorf("fehler beim Parsen der Paddle-Antwort: %w", err)
 	}
 
-	return parsed.Data.URL, nil
+	for _, s := range parsed.Data.URLs.Subscriptions {
+		if s.ID == subscriptionID {
+			return s.CancelSubscription, nil
+		}
+	}
+
+	return parsed.Data.URLs.General.Overview, nil
 }
