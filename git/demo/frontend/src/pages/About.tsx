@@ -49,10 +49,10 @@ const About = () => {
               <h3 className="text-lg font-bold mb-2 text-white">💻 Entwicklung & Tools</h3>
               <ul className="list-disc list-inside">
                 <li>Frontend: React, Flutter</li>
-                <li>Backend: Spring Boot, Laravel</li>
+                <li>Backend: Spring Boot, Laravel, GO, Python</li>
                 <li>Datenbanken: MySQL, PostgreSQL</li>
                 <li>DevOps & Automatisierung: Docker, CI/CD Pipelines</li>
-                <li>Tools: VSCode, GitHub, Figma</li>
+                <li>Tools: VSCode, GitHub, Figma, N8N</li>
               </ul>
             </div>
           </div>

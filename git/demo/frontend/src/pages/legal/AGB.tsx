@@ -36,8 +36,10 @@ const AGB: React.FC = () => {
             als Verkäufer auftritt, die Umsatzsteuer abführt und Rechnungen ausstellt. Kostenpflichtige Tarife
             verlängern sich automatisch um den gewählten Abrechnungszeitraum (monatlich oder jährlich), sofern sie
             nicht vorher gekündigt werden. Eine Kündigung ist jederzeit zum Ende des laufenden Abrechnungszeitraums
-            über das Paddle-Kundenportal (verlinkt im Dashboard) oder durch Herabstufen auf den kostenlosen Tarif
-            möglich. Informationen zu Ihrem Widerrufsrecht bei Vertragsschluss finden Sie in unserer{" "}
+            über unsere{" "}
+            <a href="/vertrag-kuendigen" className="underline text-goalyBlue">Kündigungsseite</a> (Link "Kündigen"
+            in der Fußzeile jeder Seite) oder das Paddle-Kundenportal möglich, alternativ durch Herabstufen auf
+            den kostenlosen Tarif. Informationen zu Ihrem Widerrufsrecht bei Vertragsschluss finden Sie in unserer{" "}
             <a href="/legal/widerruf" className="underline text-goalyBlue">Widerrufsbelehrung</a>.
           </p>
 

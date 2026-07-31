@@ -17,6 +17,7 @@ export default function Pricing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cycle, setCycle] = useState<Cycle>("month");
   const [checkoutError, setCheckoutError] = useState("");
+  const [withdrawalConsent, setWithdrawalConsent] = useState(false);
   const autoCheckoutTried = useRef(false);
 
   const paidPriceIds = pricingTiers
@@ -24,9 +25,20 @@ export default function Pricing() {
     .map((t) => t.priceId![cycle]);
   const { totals, loading: pricesLoading } = usePricePreview(paidPriceIds);
 
+  // Paddle's own checkout does not surface the "loss of withdrawal right on
+  // immediate performance" consent required by § 356 Abs. 5 BGB for digital
+  // content/services (confirmed - no such option exists in the Paddle
+  // dashboard), so we collect this ourselves as an explicit, required
+  // checkbox before ever opening Paddle Checkout. Also protects the
+  // post-login autocheckout resume below, since consent state doesn't (and
+  // shouldn't) survive the redirect - the user must tick it again themselves.
   async function openCheckout(tier: Tier, forCycle: Cycle) {
     if (!tier.priceId) return;
     setCheckoutError("");
+    if (!withdrawalConsent) {
+      setCheckoutError("Bitte bestätige zuerst die Checkbox zum Widerrufsrecht unten, um fortzufahren.");
+      return;
+    }
     try {
       const paddle = await getPaddle();
       if (!paddle) throw new Error("Paddle.js konnte nicht initialisiert werden");
@@ -105,6 +117,21 @@ export default function Pricing() {
           </button>
         </div>
 
+        <label className="flex items-start gap-2 max-w-md mx-auto mb-6 text-left text-sm text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withdrawalConsent}
+            onChange={(e) => setWithdrawalConsent(e.target.checked)}
+            className="mt-1 w-4 h-4 flex-shrink-0"
+          />
+          <span>
+            Ich bin damit einverstanden, dass mit der Ausführung des Vertrags bereits vor Ablauf der
+            Widerrufsfrist begonnen wird. Mir ist bekannt, dass ich dadurch bei vollständiger
+            Vertragserfüllung mein Widerrufsrecht verliere. Details in unserer{" "}
+            <Link to="/legal/widerruf" className="underline text-goalyBlue">Widerrufsbelehrung</Link>.
+          </span>
+        </label>
+
         {checkoutError && (
           <p className="text-red-400 text-sm mb-6 max-w-md mx-auto">{checkoutError}</p>
         )}
@@ -136,6 +163,9 @@ export default function Pricing() {
                     </span>
                   )}
                 </div>
+                {tier.priceId && (
+                  <p className="text-xs text-gray-500 -mt-5 mb-6">inkl. MwSt.</p>
+                )}
 
                 <ul className="space-y-2 text-sm mb-6 flex-1">
                   {tier.features.map((feature) => (
@@ -151,7 +181,7 @@ export default function Pricing() {
                     onClick={() => handleSubscribe(tier)}
                     className="w-full py-3 bg-green-600 hover:bg-green-500 rounded-lg transition-colors font-semibold"
                   >
-                    Subscribe
+                    Jetzt abonnieren
                   </button>
                 ) : isAuthenticated ? (
                   <Link

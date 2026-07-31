@@ -45,8 +45,8 @@ const Widerruf: React.FC = () => {
           nachdem Sie ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der Ausführung des
           Vertrags beginnen, und Sie Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre Zustimmung mit
           Beginn der Ausführung des Vertrags Ihr Widerrufsrecht verlieren. Da unsere kostenpflichtigen Tarife den
-          sofortigen Zugriff auf digitale Funktionen gewähren, wird diese Zustimmung im Checkout-Prozess von
-          Paddle eingeholt.
+          sofortigen Zugriff auf digitale Funktionen gewähren, holen wir diese Zustimmung direkt auf unserer
+          Preisseite über eine gesondert zu bestätigende Checkbox ein, bevor der Bezahlvorgang gestartet wird.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6 mb-2">Muster-Widerrufsformular</h2>
@@ -64,8 +64,10 @@ const Widerruf: React.FC = () => {
         <h2 className="text-2xl font-semibold mt-6 mb-2">Kündigung laufender Abonnements</h2>
         <p>
           Unabhängig vom gesetzlichen Widerrufsrecht können Sie ein laufendes kostenpflichtiges Abonnement
-          jederzeit zum Ende des aktuellen Abrechnungszeitraums über das Paddle-Kundenportal (verlinkt im
-          Dashboard) kündigen oder auf den kostenlosen Tarif herabstufen - siehe unsere{" "}
+          jederzeit zum Ende des aktuellen Abrechnungszeitraums über unsere{" "}
+          <a href="/vertrag-kuendigen" className="underline text-goalyBlue">Kündigungsseite</a> (auch über den
+          Link "Kündigen" in der Fußzeile jeder Seite erreichbar) oder das Paddle-Kundenportal kündigen bzw. auf
+          den kostenlosen Tarif herabstufen - siehe unsere{" "}
           <a href="/legal/agb" className="underline text-goalyBlue">Nutzungsbedingungen</a>.
         </p>
       </div>

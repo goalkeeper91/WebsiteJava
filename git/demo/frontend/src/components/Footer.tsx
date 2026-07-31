@@ -41,6 +41,7 @@ const Footer: React.FC = () => {
                 <Link to="/legal/agb" className="hover:text-white transition">AGB</Link>
                 <Link to="/legal/widerruf" className="hover:text-white transition">Widerruf</Link>
                 <Link to="/legal/cookies" className="hover:text-white transition">Cookies</Link>
+                <Link to="/vertrag-kuendigen" className="hover:text-white transition">Kündigen</Link>
               </div>
             </div>
           </div>

@@ -59,7 +59,6 @@ const Datenschutz: React.FC = () => {
           <strong>Goalkeeper91 c/o NextlevelNation</strong><br />
           Inhaber: Christian Steinbach<br />
           Stettener Weg 2, 89584 Ehingen (Donau)<br />
-          Telefon: [Telefonnummer]<br />
           E-Mail: info@goalkeeper91.de
         </p>
 
@@ -160,8 +159,41 @@ const Datenschutz: React.FC = () => {
           <strong>Rechtsgrundlage:</strong> Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) und Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO). Zur Löschung Ihrer Daten senden Sie bitte eine E-Mail an info@goalkeeper91.de.
         </p>
 
+        <h2 className="text-2xl font-semibold mb-4 mt-6">8. Discord OAuth und Bot-Integration</h2>
+        <p className="mb-2">
+          Optional können Sie Ihren Discord-Server mit unserem Bot verbinden (Discord Inc., 444 De Haro Street,
+          San Francisco, USA).
+        </p>
+        <p className="mb-2">
+          <strong>Datenkategorien & Speicherung:</strong> Bei der Verbindung Ihres Discord-Accounts speichern wir
+          dauerhaft in unserer Datenbank Ihre Discord-User-ID, Ihren Discord-Nutzernamen sowie einen verschlüsselten
+          Zugriffs- und Refresh-Token. Fügen Sie den Bot einem Discord-Server hinzu, speichern wir zusätzlich die
+          Server-ID (Guild-ID), den Servernamen, das Server-Icon, die Mitgliederzahl sowie die Discord-ID des
+          Server-Inhabers zur Zuordnung der Berechtigung, den Server im Dashboard zu verwalten.
+        </p>
+        <p className="mb-2">
+          <strong>Zweck:</strong> Bereitstellung der Bot-Funktionen auf Ihrem Discord-Server (z. B. Benachrichtigungen,
+          Join-to-Create-Sprachkanäle) sowie Verwaltung dieser Einstellungen über Ihr Dashboard.
+        </p>
+        <p>
+          <strong>Rechtsgrundlage:</strong> Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) und Vertragserfüllung (Art. 6
+          Abs. 1 lit. b DSGVO). Zur Löschung Ihrer Daten senden Sie bitte eine E-Mail an info@goalkeeper91.de.
+        </p>
+
+        <h2 className="text-2xl font-semibold mb-4 mt-6">9. Google Tag Manager & Cookiebot</h2>
+        <p className="mb-2">
+          Wir nutzen den Google Tag Manager (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland),
+          um in die Website eingebundene Dienste zentral zu verwalten. Der Tag Manager selbst setzt keine Cookies
+          und erhebt keine personenbezogenen Daten, sondern sorgt lediglich für das Auslösen anderer Tags.
+        </p>
+        <p>
+          Die Einwilligungsverwaltung für nicht technisch notwendige Cookies erfolgt über Cookiebot (Cybot A/S,
+          Havnegade 39, 1058 Kopenhagen, Dänemark). Details zu den eingesetzten Cookie-Kategorien finden Sie in
+          unserer <a href="/legal/cookies" className="underline text-goalyBlue">Cookie-Richtlinie</a>.
+        </p>
+
       <p className="text-sm mt-10 text-gray-400">
-        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a> & Ergänzungen für Twitch API.
+        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a> & Ergänzungen für Twitch/Discord API.
       </p>
      </div>
     </section>

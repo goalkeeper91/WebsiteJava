@@ -34,6 +34,7 @@ import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
 import Pricing from "./pages/Pricing";
 import Welcome from "./pages/Welcome";
+import CancelContract from "./pages/CancelContract";
 import Dashboard from "./pages/[user]/Dashboard";
 import { LoginPopup } from './components/popup/LoginFailed';
 import SubathonOverlay from './pages/SubathonOverlay';
@@ -90,6 +91,9 @@ const App = () => {
           <Route path='/about' element={<About />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/welcome" element={<Welcome />} />
+          {/* Kündigungsbutton nach § 312k BGB - permanently reachable from the
+              footer on every page, not tucked away behind a dashboard login. */}
+          <Route path="/vertrag-kuendigen" element={<CancelContract />} />
 
           {/* Legal */}
           <Route path="/legal/impressum" element={<Impressum />} />
