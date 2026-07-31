@@ -1,5 +1,6 @@
 import React from "react";
 import { FaEnvelope } from "react-icons/fa";
+import Seo from "../../components/Seo";
 
 const Impressum: React.FC = () => {
   const emailUser = "info";
@@ -11,6 +12,11 @@ const Impressum: React.FC = () => {
 
   return (
     <section className="relative w-full min-h-screen bg-black text-white py-16 px-6 bg-slate-950">
+      <Seo
+        title="Impressum"
+        description="Gesetzliche Anbieterkennzeichnung nach § 5 TMG für Goalkeeper91."
+        path="/legal/impressum"
+      />
 
       <div className="relative z-10 max-w-4xl mx-auto space-y-10">
         {/* Titel */}

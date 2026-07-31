@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import Seo from "../../components/Seo";
 
 const COOKIEBOT_ID = "1273f5fe-7c66-466a-b0bc-7a15c4b60657";
 
@@ -27,6 +28,11 @@ const Cookies: React.FC = () => {
 
   return (
     <section className="w-full min-h-screen bg-slate-950 flex items-center justify-center py-10 px-4">
+      <Seo
+        title="Cookie-Richtlinie"
+        description="Welche Cookies Goalkeeper91 einsetzt und wie du deine Einwilligung über Cookiebot verwaltest."
+        path="/legal/cookies"
+      />
       <div className="max-w-4xl bg-slate-900 text-white p-8 rounded-lg shadow-lg overflow-auto">
         <h1 className="text-3xl font-bold mb-6">Cookie-Richtlinie</h1>
 

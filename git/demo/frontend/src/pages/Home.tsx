@@ -1,9 +1,33 @@
+import Seo from '../components/Seo';
 import Hero from '../components/hero/Hero';
 import CommunitySection from '../components/community/CommunitySection';
 
 const Home = () => {
     return (
         <>
+            <Seo
+                title="Twitch Bot, Clip-Automatisierung & individuelle Softwareentwicklung"
+                description="Goalkeeper91: Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung als SaaS - plus individuelle Softwareentwicklung als Full-Stack Freelancer."
+                path="/"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "SoftwareApplication",
+                    name: "Goalkeeper91 Twitch Bot",
+                    applicationCategory: "BusinessApplication",
+                    operatingSystem: "Web",
+                    description:
+                        "Twitch-Chatbot als SaaS mit Automod, Loyalty-Punkten, Giveaways, Chat-Commands und automatischer Clip-Erstellung.",
+                    url: "https://goalkeeper91.de/pricing",
+                    featureList: [
+                        "Automod",
+                        "Loyalty-Punkte",
+                        "Giveaways",
+                        "Chat-Commands",
+                        "Discord-Integration",
+                        "Clip-Automatisierung",
+                    ],
+                }}
+            />
             <Hero />
             <CommunitySection />
         </>

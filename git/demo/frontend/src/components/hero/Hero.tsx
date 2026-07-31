@@ -22,8 +22,10 @@ const Hero = () => {
                     transition={{ duration: 0.8, delay: 0.3 }}
                 >
                     Ich bin Marcel – Full-Stack Entwickler mit Leidenschaft für Gaming & Streaming. Ob{' '}
-                    <span className="text-indigo-400 font-semibold">maßgeschneiderte Softwarelösungen</span> oder{' '}
-                    <span className="text-indigo-400 font-semibold">Community-Content</span> – hier findest du beides.
+                    <span className="text-indigo-400 font-semibold">maßgeschneiderte Softwarelösungen</span>, mein
+                    eigener <span className="text-indigo-400 font-semibold">Twitch Bot</span> als SaaS (Automod,
+                    Loyalty-Punkte, Clip-Automatisierung) oder{' '}
+                    <span className="text-indigo-400 font-semibold">Community-Content</span> – hier findest du alles.
                 </motion.p>
 
                 <motion.div
@@ -37,6 +39,12 @@ const Hero = () => {
                         className="w-full sm:w-auto px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
                     >
                         Entwickler anheuern
+                    </Link>
+                    <Link
+                        to="/pricing"
+                        className="w-full sm:w-auto px-6 py-3 border-2 border-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
+                    >
+                        Twitch Bot entdecken
                     </Link>
                     <a
                         href="https://twitch.tv/goalkeeper91"

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /discord/callback
+Disallow: /welcome
+Disallow: /overlay/
+Disallow: /cs2/match-notes-popup
+
+Sitemap: https://goalkeeper91.de/sitemap.xml

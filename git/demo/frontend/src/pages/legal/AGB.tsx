@@ -1,8 +1,14 @@
 import React from "react";
+import Seo from "../../components/Seo";
 
 const AGB: React.FC = () => {
   return (
     <section className="w-full min-h-screen bg-slate-950 flex items-center justify-center py-10 px-4">
+        <Seo
+          title="Nutzungsbedingungen"
+          description="Nutzungsbedingungen (AGB) von Goalkeeper91 für den Twitch-Chatbot, Clip-Automatisierung und kostenpflichtige Tarife."
+          path="/legal/agb"
+        />
         <div className="max-w-4xl bg-slate-900 text-white p-8 rounded-lg shadow-lg overflow-auto">
           <h1 className="text-3xl font-bold mb-6">Nutzungsbedingungen (Terms of Service)</h1>
 

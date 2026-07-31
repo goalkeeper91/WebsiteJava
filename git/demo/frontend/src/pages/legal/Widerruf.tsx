@@ -1,8 +1,14 @@
 import React from "react";
+import Seo from "../../components/Seo";
 
 const Widerruf: React.FC = () => {
   return (
     <section className="w-full min-h-screen bg-slate-950 flex items-center justify-center py-10 px-4">
+      <Seo
+        title="Widerrufsbelehrung"
+        description="Widerrufsbelehrung für kostenpflichtige Tarife bei Goalkeeper91: Fristen, Muster-Widerrufsformular und Hinweise zum vorzeitigen Erlöschen des Widerrufsrechts."
+        path="/legal/widerruf"
+      />
       <div className="max-w-4xl bg-slate-900 text-white p-8 rounded-lg shadow-lg overflow-auto">
         <h1 className="text-3xl font-bold mb-6">Widerrufsbelehrung</h1>
 

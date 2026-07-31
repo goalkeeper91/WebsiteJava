@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { pricingTiers, type Tier } from "../config/pricingTiers";
 import { usePricePreview } from "../hooks/usePricePreview";
 import { getPaddle } from "../lib/paddleSdk";
+import Seo from "../components/Seo";
 
 type Cycle = "month" | "year";
 
@@ -92,6 +93,11 @@ export default function Pricing() {
 
   return (
     <div className="relative w-full min-h-screen bg-slate-950 text-white">
+      <Seo
+        title="Preise"
+        description="Twitch-Bot und Clip-Automatisierung von Goalkeeper91: kostenloser Starter-Tarif sowie Pro und Advanced mit Discord-Integration, Analytics und automatischer Clip-Erstellung."
+        path="/pricing"
+      />
       <section className="text-center py-16 px-6">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">Preise</h1>
         <p className="text-gray-300 max-w-2xl mx-auto mb-8">
@@ -136,6 +142,7 @@ export default function Pricing() {
           <p className="text-red-400 text-sm mb-6 max-w-md mx-auto">{checkoutError}</p>
         )}
 
+        <h2 className="sr-only">Tarife im Vergleich</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto px-4">
           {pricingTiers.map((tier) => {
             const priceId = tier.priceId?.[cycle];

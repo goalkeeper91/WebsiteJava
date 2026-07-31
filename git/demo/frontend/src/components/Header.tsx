@@ -18,12 +18,14 @@ const Header: React.FC = () => {
                     <Link to="/" className="flex items-center space-x-4">
                         <img
                             src="/images/goalkeeper_logo.png"
-                            alt="Profile"
+                            alt="Goalkeeper91 Logo"
+                            width={48}
+                            height={48}
                             className="w-12 h-12 rounded-full"
                         />
-                        <h1 className="hidden md:block text-xl md:text-l font-semibold text-goalyBlue">
+                        <span className="hidden md:block text-xl md:text-l font-semibold text-goalyBlue">
                             Goalkeeper91
-                        </h1>
+                        </span>
                     </Link>
 
                     {/* Desktop Navigation */}

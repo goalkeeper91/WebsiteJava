@@ -2,9 +2,48 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-      <link rel="icon" type="image/x-icon" href="/favicon32x32.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      No static <meta name="description">/OG/Twitter tags here on purpose:
+      react-helmet-async (see src/components/Seo.tsx) does NOT remove
+      pre-existing non-Helmet tags from the DOM, it only appends its own -
+      so a static description here would sit alongside each page's Helmet
+      one as a duplicate tag, and both browsers and search engines resolve
+      duplicates by taking the FIRST occurrence, silently overriding every
+      route's actual per-page description with whatever static default
+      lived here. Every real route (including "/") renders <Seo> as the
+      single source of truth for title/description/OG/Twitter/canonical.
+    -->
     <title>Goalkeeper91</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfessionalService",
+        "name": "Goalkeeper91",
+        "alternateName": "Marcel Turlach - Softwareentwicklung",
+        "url": "https://goalkeeper91.de",
+        "logo": "https://goalkeeper91.de/images/goalkeeper_logo.png",
+        "image": "https://goalkeeper91.de/images/goalkeeper_logo.png",
+        "description": "Individuelle Softwareentwicklung (Web, Mobile, Automatisierung) sowie ein SaaS Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung.",
+        "areaServed": "DE",
+        "founder": {
+          "@type": "Person",
+          "name": "Marcel Turlach"
+        },
+        "sameAs": [
+          "https://www.twitch.tv/goalkeeper91",
+          "https://www.youtube.com/@goalkeeper91UNCUT",
+          "https://www.tiktok.com/@g04lkeeper91",
+          "https://www.instagram.com/goalkeeper995",
+          "https://discord.gg/XE8sW56",
+          "https://github.com/goalkeeper91"
+        ]
+      }
+    </script>
     <script>
       // The OBS overlay is a Browser Source, not a real visitor - nobody
       // there to give cookie consent, and a consent banner rendered over an

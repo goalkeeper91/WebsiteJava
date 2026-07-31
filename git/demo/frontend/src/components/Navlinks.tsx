@@ -25,9 +25,10 @@ export const NavLinks: React.FC<NavLinksProps> = ({
 
       {/* Hauptlinks */}
       <Link to="/" className={linkClass}>Home</Link>
-      <Link to="/contact" className={linkClass}>Kontakt</Link>
       <Link to="/services" className={linkClass}>Lösungen</Link>
+      <Link to="/pricing" className={linkClass}>Preise</Link>
       <Link to="/about" className={linkClass}>About</Link>
+      <Link to="/contact" className={linkClass}>Kontakt</Link>
 
       {/* Admin Link */}
       {isAdmin && (

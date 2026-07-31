@@ -1,8 +1,14 @@
+import Seo from '../components/Seo';
 import FollowMe from '../components/socials/FollowMe';
 
 const About = () => {
   return (
     <section className="relative w-full min-h-screen bg-slate-950 text-white py-16">
+      <Seo
+        title="Über mich"
+        description="Marcel alias Goalkeeper91: Full-Stack Softwareentwickler und Twitch-Streamer. Tech-Stack, Hintergrund und wie Softwareentwicklung und Live-Entertainment bei mir zusammenkommen."
+        path="/about"
+      />
       <div className="relative z-10 max-w-5xl mx-auto space-y-16">
 
         {/* Hero */}
@@ -18,7 +24,10 @@ const About = () => {
         <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
           <img
             src="/images/goalkeeper_logo.png"
-            alt="Profil"
+            alt="Goalkeeper91 Logo"
+            width={160}
+            height={160}
+            loading="lazy"
             className="w-40 h-40 rounded-full object-cover border-4 border-goalyBlue"
           />
           <div>
@@ -60,6 +69,9 @@ const About = () => {
             <img
               src="/images/streaming setup_and_me.jpg"
               alt="Goalkeeper91 und sein Streaming-Setup"
+              loading="lazy"
+              width={1000}
+              height={1333}
               className="rounded-2xl shadow-xl w-full max-w-md object-cover"
             />
           </div>

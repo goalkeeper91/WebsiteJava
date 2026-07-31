@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getSubscription, getPortalLink } from "../features/subscription/api";
 import type { UserSubscription } from "../features/subscription/types";
+import Seo from "../components/Seo";
 
 // Public "Kündigungsbutton" page required by § 312k BGB for online contracts
 // with a recurring payment obligation - must be permanently, easily
@@ -47,6 +48,11 @@ export default function CancelContract() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex items-start justify-center py-16 px-4">
+      <Seo
+        title="Vertrag kündigen"
+        description="Kündige dein Goalkeeper91-Abonnement jederzeit zum Ende des Abrechnungszeitraums - direkt hier oder über das Paddle-Kundenportal."
+        path="/vertrag-kuendigen"
+      />
       <div className="max-w-2xl w-full bg-slate-900 rounded-xl shadow-lg p-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Vertrag kündigen</h1>

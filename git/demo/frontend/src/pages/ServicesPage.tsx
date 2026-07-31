@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link } from 'react-router-dom';
 import { FaCode, FaCogs, FaStream, FaGithub } from "react-icons/fa";
+import Seo from "../components/Seo";
 
 type Service = {
   title: string;
@@ -20,14 +21,14 @@ const ServicesPage = () => {
       description:
         "Von Prototyp bis fertiges Produkt – maßgeschneiderte Anwendungen für deine Anforderungen. Egal ob Web, Mobile oder Desktop.",
       icon: <FaCode size={40} className="text-indigo-400 mb-4" />,
-      image: { src: "/images/faceit_reader.png", alt: "Twitch Bot Overview" },
+      image: { src: "/images/faceit_reader.png", alt: "Individuelle Softwarelösung: Faceit-Reader-Tool" },
     },
     {
-      title: "Automatisierung & Workflows",
+      title: "Twitch Bot & Automatisierung",
       description:
-        "Ich entwickle Bots, Integrationen und Tools, die Prozesse automatisieren – für Twitch, Discord oder deine internen Abläufe.",
+        "Ich entwickle Twitch-Bots, Discord-Integrationen und SaaS-Automatisierungen (Automod, Clip-Erstellung, Chat-Commands), die Prozesse automatisieren – für Twitch, Discord oder deine internen Abläufe.",
       icon: <FaCogs size={40} className="text-green-400 mb-4" />,
-      image: { src: "/images/Twitch Bot Overview.png", alt: "Twitch Bot Overview" },
+      image: { src: "/images/Twitch Bot Overview.png", alt: "Übersicht des Twitch-Bot-Dashboards" },
     },
     {
       title: "Streaming & Community Tech",
@@ -35,14 +36,19 @@ const ServicesPage = () => {
         "Als Streamer entwickle ich Tools & Overlays, die deine Community stärker binden und neue Features ins Stream-Erlebnis bringen.",
       icon: <FaStream size={40} className="text-pink-400 mb-4" />,
       images: [
-        { src: "/images/discord-bot.png", alt: "Overlay Screenshot" },
-        { src: "/images/twitch-bot.png", alt: "Bot Screenshot" },
+        { src: "/images/discord-bot.png", alt: "Discord-Bot Overlay Screenshot" },
+        { src: "/images/twitch-bot.png", alt: "Twitch-Bot Screenshot" },
       ],
     },
   ];
 
   return (
     <div className="relative w-full min-h-screen bg-slate-950 text-white">
+      <Seo
+        title="Services: Softwareentwicklung & Twitch Bot"
+        description="Individuelle Softwarelösungen, Twitch-Bot-Automatisierung (Automod, Clip-Erstellung, Chat-Commands) und Streaming-Tools - Freelance-Entwicklung von Marcel alias Goalkeeper91."
+        path="/services"
+      />
       {/* Hero Section */}
       <section className="relative text-center py-20 px-6 bg-slate-900">
         <motion.h1
@@ -65,7 +71,9 @@ const ServicesPage = () => {
       </section>
 
       {/* Services Grid */}
-      <section className="py-16 px-6 max-w-6xl mx-auto grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="py-16 px-6 max-w-6xl mx-auto">
+        <h2 className="sr-only">Meine Leistungen im Überblick</h2>
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service: Service) => (
           <motion.div
             key={service.title}
@@ -88,6 +96,7 @@ const ServicesPage = () => {
               <img
                 src={service.image.src}
                 alt={service.image.alt}
+                loading="lazy"
                 className="w-full max-w-xl mx-auto rounded-lg border border-gray-700 cursor-pointer hover:scale-105 transition-transform mb-3"
                 onClick={() => setLightboxImage(service.image!.src)}
               />
@@ -100,12 +109,14 @@ const ServicesPage = () => {
                   key={img.src}
                   src={img.src}
                   alt={img.alt}
+                  loading="lazy"
                   className="w-full max-w-xl mx-auto rounded-lg border border-gray-700 cursor-pointer hover:scale-105 transition-transform mb-3"
                   onClick={() => setLightboxImage(img.src)}
                 />
               ))}
           </motion.div>
         ))}
+        </div>
       </section>
 
       {/* Lightbox */}
