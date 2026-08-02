@@ -11,4 +11,6 @@ type SubscriptionTierRepository interface {
 	GetByID(ctx context.Context, tierID domain.TierID) (*domain.SubscriptionTier, error)
 
 	GetActive(ctx context.Context) ([]*domain.SubscriptionTier, error)
+
+	UpdatePrices(ctx context.Context, tierID domain.TierID, priceMonthly, priceYearly float64) error
 }

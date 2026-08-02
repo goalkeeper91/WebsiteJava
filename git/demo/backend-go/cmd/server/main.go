@@ -497,6 +497,14 @@ func main() {
 	go streamSessionScheduler.Start()
 	defer streamSessionScheduler.Stop()
 
+	// Price sync - once a day (plus once immediately at startup) pulls the
+	// current Pro/Premium prices from Paddle into subscription_tiers, so
+	// /dashboard/subscription can't silently drift from the real catalog.
+	priceSyncService := service.NewPriceSyncService(subscriptionTierRepo, paddleClient, cfg.Paddle)
+	priceSyncScheduler := service.NewPriceSyncScheduler(priceSyncService, 24*time.Hour)
+	go priceSyncScheduler.Start()
+	defer priceSyncScheduler.Stop()
+
 	log.Println("✅ Background Services gestartet")
 
 	// ============================================================

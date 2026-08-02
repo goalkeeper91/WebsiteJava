@@ -94,6 +94,20 @@ func (r *SubscriptionTierRepository) GetActive(ctx context.Context) ([]*domain.S
 	return tiers, nil
 }
 
+// UpdatePrices overwrites the stored price for a tier - used by
+// PriceSyncService to bring subscription_tiers back in line with whatever
+// is actually configured in the Paddle dashboard/catalog.
+func (r *SubscriptionTierRepository) UpdatePrices(ctx context.Context, tierID domain.TierID, priceMonthly, priceYearly float64) error {
+	query := `UPDATE subscription_tiers SET price_monthly = $1, price_yearly = $2 WHERE id = $3`
+
+	_, err := r.db.ExecContext(ctx, query, priceMonthly, priceYearly, tierID)
+	if err != nil {
+		return fmt.Errorf("fehler beim Aktualisieren der Tier-Preise: %w", err)
+	}
+
+	return nil
+}
+
 // Helper: scan from rows
 func scanTier(rows *sql.Rows) (*domain.SubscriptionTier, error) {
 	var tier domain.SubscriptionTier

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="037-update-tier-prices-again" author="Marcel">
+        <!-- Second price reduction: the Paddle catalog itself was already
+             updated to these values via the API, but subscription_tiers
+             (migration 035's 7.99/79.99, 21.99/199.99) was never brought in
+             sync - /dashboard/subscription reads these DB columns directly
+             rather than Paddle's live catalog (only the public /pricing page
+             does that, via PricePreview()), so it kept showing stale prices. -->
+        <update tableName="subscription_tiers">
+            <column name="price_monthly" valueNumeric="4.99"/>
+            <column name="price_yearly" valueNumeric="49.99"/>
+            <where>id = 'pro'</where>
+        </update>
+
+        <update tableName="subscription_tiers">
+            <column name="price_monthly" valueNumeric="17.99"/>
+            <column name="price_yearly" valueNumeric="179.99"/>
+            <where>id = 'premium'</where>
+        </update>
+
+        <rollback>
+            <update tableName="subscription_tiers">
+                <column name="price_monthly" valueNumeric="7.99"/>
+                <column name="price_yearly" valueNumeric="79.99"/>
+                <where>id = 'pro'</where>
+            </update>
+            <update tableName="subscription_tiers">
+                <column name="price_monthly" valueNumeric="21.99"/>
+                <column name="price_yearly" valueNumeric="199.99"/>
+                <where>id = 'premium'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

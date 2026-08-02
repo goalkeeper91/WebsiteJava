@@ -41,5 +41,6 @@
     <include file="changesets/034-rename-stripe-to-paddle-columns.xml" relativeToChangelogFile="true"/>
     <include file="changesets/035-update-tier-prices.xml" relativeToChangelogFile="true"/>
     <include file="changesets/036-create-cs2-caster-tools.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/037-update-tier-prices-again.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
