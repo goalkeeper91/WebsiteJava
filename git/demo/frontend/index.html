@@ -19,7 +19,7 @@
       single source of truth for title/description/OG/Twitter/canonical.
     -->
     <title>Goalkeeper91</title>
-    <script type="application/ld+json">
+    <script type="application/ld+json" id="global-jsonld">
       {
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
@@ -42,6 +42,20 @@
           "https://discord.gg/XE8sW56",
           "https://github.com/goalkeeper91"
         ]
+      }
+    </script>
+    <script>
+      // bot.goalkeeper91.de is a Paddle-facing storefront restricted to the
+      // Twitch Bot SaaS product only (see src/lib/botDomain.ts) - the global
+      // JSON-LD above describes the freelance/software-development business
+      // instead, which is exactly the product category Paddle's Acceptable
+      // Use Policy excludes, so it must not be present on that hostname at
+      // all. Removed here (before the SPA even mounts) rather than only in
+      // React, since a crawler reading raw HTML wouldn't see a React-time
+      // removal in time anyway.
+      if (location.hostname === 'bot.goalkeeper91.de') {
+        var globalJsonLd = document.getElementById('global-jsonld');
+        if (globalJsonLd) globalJsonLd.remove();
       }
     </script>
     <script>

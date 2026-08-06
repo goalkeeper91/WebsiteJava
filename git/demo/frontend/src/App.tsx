@@ -1,4 +1,6 @@
+import type { ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { isBotStorefront } from './lib/botDomain';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -64,6 +66,14 @@ const SiteLayout = () => (
   </div>
 );
 
+// Guards the freelance/marketing pages (Home, Services, About, Contact) on
+// bot.goalkeeper91.de - see lib/botDomain.ts. Anyone hitting one of these
+// paths directly (bookmark, guessed URL, a crawler) is bounced to /pricing
+// instead of the freelance content ever rendering, since hiding the nav
+// links alone wouldn't stop a URL-based domain scan from finding them.
+const FreelanceOnlyRoute = ({ children }: { children: ReactElement }) =>
+  isBotStorefront() ? <Navigate to="/pricing" replace /> : children;
+
 // Team management only applies to your own channel, not one you're managing
 // on someone else's behalf - deep-linking here while acting as another
 // channel bounces back to the Twitch overview instead of rendering.
@@ -84,11 +94,12 @@ const App = () => {
         <Route path='/cs2/match-notes-popup' element={<CS2MatchNotesPopup />} />
 
         <Route element={<SiteLayout />}>
-          {/* Public Routes */}
-          <Route path='/' element={<Home />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path='/about' element={<About />} />
+          {/* Public Routes - Home/Services/About/Contact are the freelance
+              marketing pages, gated off entirely on bot.goalkeeper91.de */}
+          <Route path='/' element={<FreelanceOnlyRoute><Home /></FreelanceOnlyRoute>} />
+          <Route path="/contact" element={<FreelanceOnlyRoute><ContactPage /></FreelanceOnlyRoute>} />
+          <Route path="/services" element={<FreelanceOnlyRoute><ServicesPage /></FreelanceOnlyRoute>} />
+          <Route path='/about' element={<FreelanceOnlyRoute><About /></FreelanceOnlyRoute>} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/welcome" element={<Welcome />} />
           {/* Kündigungsbutton nach § 312k BGB - permanently reachable from the

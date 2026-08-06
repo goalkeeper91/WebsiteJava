@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { NavLinks } from './Navlinks';
+import { isBotStorefront } from '../lib/botDomain';
 
 const Header: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,7 +16,7 @@ const Header: React.FC = () => {
     return (
             <header className="fixed top-0 left-0 z-50 w-full bg-slate-700/60 text-white">
                 <div className="flex items-center justify-between py-2 px-6">
-                    <Link to="/" className="flex items-center space-x-4">
+                    <Link to={isBotStorefront() ? "/pricing" : "/"} className="flex items-center space-x-4">
                         <img
                             src="/images/goalkeeper_logo.png"
                             alt="Goalkeeper91 Logo"

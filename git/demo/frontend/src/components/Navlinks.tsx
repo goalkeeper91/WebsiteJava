@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { isBotStorefront } from "../lib/botDomain";
 
 interface NavLinksProps {
   isAuthenticated: boolean;
@@ -20,15 +21,21 @@ export const NavLinks: React.FC<NavLinksProps> = ({
     ? "block hover:text-blue-500"
     : "hover:text-blue-500";
 
+  // bot.goalkeeper91.de carries only the Twitch Bot SaaS product for Paddle
+  // review purposes - see lib/botDomain.ts. The freelance-services nav
+  // links are dropped here too, not just the routes themselves, so there's
+  // no dead link pointing at a page that immediately redirects away.
+  const isBot = isBotStorefront();
+
   return (
     <div className={isMobile ? "space-y-2" : "flex space-x-6 items-center"}>
 
       {/* Hauptlinks */}
-      <Link to="/" className={linkClass}>Home</Link>
-      <Link to="/services" className={linkClass}>Lösungen</Link>
+      <Link to={isBot ? "/pricing" : "/"} className={linkClass}>Home</Link>
+      {!isBot && <Link to="/services" className={linkClass}>Lösungen</Link>}
       <Link to="/pricing" className={linkClass}>Preise</Link>
-      <Link to="/about" className={linkClass}>About</Link>
-      <Link to="/contact" className={linkClass}>Kontakt</Link>
+      {!isBot && <Link to="/about" className={linkClass}>About</Link>}
+      {!isBot && <Link to="/contact" className={linkClass}>Kontakt</Link>}
 
       {/* Admin Link */}
       {isAdmin && (
