@@ -15,9 +15,9 @@ import (
 )
 
 type AuthServiceInterface interface {
-	GetAuthURL() (string, string, error)
+	GetAuthURL(redirectURI string) (string, string, error)
 	GetBotAuthURL() (string, string, error)
-	HandleCallback(ctx context.Context, code string) (*domain.User, error)
+	HandleCallback(ctx context.Context, code, redirectURI string) (*domain.User, error)
 	HandleBotCallback(ctx context.Context, code string) (*domain.User, error)
 	GetUserByTwitchID(ctx context.Context, twitchID string) (*domain.User, error)
 }
@@ -27,8 +27,29 @@ const (
 	sessionStateKey      = "oauth_state"
 	sessionBotStateKey   = "oauth_bot_state"
 	sessionReturnToKey   = "oauth_return_to"
+	sessionOriginKey     = "oauth_origin"
 	defaultLoginRedirect = "/dashboard"
 )
+
+// botStorefrontHost mirrors frontend/src/lib/botDomain.ts's
+// BOT_STOREFRONT_HOSTNAME - the Paddle-compliant Twitch Bot storefront
+// subdomain. Login/Callback keep the entire OAuth round-trip (authorize ->
+// Twitch -> callback -> final redirect) on whichever of these hosts the
+// user actually started from, otherwise a login started on the bot
+// storefront would silently bounce back to the main domain instead of
+// staying there.
+const botStorefrontHost = "bot.goalkeeper91.de"
+const botStorefrontOrigin = "https://" + botStorefrontHost
+
+// oauthOriginForRequest returns "" for the main domain (meaning: use the
+// handler's/service's configured defaults, unchanged), or the bot
+// storefront's own origin when the request came in on that hostname.
+func oauthOriginForRequest(r *http.Request) string {
+	if r.Host == botStorefrontHost {
+		return botStorefrontOrigin
+	}
+	return ""
+}
 
 // isValidReturnTo guards against open-redirect: only a same-origin relative
 // path is accepted (must start with exactly one '/', never '//' - which
@@ -79,7 +100,13 @@ func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	authURL, state, err := h.authService.GetAuthURL()
+	origin := oauthOriginForRequest(r)
+	redirectURI := ""
+	if origin != "" {
+		redirectURI = origin + "/auth/callback"
+	}
+
+	authURL, state, err := h.authService.GetAuthURL(redirectURI)
 	if err != nil {
 		log.Printf("Fehler beim Generieren der Auth URL: %v", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -88,6 +115,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := h.sessionStore.Get(r, h.sessionName)
 	session.Values[sessionStateKey] = state
+	session.Values[sessionOriginKey] = origin
 	if returnTo := r.URL.Query().Get("returnTo"); isValidReturnTo(returnTo) {
 		session.Values[sessionReturnToKey] = returnTo
 	}
@@ -108,37 +136,49 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// origin/redirectURI must mirror exactly what Login stored for this
+	// flow - Twitch's token exchange rejects a redirect_uri mismatch, and a
+	// user who started on the bot storefront must land back there, not on
+	// the main domain.
+	origin := h.frontendURL
+	redirectURI := ""
+	if stored, ok := session.Values[sessionOriginKey].(string); ok && stored != "" {
+		origin = stored
+		redirectURI = stored + "/auth/callback"
+	}
+
 	storedState, ok := session.Values[sessionStateKey].(string)
 	if !ok || storedState == "" {
 		log.Printf("Kein State in Session gefunden")
-		http.Redirect(w, r, h.frontendURL+"/error?message=invalid_state", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, origin+"/error?message=invalid_state", http.StatusTemporaryRedirect)
 		return
 	}
 
 	receivedState := r.URL.Query().Get("state")
 	if receivedState != storedState {
 		log.Printf("State Mismatch: erwartet %s, erhalten %s", storedState, receivedState)
-		http.Redirect(w, r, h.frontendURL+"/error?message=state_mismatch", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, origin+"/error?message=state_mismatch", http.StatusTemporaryRedirect)
 		return
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		log.Printf("Kein Authorization Code erhalten")
-		http.Redirect(w, r, h.frontendURL+"/error?message=no_code", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, origin+"/error?message=no_code", http.StatusTemporaryRedirect)
 		return
 	}
 
-	user, err := h.authService.HandleCallback(r.Context(), code)
+	user, err := h.authService.HandleCallback(r.Context(), code, redirectURI)
 	if err != nil {
 		log.Printf("Fehler beim Verarbeiten des Callbacks: %v", err)
-		http.Redirect(w, r, h.frontendURL+"/error?message=auth_failed", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, origin+"/error?message=auth_failed", http.StatusTemporaryRedirect)
 		return
 	}
 
 	session.Values[sessionUserKey] = user.TwitchID
 	session.Values["is_admin"] = user.IsAdmin
 	delete(session.Values, sessionStateKey)
+	delete(session.Values, sessionOriginKey)
 
 	returnTo := defaultLoginRedirect
 	if stored, ok := session.Values[sessionReturnToKey].(string); ok && isValidReturnTo(stored) {
@@ -150,12 +190,12 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if err := session.Save(r, w); err != nil {
 		log.Printf("Fehler beim Speichern der Session: %v", err)
-		http.Redirect(w, r, h.frontendURL+"/error?message=session_save_error", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, origin+"/error?message=session_save_error", http.StatusTemporaryRedirect)
 		return
 	}
 
 	log.Printf("✅ User %s erfolgreich eingeloggt (Admin: %v)", user.Username, user.IsAdmin)
-	http.Redirect(w, r, h.frontendURL+returnTo, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, origin+returnTo, http.StatusTemporaryRedirect)
 }
 
 func (h *AuthHandler) BotLogin(w http.ResponseWriter, r *http.Request) {

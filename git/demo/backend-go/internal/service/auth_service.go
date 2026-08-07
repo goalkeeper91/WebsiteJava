@@ -90,18 +90,32 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) GetAuthURL() (string, string, error) {
+// GetAuthURL builds the Twitch authorize URL. redirectURI overrides the
+// service's configured default (used when the login started on
+// bot.goalkeeper91.de, see AuthHandler.oauthOriginForRequest) - pass "" to
+// use the default, main-domain redirect_uri unchanged.
+func (s *AuthService) GetAuthURL(redirectURI string) (string, string, error) {
 	state, err := generateStateToken()
 	if err != nil {
 		return "", "", fmt.Errorf("fehler beim Generieren des State Tokens: %w", err)
 	}
 
-	url := s.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	cfg := s.oauthConfig
+	if redirectURI != "" {
+		cfgCopy := *s.oauthConfig
+		cfgCopy.RedirectURL = redirectURI
+		cfg = &cfgCopy
+	}
+
+	url := cfg.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	return url, state, nil
 }
 
-func (s *AuthService) HandleCallback(ctx context.Context, code string) (*domain.User, error) {
-	return s.handleCallback(ctx, code, false)
+// HandleCallback exchanges the Twitch authorization code. redirectURI must
+// be the exact same value passed to GetAuthURL for this flow - Twitch's
+// token endpoint rejects a mismatch (RFC 6749 redirect_uri validation).
+func (s *AuthService) HandleCallback(ctx context.Context, code, redirectURI string) (*domain.User, error) {
+	return s.handleCallback(ctx, code, false, redirectURI)
 }
 
 
@@ -120,15 +134,20 @@ func (s *AuthService) GetBotAuthURL() (string, string, error) {
 }
 
 func (s *AuthService) HandleBotCallback(ctx context.Context, code string) (*domain.User, error) {
-	return s.handleCallback(ctx, code, true)
+	return s.handleCallback(ctx, code, true, "")
 }
 
 // ===== SHARED CALLBACK LOGIC =====
 
-func (s *AuthService) handleCallback(ctx context.Context, code string, isBot bool) (*domain.User, error) {
+func (s *AuthService) handleCallback(ctx context.Context, code string, isBot bool, redirectURI string) (*domain.User, error) {
 	config := s.oauthConfig
 	if isBot {
 		config = s.botOauthConfig
+	}
+	if redirectURI != "" {
+		cfgCopy := *config
+		cfgCopy.RedirectURL = redirectURI
+		config = &cfgCopy
 	}
 
 	token, err := config.Exchange(ctx, code)

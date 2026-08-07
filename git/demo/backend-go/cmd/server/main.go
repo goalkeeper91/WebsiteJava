@@ -551,12 +551,12 @@ type AuthServiceWithChannelSync struct {
 	channelService *service.TwitchChannelService
 }
 
-func (s *AuthServiceWithChannelSync) GetAuthURL() (string, string, error) {
-	return s.authService.GetAuthURL()
+func (s *AuthServiceWithChannelSync) GetAuthURL(redirectURI string) (string, string, error) {
+	return s.authService.GetAuthURL(redirectURI)
 }
 
-func (s *AuthServiceWithChannelSync) HandleCallback(ctx context.Context, code string) (*domain.User, error) {
-	user, err := s.authService.HandleCallback(ctx, code)
+func (s *AuthServiceWithChannelSync) HandleCallback(ctx context.Context, code, redirectURI string) (*domain.User, error) {
+	user, err := s.authService.HandleCallback(ctx, code, redirectURI)
 	if err != nil {
 		return nil, err
 	}
