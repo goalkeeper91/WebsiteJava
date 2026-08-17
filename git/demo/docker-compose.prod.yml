@@ -268,6 +268,12 @@ services:
     environment:
       GMAIL_RELAY_USER: ${GMAIL_RELAY_USER}
       GMAIL_RELAY_APP_PASSWORD: ${GMAIL_RELAY_APP_PASSWORD}
+    # Ohne Volume liegt die Mail-Queue nur in der Container-Schreibschicht -
+    # ein Rebuild (wie beim Chroot-Fix gerade eben) hat dadurch noch
+    # wartende Mails stillschweigend verschluckt. Mit Volume ueberlebt die
+    # Queue kuenftige Deploys, genau wie bei postgres/redis/n8n oben.
+    volumes:
+      - mailrelay_spool_prod:/var/spool/postfix
     ports:
       - "25:25"
     networks:
@@ -361,6 +367,8 @@ volumes:
   n8n_data:
     driver: local
   ollama_data_prod:
+    driver: local
+  mailrelay_spool_prod:
     driver: local
 
 # =========================
