@@ -16,7 +16,14 @@ COPY entrypoint.sh /entrypoint.sh
 # aus Umgebungsvariablen erzeugt (siehe entrypoint.sh) statt beim Build -
 # damit landet das Passwort nie im Docker-Image/Layer-Cache oder in git.
 RUN chmod +x /entrypoint.sh \
-    && postmap /etc/postfix/virtual
+    && postmap /etc/postfix/virtual \
+    # Chroot fuer alle Postfix-Dienste aus (siehe Debugging: der chrootete
+    # smtp-Ausgangsprozess sieht /etc/resolv.conf nicht, DNS-Aufloesung fuer
+    # smtp.gmail.com schlug deshalb mit "Host not found" fehl, obwohl der
+    # Name ganz normal aufloesbar ist). Der Container selbst ist hier schon
+    # die Isolation, ein zusaetzliches Chroot bringt in diesem engen
+    # Einzelzweck-Setup keinen relevanten Zusatznutzen.
+    && postconf -F '*/*/chroot=n'
 
 EXPOSE 25
 ENTRYPOINT ["/entrypoint.sh"]
