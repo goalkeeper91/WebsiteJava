@@ -1,0 +1,37 @@
+# Minimal-Konfiguration fuer einen reinen Weiterleitungs-Relay (keine echten
+# Postfaecher, kein IMAP/POP) - siehe git/demo README bzw. docker-compose.prod.yml
+# Kommentar beim "mailrelay"-Service fuer den Hintergrund.
+
+myhostname = mail.goalkeeper91.de
+mydomain = fuchs.goalkeeper91.de
+myorigin = $mydomain
+
+# Bewusst KEINE lokale lokale Zustellung (mydestination leer) - jede
+# eingehende Adresse wird ausschliesslich ueber virtual_alias_maps aufgeloest
+# und sofort weitergeleitet. Das ist der Unterschied zu einem "echten"
+# Mailserver mit Postfaechern.
+mydestination =
+virtual_alias_domains = fuchs.goalkeeper91.de
+virtual_alias_maps = hash:/etc/postfix/virtual
+
+inet_interfaces = all
+inet_protocols = ipv4
+mynetworks = 127.0.0.0/8
+
+# Ausgehend NICHT direkt ins offene Internet (das braeuchte eine gute
+# Sende-Reputation der Server-IP, siehe Diskussion), sondern authentifiziert
+# ueber Gmail selbst als Relay - das Ziel-Postfach ist ohnehin ein
+# Gmail-Konto, das vertraut sich selbst. GMAIL_RELAY_USER/APP_PASSWORD
+# kommen als Env-Var rein (siehe entrypoint.sh), landen nie in diesem Repo.
+relayhost = [smtp.gmail.com]:587
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_sasl_mechanism_filter = plain, login
+smtp_tls_security_level = encrypt
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+
+# Nur eigene Container (mynetworks) UND aufgeloeste virtuelle Ziele duerfen
+# relayed werden - verhindert, dass dieser Server als offener Relay fuer
+# fremde Domains missbraucht wird.
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination

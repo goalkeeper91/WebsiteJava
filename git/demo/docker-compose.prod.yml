@@ -255,6 +255,25 @@ services:
       retries: 3
 
   # =========================
+  # Mail-Relay (fuchs-erste-hilfe@fuchs.goalkeeper91.de -> Gmail)
+  # =========================
+  # Reiner Weiterleitungs-Postfix, komplett isoliert von nginx/den anderen
+  # Diensten (eigener Port 25, kein Reverse-Proxy davor moeglich - SMTP ist
+  # kein HTTP). Hintergrund/DNS-Setup siehe docs im FuchsErsteHilfe-Repo.
+  mailrelay:
+    build:
+      context: ./mailrelay
+    container_name: goalkeeper_mailrelay_prod
+    restart: unless-stopped
+    environment:
+      GMAIL_RELAY_USER: ${GMAIL_RELAY_USER}
+      GMAIL_RELAY_APP_PASSWORD: ${GMAIL_RELAY_APP_PASSWORD}
+    ports:
+      - "25:25"
+    networks:
+      - app-network
+
+  # =========================
   # Adminer (Datenbank UI)
   # =========================
   adminer:

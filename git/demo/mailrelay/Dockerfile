@@ -1,0 +1,22 @@
+FROM debian:bookworm-slim
+
+# Nur Postfix als reiner Weiterleitungs-Relay (siehe main.cf) - kein
+# Dovecot/IMAP, keine echten Postfaecher, deshalb bewusst schlank.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      postfix libsasl2-modules ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY main.cf /etc/postfix/main.cf
+COPY virtual /etc/postfix/virtual
+COPY entrypoint.sh /entrypoint.sh
+
+# virtual-Map ist nicht geheim (nur E-Mail-Adressen, keine Passwoerter) und
+# kann deshalb schon beim Build gepostmapt werden. sasl_passwd (das
+# Gmail-App-Passwort) ist geheim und wird bewusst erst beim Container-Start
+# aus Umgebungsvariablen erzeugt (siehe entrypoint.sh) statt beim Build -
+# damit landet das Passwort nie im Docker-Image/Layer-Cache oder in git.
+RUN chmod +x /entrypoint.sh \
+    && postmap /etc/postfix/virtual
+
+EXPOSE 25
+ENTRYPOINT ["/entrypoint.sh"]
