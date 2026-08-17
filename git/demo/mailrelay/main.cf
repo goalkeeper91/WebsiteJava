@@ -18,6 +18,12 @@ inet_interfaces = all
 inet_protocols = ipv4
 mynetworks = 127.0.0.0/8
 
+# Postfix loggt standardmaessig ueber Syslog, nicht auf stdout - "docker
+# logs" zeigt davon nichts, egal ob alles laeuft oder etwas fehlschlaegt.
+# maillog_file leitet Postfix' eigenes Logging direkt auf stdout um (Postfix
+# >= 3.4, in Debian bookworm vorhanden).
+maillog_file = /dev/stdout
+
 # Ausgehend NICHT direkt ins offene Internet (das braeuchte eine gute
 # Sende-Reputation der Server-IP, siehe Diskussion), sondern authentifiziert
 # ueber Gmail selbst als Relay - das Ziel-Postfach ist ohnehin ein
