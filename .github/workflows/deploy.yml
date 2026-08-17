@@ -155,6 +155,27 @@ jobs:
           echo "✅ Nginx Config (inkl. Dockerfile) deployed"
 
       #########################################
+      # DEPLOY MAIL RELAY
+      #########################################
+      - name: 📧 Deploy Mail Relay
+        run: |
+          # Ohne diesen Schritt schlaegt "Apply Docker Compose" fehl, weil
+          # docker-compose.prod.yml fuer den mailrelay-Service "context:
+          # ./mailrelay" referenziert, dieser Ordner aber nie auf den Server
+          # kam (siehe Fehlversuch: "unable to prepare context: path
+          # .../mailrelay not found"). Bewusst ohne --delete, wie beim
+          # Nginx-Schritt oben.
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app/mailrelay"
+
+          rsync -av \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./git/demo/mailrelay/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/mailrelay/
+
+          echo "✅ Mail Relay (Postfix) deployed zu ~/app/mailrelay/"
+
+      #########################################
       # DEPLOY DOCKER COMPOSE
       #########################################
       - name: 🐳 Deploy Docker Compose
@@ -214,6 +235,7 @@ jobs:
           echo "  ✅ frontend_dist/     (Frontend Build)"
           echo "  ✅ migrations/        (DB Migrations, noch nicht ausgeführt)"
           echo "  ✅ nginx/             (conf.d-Fragmente + Dockerfile)"
+          echo "  ✅ mailrelay/         (Postfix-Weiterleitung)"
           echo "  ✅ docker-compose.prod.yml"
           echo "  ✅ migrate-initial-SAFE.sh"
           echo ""
