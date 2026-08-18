@@ -41,3 +41,36 @@ smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 # relayed werden - verhindert, dass dieser Server als offener Relay fuer
 # fremde Domains missbraucht wird.
 smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+
+# Basis-Haertung gegen Spam-/Massenscan-Bots, die die auf der Website
+# veroeffentlichte Adresse (fuchs-erste-hilfe@fuchs.goalkeeper91.de)
+# anschreiben. Filtert nichts Legitimes weg, faengt aber einen guten Teil
+# des ungezielten Bot-Traffics schon VOR der Weiterleitung an Gmail ab
+# (weniger Rauschen, auch wenn Gmails eigener Spamfilter ohnehin greift).
+#
+# - HELO ist Pflicht und muss syntaktisch gueltig aussehen (die meisten
+#   simplen Spam-Skripte senden gar kein oder ein offensichtlich falsches
+#   HELO).
+# - Absender-Domain muss aufloesbar sein (reject_unknown_sender_domain) -
+#   filtert Faelschungen mit frei erfundenen Absenderdomains.
+# - Gegenstelle wird gegen Spamhaus' oeffentliche Blocklist geprueft
+#   (bekannte Spam-/Botnet-Quell-IPs). Zen ist die kombinierte Spamhaus-
+#   Liste (SBL+XBL+PBL).
+# - Verbindungs-Ratenlimit pro Quell-IP verhindert, dass eine einzelne
+#   Quelle den Relay mit vielen parallelen/schnellen Verbindungen flutet.
+smtpd_helo_required = yes
+smtpd_helo_restrictions = permit_mynetworks, reject_invalid_helo_hostname, permit
+smtpd_recipient_restrictions =
+    permit_mynetworks,
+    reject_unauth_destination,
+    reject_unknown_sender_domain,
+    reject_rbl_client zen.spamhaus.org,
+    permit
+smtpd_client_connection_rate_limit = 10
+smtpd_client_connection_count_limit = 5
+anvil_rate_time_unit = 60s
+
+# Angemessene Obergrenze fuer eine einzelne Kontaktadresse ohne Anhaenge-
+# Workflow - verhindert, dass jemand den Relay mit sehr grossen Mails
+# (Speicher/Bandbreite) belastet, laesst aber normale Anhaenge zu.
+message_size_limit = 15728640
