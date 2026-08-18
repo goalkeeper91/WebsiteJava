@@ -243,6 +243,9 @@ services:
       - ./nginx/zeiterfassung.conf:/etc/nginx/conf.d/zeiterfassung.conf:ro
       - ./nginx/htpasswd/zeiterfassung:/etc/nginx/htpasswd/zeiterfassung:ro
       - ./nginx/sanitaetsleitstelle.goalkeeper91.de.conf:/etc/nginx/conf.d/sanitaetsleitstelle.conf:ro
+      - ./nginx/fuchs.goalkeeper91.de.conf:/etc/nginx/conf.d/fuchs.conf:ro
+      - ./nginx/htpasswd/fuchs:/etc/nginx/htpasswd/fuchs:ro
+      - ./website-fuchs:/usr/share/nginx/fuchs:ro
       - ./frontend_dist:/usr/share/nginx/html:ro
       - ./certs:/etc/nginx/certs:ro
       - ./certbot-www:/var/www/certbot:ro
