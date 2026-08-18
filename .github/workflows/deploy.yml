@@ -221,6 +221,21 @@ jobs:
 
           echo "✅ Container gebaut und neu gestartet"
 
+          # nginx explizit erzwungen neu erstellen (siehe Incident
+          # 2026-08-18, fuchs.goalkeeper91.de): "docker compose up -d"
+          # erkennt reine Aenderungen an gemounteten Config-Dateien NICHT
+          # als Grund fuer einen Neustart, weil rsync Dateien per
+          # Neu-schreiben-und-Umbenennen ersetzt - ein laufender
+          # Datei-Bind-Mount bleibt dann an der ALTEN Datei haengen, obwohl
+          # der Host-Pfad schon die neue zeigt. --force-recreate erzwingt,
+          # dass nginx die Mounts (Configs, htpasswd, website-fuchs, ...)
+          # bei JEDEM Deploy frisch einliest, unabhaengig davon, ob Compose
+          # eine Aenderung an der Service-Definition selbst erkennt.
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "cd /home/${{ secrets.SERVER_USER }}/app && docker compose -f docker-compose.prod.yml up -d --force-recreate nginx"
+
+          echo "✅ nginx neu erstellt (aktuelle Config-Dateien garantiert geladen)"
+
       #########################################
       # WARNUNG - MANUELLE SCHRITTE
       #########################################
