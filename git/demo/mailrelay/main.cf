@@ -16,7 +16,15 @@ virtual_alias_maps = hash:/etc/postfix/virtual
 
 inet_interfaces = all
 inet_protocols = ipv4
-mynetworks = 127.0.0.0/8
+# 172.20.0.0/16 = goalkeeper_prod_network (das gemeinsame Docker-Netzwerk
+# aller Container auf diesem Server, siehe docker-compose.prod.yml) - damit
+# duerfen andere eigene Container (z.B. ein Django-Backend mit
+# EMAIL_HOST=mailrelay) hierueber relayen, nicht nur der Relay-Container
+# selbst. Docker-Netzwerke sind nach Mitgliedschaft isoliert, nicht nach
+# CIDR-Groesse - das Vertrauen aufs ganze /16 ist unproblematisch, SOLANGE
+# in goalkeeper_prod_network wirklich nur eigene Container haengen (zuletzt
+# per "docker network inspect goalkeeper_prod_network" geprueft).
+mynetworks = 127.0.0.0/8, 172.20.0.0/16
 
 # Postfix loggt standardmaessig ueber Syslog, nicht auf stdout - "docker
 # logs" zeigt davon nichts, egal ob alles laeuft oder etwas fehlschlaegt.
