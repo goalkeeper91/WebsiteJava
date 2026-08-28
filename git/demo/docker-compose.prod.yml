@@ -245,6 +245,7 @@ services:
       - ./nginx/sanitaetsleitstelle.goalkeeper91.de.conf:/etc/nginx/conf.d/sanitaetsleitstelle.conf:ro
       - ./nginx/fuchs.goalkeeper91.de.conf:/etc/nginx/conf.d/fuchs.conf:ro
       - ./nginx/office.goalkeeper91.de.conf:/etc/nginx/conf.d/office.conf:ro
+      - ./nginx/partner.goalkeeper91.de.conf:/etc/nginx/conf.d/partner.conf:ro
       - ./nginx/htpasswd/fuchs:/etc/nginx/htpasswd/fuchs:ro
       - ./website-fuchs:/usr/share/nginx/fuchs:ro
       - ./frontend_dist:/usr/share/nginx/html:ro
