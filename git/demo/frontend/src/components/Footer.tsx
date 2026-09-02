@@ -54,8 +54,17 @@ const Footer: React.FC = () => {
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
                 <Link to="/legal/impressum" className="hover:text-white transition">Impressum</Link>
                 <Link to="/legal/datenschutz" className="hover:text-white transition">Datenschutz</Link>
-                <Link to="/legal/agb" className="hover:text-white transition">AGB</Link>
-                <Link to="/legal/widerruf" className="hover:text-white transition">Widerruf</Link>
+                {/* AGB und Widerrufsbelehrung handeln beide ausschließlich vom
+                    Twitch-Bot-Abo (Paddle-Checkout, Twitch-Login, 14-Tage-
+                    Widerrufsrecht für "kostenpflichtige Tarife") - auf dev.
+                    gibt es weder einen Online-Vertragsschluss noch
+                    Verbraucher-Kunden (B2B-Projektanfragen laufen über ein
+                    individuelles Angebot, siehe DevContact.tsx), das
+                    Verbraucher-Widerrufsrecht nach §312g BGB greift dort gar
+                    nicht erst. Beide Seiten blieben sonst live erreichbar und
+                    zeigen komplett falsche Inhalte (Bot-Kündigungsseite etc.). */}
+                {!isDev && <Link to="/legal/agb" className="hover:text-white transition">AGB</Link>}
+                {!isDev && <Link to="/legal/widerruf" className="hover:text-white transition">Widerruf</Link>}
                 <Link to="/legal/cookies" className="hover:text-white transition">Cookies</Link>
                 {/* §312k-BGB-Kündigungsbutton ist Twitch-Bot-Abo-spezifisch -
                     auf dev. gibt es kein Abo, das gekündigt werden könnte. */}

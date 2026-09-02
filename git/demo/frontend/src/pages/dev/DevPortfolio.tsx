@@ -142,7 +142,7 @@ const DevPortfolio = () => {
                     src={project.visual.src}
                     alt={project.title}
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                   />
                 ) : (
                   <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${project.visual.gradient} text-white/90`}>
