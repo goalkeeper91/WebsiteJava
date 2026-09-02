@@ -1,16 +1,10 @@
 import type { ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { isBotStorefront } from './lib/botDomain';
-import { isDevStorefront } from './lib/devDomain';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
-import DevHome from './pages/dev/DevHome';
-import DevServices from './pages/dev/DevServices';
-import DevPortfolio from './pages/dev/DevPortfolio';
-import DevAbout from './pages/dev/DevAbout';
-import DevContact from './pages/dev/DevContact';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
 import AdminRoute from './components/routes/AdminRoute';
 import DiscordCallback from './components/socials/DiscordCallback';
@@ -70,22 +64,20 @@ const SiteLayout = () => (
   </div>
 );
 
-// Three-way storefront switch for a shared path: bot.goalkeeper91.de never
-// sees anything but the Twitch Bot product (see lib/botDomain.ts - Paddle
-// rejected the main domain for carrying "Software Development Services"
-// content alongside a SaaS checkout, so that hostname must stay 100% clean
-// of freelance content), dev.goalkeeper91.de sees ONLY the extracted
-// software-dev-business content (see lib/devDomain.ts), everything else
-// (the main domain) sees `main`. Redirects rather than 404s/blank pages
-// for a path that doesn't apply to the current hostname - a bookmark,
-// guessed URL, or crawler hitting e.g. /services on the main domain (that
-// page moved to dev.) bounces to `/` instead of rendering nothing or the
-// wrong persona's content.
-const StorefrontRoute = ({ main, dev }: { main: ReactElement | null; dev: ReactElement | null }) => {
-  if (isBotStorefront()) return <Navigate to="/pricing" replace />;
-  if (isDevStorefront()) return dev ?? <Navigate to="/" replace />;
-  return main ?? <Navigate to="/" replace />;
-};
+// bot.goalkeeper91.de never sees anything but the Twitch Bot product (see
+// lib/botDomain.ts - Paddle rejected the main domain for carrying
+// "Software Development Services" content alongside a SaaS checkout, so
+// that hostname must stay 100% clean of freelance content). Redirects
+// rather than a blank page for a route that doesn't apply there.
+//
+// The software-dev-business content that used to live here as a third
+// storefront persona (dev.goalkeeper91.de, gated by isDevStorefront()) has
+// moved to its own repo/container - see
+// github.com/goalkeeper91/from_goaly_to_cody and this repo's
+// nginx/proxy.conf, which now proxies that hostname straight to that
+// container instead of serving this frontend_dist build at all.
+const BotGate = ({ main }: { main: ReactElement }) =>
+  isBotStorefront() ? <Navigate to="/pricing" replace /> : main;
 
 // Team management only applies to your own channel, not one you're managing
 // on someone else's behalf - deep-linking here while acting as another
@@ -107,18 +99,14 @@ const App = () => {
         <Route path='/cs2/match-notes-popup' element={<CS2MatchNotesPopup />} />
 
         <Route element={<SiteLayout />}>
-          {/* Public Routes - / and /about carry different content per
-              storefront (streamer persona on the main domain, dev-business
-              persona on dev.goalkeeper91.de); /services, /portfolio and
-              /contact exist ONLY on dev.goalkeeper91.de now (the software-
-              dev business is fully extracted off the main domain - see
-              lib/devDomain.ts). All of it stays gated off entirely on
-              bot.goalkeeper91.de, same as before. */}
-          <Route path='/' element={<StorefrontRoute main={<Home />} dev={<DevHome />} />} />
-          <Route path="/contact" element={<StorefrontRoute main={null} dev={<DevContact />} />} />
-          <Route path="/services" element={<StorefrontRoute main={null} dev={<DevServices />} />} />
-          <Route path="/portfolio" element={<StorefrontRoute main={null} dev={<DevPortfolio />} />} />
-          <Route path='/about' element={<StorefrontRoute main={<About />} dev={<DevAbout />} />} />
+          {/* Streamer-persona routes (main domain) - gated off entirely on
+              bot.goalkeeper91.de via BotGate. /services, /portfolio and
+              /contact used to exist here too, gated to dev.goalkeeper91.de
+              only - that content has since moved to its own repo/container
+              (github.com/goalkeeper91/from_goaly_to_cody), this app no
+              longer serves that hostname at all (see nginx/proxy.conf). */}
+          <Route path='/' element={<BotGate main={<Home />} />} />
+          <Route path='/about' element={<BotGate main={<About />} />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/welcome" element={<Welcome />} />
           {/* Kündigungsbutton nach § 312k BGB - permanently reachable from the
