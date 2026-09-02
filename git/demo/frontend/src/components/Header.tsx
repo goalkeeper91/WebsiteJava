@@ -4,6 +4,7 @@ import { FaBars, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { NavLinks } from './Navlinks';
 import { isBotStorefront } from '../lib/botDomain';
+import { isDevStorefront } from '../lib/devDomain';
 
 const Header: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,13 +20,17 @@ const Header: React.FC = () => {
                     <Link to={isBotStorefront() ? "/pricing" : "/"} className="flex items-center space-x-4">
                         <img
                             src="/images/goalkeeper_logo.png"
-                            alt="Goalkeeper91 Logo"
+                            alt={isDevStorefront() ? "Marcel Turlach Logo" : "Goalkeeper91 Logo"}
                             width={48}
                             height={48}
                             className="w-12 h-12 rounded-full"
                         />
+                        {/* dev.goalkeeper91.de is meant to eventually move to its own
+                            independent domain (see lib/devDomain.ts) - showing the
+                            real name here instead of the gamer tag from day one
+                            avoids re-branding this specific piece of copy later. */}
                         <span className="hidden md:block text-xl md:text-l font-semibold text-goalyBlue">
-                            Goalkeeper91
+                            {isDevStorefront() ? "Marcel Turlach" : "Goalkeeper91"}
                         </span>
                     </Link>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { isBotStorefront } from "../lib/botDomain";
+import { DEV_STOREFRONT_HOSTNAME, isDevStorefront } from "../lib/devDomain";
 
 interface NavLinksProps {
   isAuthenticated: boolean;
@@ -26,16 +27,35 @@ export const NavLinks: React.FC<NavLinksProps> = ({
   // links are dropped here too, not just the routes themselves, so there's
   // no dead link pointing at a page that immediately redirects away.
   const isBot = isBotStorefront();
+  // dev.goalkeeper91.de carries only the software-development-business
+  // content (see lib/devDomain.ts) - its own nav, no streamer/bot-SaaS
+  // links at all, same "no dead link to gated-off content" reasoning.
+  const isDev = isDevStorefront();
 
   return (
     <div className={isMobile ? "space-y-2" : "flex space-x-6 items-center"}>
 
       {/* Hauptlinks */}
-      <Link to={isBot ? "/pricing" : "/"} className={linkClass}>Home</Link>
-      {!isBot && <Link to="/services" className={linkClass}>Lösungen</Link>}
-      <Link to="/pricing" className={linkClass}>Preise</Link>
-      {!isBot && <Link to="/about" className={linkClass}>About</Link>}
-      {!isBot && <Link to="/contact" className={linkClass}>Kontakt</Link>}
+      {isDev ? (
+        <>
+          <Link to="/" className={linkClass}>Home</Link>
+          <Link to="/services" className={linkClass}>Leistungen</Link>
+          <Link to="/portfolio" className={linkClass}>Portfolio</Link>
+          <Link to="/about" className={linkClass}>Über mich</Link>
+          <Link to="/contact" className={linkClass}>Kontakt</Link>
+        </>
+      ) : (
+        <>
+          <Link to={isBot ? "/pricing" : "/"} className={linkClass}>Home</Link>
+          <Link to="/pricing" className={linkClass}>Preise</Link>
+          {!isBot && <Link to="/about" className={linkClass}>About</Link>}
+          {!isBot && (
+            <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className={linkClass}>
+              Entwickler gesucht?
+            </a>
+          )}
+        </>
+      )}
 
       {/* Admin Link */}
       {isAdmin && (

@@ -40,10 +40,10 @@ const About = () => {
           </div>
         </div>
 
-        {/* Setup / Tech Stack */}
+        {/* Setup */}
         <div>
-          <h2 className="text-2xl font-semibold mb-6 text-goalyBlue text-center">Mein Setup & Tech Stack</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm text-gray-300">
+          <h2 className="text-2xl font-semibold mb-6 text-goalyBlue text-center">Mein Streaming-Setup</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm text-gray-300 max-w-md mx-auto">
             <div className="bg-slate-800/40 p-4 rounded-xl shadow-lg">
               <h3 className="text-lg font-bold mb-2 text-white">🎮 Hardware & Streaming</h3>
               <ul className="list-disc list-inside">
@@ -52,16 +52,6 @@ const About = () => {
                 <li>RAM: 32GB G.Skill RipJaws V</li>
                 <li>Cam: Logitech C922</li>
                 <li>Mic: Shure MV7+</li>
-              </ul>
-            </div>
-            <div className="bg-slate-800/40 p-4 rounded-xl shadow-lg">
-              <h3 className="text-lg font-bold mb-2 text-white">💻 Entwicklung & Tools</h3>
-              <ul className="list-disc list-inside">
-                <li>Frontend: React, Flutter</li>
-                <li>Backend: Spring Boot, Laravel, GO, Python</li>
-                <li>Datenbanken: MySQL, PostgreSQL</li>
-                <li>DevOps & Automatisierung: Docker, CI/CD Pipelines</li>
-                <li>Tools: VSCode, GitHub, Figma, N8N</li>
               </ul>
             </div>
           </div>

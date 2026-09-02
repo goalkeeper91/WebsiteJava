@@ -31,38 +31,20 @@ body {
   width: 100%;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+/* The block that used to be here (a bare `h1 { font-size: 3.2em; }`, a
+   default Vite-template `button` style, and a `prefers-color-scheme:
+   light` override) was leftover Vite/React scaffold CSS, never removed
+   after the project moved to Tailwind. All three lived outside any
+   Tailwind `@layer`, which in the CSS cascade-layers model means they beat
+   every layered Tailwind utility regardless of specificity - confirmed
+   live: every `<h1>` on the site rendered at a fixed 51.2px (3.2 * 16px)
+   on every viewport, since the responsive `text-2xl sm:text-4xl md:...`
+   classes on the actual heading elements never stood a chance against
+   this unlayered rule. The light-mode block had the same problem in a
+   different spot: this whole site is Tailwind-styled dark-only (no actual
+   light theme built), so it never did anything useful - it just repainted
+   `<html>` white whenever a visitor's OS was in light mode, which is
+   exactly what SubathonOverlay.tsx already had to work around for the OBS
+   browser-source case. Removed outright rather than moved into a layer,
+   since none of the three were an intentional design decision to begin
+   with. */

@@ -6,8 +6,8 @@ const Home = () => {
     return (
         <>
             <Seo
-                title="Twitch Bot, Clip-Automatisierung & individuelle Softwareentwicklung"
-                description="Goalkeeper91: Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung als SaaS - plus individuelle Softwareentwicklung als Full-Stack Freelancer."
+                title="Twitch Bot SaaS, Clip-Automatisierung & Live Entertainment"
+                description="Goalkeeper91: Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung als SaaS - plus Livestream und Community."
                 path="/"
                 structuredData={{
                     "@context": "https://schema.org",

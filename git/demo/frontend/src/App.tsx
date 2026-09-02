@@ -1,10 +1,16 @@
 import type { ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { isBotStorefront } from './lib/botDomain';
+import { isDevStorefront } from './lib/devDomain';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
+import DevHome from './pages/dev/DevHome';
+import DevServices from './pages/dev/DevServices';
+import DevPortfolio from './pages/dev/DevPortfolio';
+import DevAbout from './pages/dev/DevAbout';
+import DevContact from './pages/dev/DevContact';
 import ProtectedRoute from './components/routes/ProtectedRoutes';
 import AdminRoute from './components/routes/AdminRoute';
 import DiscordCallback from './components/socials/DiscordCallback';
@@ -32,8 +38,6 @@ import Datenschutz from "./pages/legal/Datenschutz";
 import Agb from "./pages/legal/AGB";
 import Widerruf from "./pages/legal/Widerruf";
 import Cookies from "./pages/legal/Cookies";
-import ContactPage from "./pages/ContactPage";
-import ServicesPage from "./pages/ServicesPage";
 import Pricing from "./pages/Pricing";
 import Welcome from "./pages/Welcome";
 import CancelContract from "./pages/CancelContract";
@@ -66,13 +70,22 @@ const SiteLayout = () => (
   </div>
 );
 
-// Guards the freelance/marketing pages (Home, Services, About, Contact) on
-// bot.goalkeeper91.de - see lib/botDomain.ts. Anyone hitting one of these
-// paths directly (bookmark, guessed URL, a crawler) is bounced to /pricing
-// instead of the freelance content ever rendering, since hiding the nav
-// links alone wouldn't stop a URL-based domain scan from finding them.
-const FreelanceOnlyRoute = ({ children }: { children: ReactElement }) =>
-  isBotStorefront() ? <Navigate to="/pricing" replace /> : children;
+// Three-way storefront switch for a shared path: bot.goalkeeper91.de never
+// sees anything but the Twitch Bot product (see lib/botDomain.ts - Paddle
+// rejected the main domain for carrying "Software Development Services"
+// content alongside a SaaS checkout, so that hostname must stay 100% clean
+// of freelance content), dev.goalkeeper91.de sees ONLY the extracted
+// software-dev-business content (see lib/devDomain.ts), everything else
+// (the main domain) sees `main`. Redirects rather than 404s/blank pages
+// for a path that doesn't apply to the current hostname - a bookmark,
+// guessed URL, or crawler hitting e.g. /services on the main domain (that
+// page moved to dev.) bounces to `/` instead of rendering nothing or the
+// wrong persona's content.
+const StorefrontRoute = ({ main, dev }: { main: ReactElement | null; dev: ReactElement | null }) => {
+  if (isBotStorefront()) return <Navigate to="/pricing" replace />;
+  if (isDevStorefront()) return dev ?? <Navigate to="/" replace />;
+  return main ?? <Navigate to="/" replace />;
+};
 
 // Team management only applies to your own channel, not one you're managing
 // on someone else's behalf - deep-linking here while acting as another
@@ -94,12 +107,18 @@ const App = () => {
         <Route path='/cs2/match-notes-popup' element={<CS2MatchNotesPopup />} />
 
         <Route element={<SiteLayout />}>
-          {/* Public Routes - Home/Services/About/Contact are the freelance
-              marketing pages, gated off entirely on bot.goalkeeper91.de */}
-          <Route path='/' element={<FreelanceOnlyRoute><Home /></FreelanceOnlyRoute>} />
-          <Route path="/contact" element={<FreelanceOnlyRoute><ContactPage /></FreelanceOnlyRoute>} />
-          <Route path="/services" element={<FreelanceOnlyRoute><ServicesPage /></FreelanceOnlyRoute>} />
-          <Route path='/about' element={<FreelanceOnlyRoute><About /></FreelanceOnlyRoute>} />
+          {/* Public Routes - / and /about carry different content per
+              storefront (streamer persona on the main domain, dev-business
+              persona on dev.goalkeeper91.de); /services, /portfolio and
+              /contact exist ONLY on dev.goalkeeper91.de now (the software-
+              dev business is fully extracted off the main domain - see
+              lib/devDomain.ts). All of it stays gated off entirely on
+              bot.goalkeeper91.de, same as before. */}
+          <Route path='/' element={<StorefrontRoute main={<Home />} dev={<DevHome />} />} />
+          <Route path="/contact" element={<StorefrontRoute main={null} dev={<DevContact />} />} />
+          <Route path="/services" element={<StorefrontRoute main={null} dev={<DevServices />} />} />
+          <Route path="/portfolio" element={<StorefrontRoute main={null} dev={<DevPortfolio />} />} />
+          <Route path='/about' element={<StorefrontRoute main={<About />} dev={<DevAbout />} />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/welcome" element={<Welcome />} />
           {/* Kündigungsbutton nach § 312k BGB - permanently reachable from the

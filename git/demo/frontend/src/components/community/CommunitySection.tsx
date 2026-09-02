@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { FaDiscord } from "react-icons/fa";
-import { Link } from 'react-router-dom';
+import { DEV_STOREFRONT_HOSTNAME } from '../../lib/devDomain';
 
 const CommunitySection = () => {
     const [memberCount, setMemberCount] = useState<number | null>(null);
@@ -37,7 +37,7 @@ const CommunitySection = () => {
             </motion.p>
 
             <motion.a
-                href="https://discord.gg/BBBAVFCfm8"
+                href="https://discord.gg/XE8sW56"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 px-6 py-3 bg-goalyBlue hover:bg-goalyCyan text-white font-semibold rounded-full shadow-md transition"
@@ -55,9 +55,9 @@ const CommunitySection = () => {
             >
                 <p>
                     👉 Du suchst einen Entwickler für dein Projekt?{" "}
-                    <Link to="/contact" className="text-indigo-400 hover:underline">
-                        Kontaktiere mich direkt
-                    </Link>
+                    <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="text-indigo-400 hover:underline">
+                        Zu meinem Software-Business
+                    </a>
                 </p>
             </motion.div>
         </div>

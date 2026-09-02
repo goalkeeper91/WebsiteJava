@@ -2,9 +2,11 @@ import React from 'react';
 import { FaTwitch, FaYoutube, FaTiktok, FaInstagram, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { isBotStorefront } from '../lib/botDomain';
+import { DEV_STOREFRONT_HOSTNAME, isDevStorefront } from '../lib/devDomain';
 
 const Footer: React.FC = () => {
   const isBot = isBotStorefront();
+  const isDev = isDevStorefront();
 
   return (
     <footer className="bg-slate-900 text-white py-6 w-full box-border">
@@ -39,10 +41,24 @@ const Footer: React.FC = () => {
 
             <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
-                {!isBot && <Link to="/services" className="hover:text-white transition">Lösungen</Link>}
-                <Link to="/pricing" className="hover:text-white transition">Preise</Link>
-                {!isBot && <Link to="/about" className="hover:text-white transition">About</Link>}
-                {!isBot && <Link to="/contact" className="hover:text-white transition">Kontakt</Link>}
+                {isDev ? (
+                  <>
+                    <Link to="/services" className="hover:text-white transition">Leistungen</Link>
+                    <Link to="/portfolio" className="hover:text-white transition">Portfolio</Link>
+                    <Link to="/about" className="hover:text-white transition">Über mich</Link>
+                    <Link to="/contact" className="hover:text-white transition">Kontakt</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/pricing" className="hover:text-white transition">Preise</Link>
+                    {!isBot && <Link to="/about" className="hover:text-white transition">About</Link>}
+                    {!isBot && (
+                      <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="hover:text-white transition">
+                        Entwickler gesucht?
+                      </a>
+                    )}
+                  </>
+                )}
               </div>
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
                 <Link to="/legal/impressum" className="hover:text-white transition">Impressum</Link>

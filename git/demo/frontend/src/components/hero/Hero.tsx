@@ -12,7 +12,7 @@ const Hero = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
                 >
-                    Softwareentwicklung & Live Entertainment
+                    Twitch Bot SaaS & Live Entertainment
                 </motion.h1>
 
                 <motion.p
@@ -21,11 +21,10 @@ const Hero = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.3 }}
                 >
-                    Ich bin Marcel – Full-Stack Entwickler mit Leidenschaft für Gaming & Streaming. Ob{' '}
-                    <span className="text-indigo-400 font-semibold">maßgeschneiderte Softwarelösungen</span>, mein
-                    eigener <span className="text-indigo-400 font-semibold">Twitch Bot</span> als SaaS (Automod,
-                    Loyalty-Punkte, Clip-Automatisierung) oder{' '}
-                    <span className="text-indigo-400 font-semibold">Community-Content</span> – hier findest du alles.
+                    Ich bin Marcel – Gamer, Streamer und Entwickler meines eigenen{' '}
+                    <span className="text-indigo-400 font-semibold">Twitch Bots</span> als SaaS (Automod,
+                    Loyalty-Punkte, Clip-Automatisierung). Schau beim Livestream vorbei oder werde Teil der{' '}
+                    <span className="text-indigo-400 font-semibold">Community</span>.
                 </motion.p>
 
                 <motion.div
@@ -35,14 +34,8 @@ const Hero = () => {
                     transition={{ delay: 0.6 }}
                 >
                     <Link
-                        to="/contact"
-                        className="w-full sm:w-auto px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
-                    >
-                        Entwickler anheuern
-                    </Link>
-                    <Link
                         to="/pricing"
-                        className="w-full sm:w-auto px-6 py-3 border-2 border-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
+                        className="w-full sm:w-auto px-6 py-3 bg-goalyBlue hover:bg-goalyCyan rounded-lg text-white font-semibold transition text-center"
                     >
                         Twitch Bot entdecken
                     </Link>
