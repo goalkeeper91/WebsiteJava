@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from "framer-motion";
 import { FaDiscord } from "react-icons/fa";
-import { DEV_STOREFRONT_HOSTNAME } from '../../lib/devDomain';
 
 const CommunitySection = () => {
     const [memberCount, setMemberCount] = useState<number | null>(null);
@@ -32,7 +31,7 @@ const CommunitySection = () => {
                 transition={{ delay: 0.3 }}
             >
                 <strong>{memberCount ?? '...'}</strong> Mitglieder diskutieren bereits über
-                <span className="text-indigo-400 font-semibold"> Technik, Gaming & Streaming</span>.
+                <span className="text-indigo-400 font-semibold"> Gaming & Streaming</span>.
                 Sei dabei, wenn es um spannende Projekte, neue Ideen und gute Unterhaltung geht!
             </motion.p>
 
@@ -46,20 +45,6 @@ const CommunitySection = () => {
                 <FaDiscord size={24} />
                 Jetzt Discord beitreten
             </motion.a>
-
-            <motion.div
-                className="mt-8 text-sm text-gray-400"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-            >
-                <p>
-                    👉 Du suchst einen Entwickler für dein Projekt?{" "}
-                    <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="text-indigo-400 hover:underline">
-                        Zu meinem Software-Business
-                    </a>
-                </p>
-            </motion.div>
         </div>
     </section>
   );

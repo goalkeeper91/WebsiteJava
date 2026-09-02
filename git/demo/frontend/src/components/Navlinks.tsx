@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { isBotStorefront } from "../lib/botDomain";
-import { DEV_STOREFRONT_HOSTNAME, isDevStorefront } from "../lib/devDomain";
+import { isDevStorefront } from "../lib/devDomain";
 
 interface NavLinksProps {
   isAuthenticated: boolean;
@@ -49,11 +49,6 @@ export const NavLinks: React.FC<NavLinksProps> = ({
           <Link to={isBot ? "/pricing" : "/"} className={linkClass}>Home</Link>
           <Link to="/pricing" className={linkClass}>Preise</Link>
           {!isBot && <Link to="/about" className={linkClass}>About</Link>}
-          {!isBot && (
-            <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className={linkClass}>
-              Entwickler gesucht?
-            </a>
-          )}
         </>
       )}
 

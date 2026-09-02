@@ -2,7 +2,7 @@ import React from 'react';
 import { FaTwitch, FaYoutube, FaTiktok, FaInstagram, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { isBotStorefront } from '../lib/botDomain';
-import { DEV_STOREFRONT_HOSTNAME, isDevStorefront } from '../lib/devDomain';
+import { isDevStorefront } from '../lib/devDomain';
 
 const Footer: React.FC = () => {
   const isBot = isBotStorefront();
@@ -36,24 +36,19 @@ const Footer: React.FC = () => {
             </div>
 
             <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
-              &copy; {new Date().getFullYear()} Goalkeeper91. Alle Rechte vorbehalten.
+              &copy; {new Date().getFullYear()} {isDev ? "Marcel Turlach" : "Goalkeeper91"}. Alle Rechte vorbehalten.
             </div>
 
             <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
               {/* Every one of these already sits in the header nav (see
                   Navlinks.tsx) - repeating them here was pure redundancy,
-                  not extra discoverability. Only the main/bot persona keeps
-                  a row here, since it's just the single cross-storefront
-                  "Entwickler gesucht?" link, not a duplicate of its own nav. */}
+                  not extra discoverability. dev. no longer cross-links to/
+                  from the main domain at all (this storefront is meant to
+                  become fully independent later, see lib/devDomain.ts). */}
               {!isDev && (
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
                   <Link to="/pricing" className="hover:text-white transition">Preise</Link>
                   {!isBot && <Link to="/about" className="hover:text-white transition">About</Link>}
-                  {!isBot && (
-                    <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="hover:text-white transition">
-                      Entwickler gesucht?
-                    </a>
-                  )}
                 </div>
               )}
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">

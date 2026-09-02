@@ -78,13 +78,17 @@ const projects: Project[] = [
 
 const DevPortfolio = () => {
   return (
-    <div className="relative w-full min-h-screen bg-slate-950 text-white">
+    <div className="relative w-full bg-slate-950 text-white overflow-hidden">
       <Seo
         title="Portfolio & Referenzen"
         description="Ausgewählte Projekte von Marcel Turlach: Esport-Vereins-Plattform mit FACEIT-Integration und KI-Features, eine Twitch-Bot-SaaS-Plattform mit Go-Backend und Paddle-Billing, und mehr."
         path="/portfolio"
       />
-      <section className="relative text-center py-20 px-6 bg-slate-900">
+
+      {/* Same decorative glow as the rest of the storefront. */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-goalyBlue/10 blur-3xl" />
+
+      <section className="relative z-10 text-center py-20 px-6">
         <motion.h1
           className="text-5xl font-extrabold mb-4"
           initial={{ opacity: 0, y: -20 }}

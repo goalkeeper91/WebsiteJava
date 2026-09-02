@@ -21,30 +21,34 @@ const DevServices = () => {
       title: "Individuelle Softwarelösungen",
       description:
         "Von Prototyp bis Produktivbetrieb – maßgeschneiderte Web-, Mobile- oder Desktop-Anwendungen für deine Anforderungen, kein Baukasten von der Stange.",
-      icon: <FaCode size={40} className="text-indigo-400 mb-4" />,
+      icon: <FaCode size={32} />,
     },
     {
       title: "KI-gestützte Prozessautomatisierung",
       description:
         "Design und Implementierung KI-gestützter Automatisierungslösungen (Digital Automations, LLM-/Prompt-Engineering, API-Integrationen) für datenintensive oder wiederkehrende Aufgaben.",
-      icon: <FaRobot size={40} className="text-green-400 mb-4" />,
+      icon: <FaRobot size={32} />,
     },
     {
       title: "Bots & Integrationen",
       description:
         "Bots, Workflow-Automatisierungen und Schnittstellen-Integrationen (Discord, Twitch, interne Tools) - Prozesse automatisieren statt manuell wiederholen.",
-      icon: <FaCogs size={40} className="text-pink-400 mb-4" />,
+      icon: <FaCogs size={32} />,
     },
   ];
 
   return (
-    <div className="relative w-full min-h-screen bg-slate-950 text-white">
+    <div className="relative w-full bg-slate-950 text-white overflow-hidden">
       <Seo
         title="Leistungen: Softwareentwicklung & KI-Automatisierung"
         description="Individuelle Softwarelösungen, KI-gestützte Prozessautomatisierung und Bot-/API-Integrationen - Freelance-Entwicklung von Marcel Turlach."
         path="/services"
       />
-      <section className="relative text-center py-20 px-6 bg-slate-900">
+
+      {/* Same decorative glow as About/Home/Portfolio for a consistent look. */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-goalyBlue/10 blur-3xl" />
+
+      <section className="relative z-10 text-center py-20 px-6">
         <motion.h1
           className="text-5xl font-extrabold mb-4"
           initial={{ opacity: 0, y: -20 }}
@@ -64,32 +68,37 @@ const DevServices = () => {
         </motion.p>
       </section>
 
-      <section className="py-16 px-6 max-w-6xl mx-auto">
+      <section className="relative z-10 py-16 px-6 max-w-6xl mx-auto">
         <h2 className="sr-only">Leistungen im Überblick</h2>
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service, i) => (
             <motion.div
               key={service.title}
-              className="bg-slate-900 rounded-2xl shadow-lg p-6 flex flex-col items-center text-center"
-              whileHover={{ scale: 1.05 }}
+              className="bg-slate-900 rounded-2xl shadow-lg p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.03 }}
             >
-              {service.icon}
-              <h3 className="text-2xl font-bold mb-2">{service.title}</h3>
-              <p className="text-gray-300">{service.description}</p>
+              <div className="text-goalyBlue mb-3">{service.icon}</div>
+              <h3 className="text-xl font-bold mb-2">{service.title}</h3>
+              <p className="text-gray-300 text-sm">{service.description}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      <section className="py-20 px-6 text-center bg-slate-900">
+      <section className="relative z-10 bg-slate-900 py-20 px-6 text-center">
         <motion.h2
           className="text-3xl font-bold mb-6"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
         >
           Bereit, dein Projekt zu starten?
         </motion.h2>
-        <p className="text-gray-100 mb-8">
+        <p className="text-gray-300 mb-8 max-w-xl mx-auto">
           Lass uns über deine Ideen sprechen – ob kleine Automatisierung oder komplexe Softwarelösung.
           Keine Pauschalpreise, jedes Projekt bekommt nach einem kurzen Erstgespräch ein individuelles Angebot.
         </p>

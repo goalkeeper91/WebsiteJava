@@ -28,7 +28,7 @@ const valueProps: ValueProp[] = [
   {
     icon: <FaAmbulance size={28} />,
     title: "Ruhe unter Druck",
-    text: "7 Jahre Rettungssanitäter vor der Softwareentwicklung. Krisenmanagement, Priorisieren, nicht in Panik geraten - das bringe ich in jedes Projekt mit.",
+    text: "7 Jahre Rettungssanitäter, und bis heute gelegentlich weiter im Einsatz. Krisenmanagement, Priorisieren, nicht in Panik geraten - keine alte Anekdote, sondern etwas, das ich immer noch mache.",
   },
   {
     icon: <FaBolt size={28} />,
@@ -43,6 +43,7 @@ type Job = { period: string; title: string; company?: string };
 // lives in the value props / portfolio instead. This is a scan-in-five-
 // seconds timeline, not the CV itself.
 const experience: Job[] = [
+  { period: "aktuell, nebenberuflich", title: "Rettungssanitäter", company: "zur finanziellen Überbrückung, neben dem Aufbau des Software-Business" },
   { period: "07/2025 – heute", title: "Fullstack Developer", company: "Eigenprojekt (goalkeeper91.de)" },
   { period: "02/2024 – 07/2025", title: "Webentwickler", company: "Travello GmbH" },
   { period: "02/2022 – 02/2024", title: "Professionalisierung", company: "Vertiefung Software-Architektur" },
