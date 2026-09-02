@@ -40,26 +40,22 @@ const Footer: React.FC = () => {
             </div>
 
             <div className="text-sm text-gray-400 text-center sm:text-right max-w-full">
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
-                {isDev ? (
-                  <>
-                    <Link to="/services" className="hover:text-white transition">Leistungen</Link>
-                    <Link to="/portfolio" className="hover:text-white transition">Portfolio</Link>
-                    <Link to="/about" className="hover:text-white transition">Über mich</Link>
-                    <Link to="/contact" className="hover:text-white transition">Kontakt</Link>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/pricing" className="hover:text-white transition">Preise</Link>
-                    {!isBot && <Link to="/about" className="hover:text-white transition">About</Link>}
-                    {!isBot && (
-                      <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="hover:text-white transition">
-                        Entwickler gesucht?
-                      </a>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Every one of these already sits in the header nav (see
+                  Navlinks.tsx) - repeating them here was pure redundancy,
+                  not extra discoverability. Only the main/bot persona keeps
+                  a row here, since it's just the single cross-storefront
+                  "Entwickler gesucht?" link, not a duplicate of its own nav. */}
+              {!isDev && (
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
+                  <Link to="/pricing" className="hover:text-white transition">Preise</Link>
+                  {!isBot && <Link to="/about" className="hover:text-white transition">About</Link>}
+                  {!isBot && (
+                    <a href={`https://${DEV_STOREFRONT_HOSTNAME}`} className="hover:text-white transition">
+                      Entwickler gesucht?
+                    </a>
+                  )}
+                </div>
+              )}
               <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end">
                 <Link to="/legal/impressum" className="hover:text-white transition">Impressum</Link>
                 <Link to="/legal/datenschutz" className="hover:text-white transition">Datenschutz</Link>

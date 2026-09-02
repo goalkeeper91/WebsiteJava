@@ -57,28 +57,35 @@ export const NavLinks: React.FC<NavLinksProps> = ({
         </>
       )}
 
-      {/* Admin Link */}
-      {isAdmin && (
-        <Link to="/admin" className={`${linkClass} text-green-400 font-bold`}>
-          Admin
-        </Link>
-      )}
+      {/* Twitch-OAuth-Login/Admin/Dashboard sind Bot-SaaS-Funktionalität
+          (Streamer verwalten ihren Bot-Kanal) - auf dev.goalkeeper91.de
+          hat ein Kunde, der einen Entwickler sucht, keinen Grund, das je
+          zu sehen. Wer als Betreiber wirklich ins Bot-Dashboard muss, tut
+          das über die Haupt-/Bot-Domain, nicht über die Dev-Storefront-Nav. */}
+      {!isDev && (
+        <>
+          {isAdmin && (
+            <Link to="/admin" className={`${linkClass} text-green-400 font-bold`}>
+              Admin
+            </Link>
+          )}
 
-      {isAuthenticated && (
-        <Link to="/dashboard" className={`${linkClass} text-green-400 font-bold`}>
-            Dashboard
-        </Link>
-      )}
+          {isAuthenticated && (
+            <Link to="/dashboard" className={`${linkClass} text-green-400 font-bold`}>
+                Dashboard
+            </Link>
+          )}
 
-      {/* Login / Logout */}
-      {username ? (
-        <button onClick={handleLogout} className={`${linkClass} text-red-300`}>
-          Logout ({username})
-        </button>
-      ) : (
-        <a href="/auth/login" className={`${linkClass} text-green-300`}>
-          Login
-        </a>
+          {username ? (
+            <button onClick={handleLogout} className={`${linkClass} text-red-300`}>
+              Logout ({username})
+            </button>
+          ) : (
+            <a href="/auth/login" className={`${linkClass} text-green-300`}>
+              Login
+            </a>
+          )}
+        </>
       )}
     </div>
   );
