@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FaRobot, FaDesktop } from "react-icons/fa";
 import Seo from "../../components/Seo";
 
 type Visual =
@@ -21,12 +20,15 @@ type Project = {
 // descriptions (architecture, scope, tech stack), never business-logic
 // specifics or client-confidential details - matches the user's own
 // instruction ("so viel wie möglich zeigen, ohne wichtige Kernfeatures zu
-// leaken"). Visuals: real screenshots where a clean one exists (the
-// Punishers Germany brand logo, the Twitch Bot dashboard) - deliberately
-// NOT the FaceitReader screenshot that was here before, since it happens
-// to show an in-app error dialog and would undermine trust more than a
-// missing image would. Hanse-Analyst/FaceitReader get a styled icon panel
-// instead - consistent look, no misleading screenshot.
+// leaken"). All four visuals are real: Punishers Germany's brand logo, a
+// real Twitch Bot dashboard screenshot, and fresh screenshots taken of
+// Hanse-Analyst (its own dev server, browser DOM) and FaceitReader (the
+// actual installed desktop app, OS-level window capture) - deliberately
+// NOT the very first FaceitReader screenshot that was here, which
+// happened to catch an in-app error dialog. The `icon` variant of Visual
+// below is kept as a documented fallback pattern (styled gradient+icon
+// panel) for a future project that doesn't have a clean screenshot yet,
+// even though nothing currently uses it.
 const projects: Project[] = [
   {
     title: "Punishers Germany",
@@ -70,7 +72,7 @@ const projects: Project[] = [
     ],
     tech: ["Python", "FastAPI", "SQLAlchemy", "React", "Vite", "Ollama / Llama 3"],
     link: { href: "https://github.com/goalkeeper91/Hanse-Analyst", label: "Auf GitHub ansehen" },
-    visual: { type: "icon", icon: <FaRobot size={64} />, gradient: "from-emerald-600 to-teal-700" },
+    visual: { type: "image", src: "/images/hanse-analyst-screenshot.png" },
   },
   {
     title: "FaceitReader",
@@ -83,7 +85,7 @@ const projects: Project[] = [
     ],
     tech: ["C#", ".NET"],
     link: { href: "https://github.com/goalkeeper91/FaceitReader", label: "Auf GitHub ansehen" },
-    visual: { type: "icon", icon: <FaDesktop size={64} />, gradient: "from-amber-600 to-orange-700" },
+    visual: { type: "image", src: "/images/faceitreader-screenshot.png" },
   },
 ];
 
