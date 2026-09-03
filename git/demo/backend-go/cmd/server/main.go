@@ -361,7 +361,7 @@ func main() {
 	commandHandler := handler.NewChatCommandHandler(commandService, sessionStore, cfg.Session.Name, teamService)
 	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name, teamService)
 	streamDashboardHandler := handler.NewStreamDashboardHandler(streamDashboardService, sessionStore, cfg.Session.Name, teamService)
-	contactHandler := handler.NewContactHandler(contactRepo)
+	contactHandler := handler.NewContactHandler(contactRepo, cfg.Discord.BotToken, cfg.Discord.AdminContactChannel)
 	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
 	botStatsHandler := handler.NewBotStatsHandler(redisService, sessionStore, cfg.Session.Name)
 

@@ -115,6 +115,13 @@ services:
       DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL}
       DISCORD_PERMISSIONS: ${DISCORD_BOT_PERMISSIONS:-8}
 
+      # Admin-Benachrichtigung bei neuen Kontaktanfragen (contact_handler.go,
+      # notifyDiscord) - Bot-Token + Ziel-Channel-ID des privaten Channels,
+      # in dem die Anfragen landen sollen. Beide optional: ohne sie bleibt
+      # das Kontaktformular unverändert funktionsfähig, nur ohne Benachrichtigung.
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_ADMIN_CONTACT_CHANNEL: ${DISCORD_ADMIN_CONTACT_CHANNEL}
+
       # Subathon Timer EventSub webhook (Twitch signs deliveries with this
       # secret; callback URL must be publicly reachable, no localhost default)
       SUBATHON_EVENTSUB_SECRET: ${SUBATHON_EVENTSUB_SECRET}
