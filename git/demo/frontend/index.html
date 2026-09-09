@@ -24,11 +24,10 @@
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
         "name": "Goalkeeper91",
-        "alternateName": "Marcel Turlach - Softwareentwicklung",
         "url": "https://goalkeeper91.de",
         "logo": "https://goalkeeper91.de/images/goalkeeper_logo.png",
         "image": "https://goalkeeper91.de/images/goalkeeper_logo.png",
-        "description": "Individuelle Softwareentwicklung (Web, Mobile, Automatisierung) sowie ein SaaS Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung.",
+        "description": "SaaS Twitch-Chatbot mit Automod, Loyalty-Punkten, Giveaways und automatischer Clip-Erstellung, von Streamer Marcel Turlach (Goalkeeper91).",
         "areaServed": "DE",
         "founder": {
           "@type": "Person",
@@ -46,13 +45,15 @@
     </script>
     <script>
       // bot.goalkeeper91.de is a Paddle-facing storefront restricted to the
-      // Twitch Bot SaaS product only (see src/lib/botDomain.ts) - the global
-      // JSON-LD above describes the freelance/software-development business
-      // instead, which is exactly the product category Paddle's Acceptable
-      // Use Policy excludes, so it must not be present on that hostname at
-      // all. Removed here (before the SPA even mounts) rather than only in
-      // React, since a crawler reading raw HTML wouldn't see a React-time
-      // removal in time anyway.
+      // Twitch Bot SaaS product only (see src/lib/botDomain.ts). The global
+      // JSON-LD above no longer mentions the freelance/software-development
+      // business at all (that content moved entirely off this repo to its
+      // own project - see github.com/goalkeeper91/from_goaly_to_cody), but
+      // it's still stripped here too: bot. shouldn't carry the streamer/
+      // ProfessionalService branding either, same reasoning as before
+      // (Paddle reviews this hostname in isolation). Removed here (before
+      // the SPA even mounts) rather than only in React, since a crawler
+      // reading raw HTML wouldn't see a React-time removal in time anyway.
       if (location.hostname === 'bot.goalkeeper91.de') {
         var globalJsonLd = document.getElementById('global-jsonld');
         if (globalJsonLd) globalJsonLd.remove();

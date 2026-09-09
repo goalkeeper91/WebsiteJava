@@ -6,7 +6,7 @@ const About = () => {
     <section className="relative w-full min-h-screen bg-slate-950 text-white py-16">
       <Seo
         title="Über mich"
-        description="Marcel alias Goalkeeper91: Full-Stack Softwareentwickler und Twitch-Streamer. Tech-Stack, Hintergrund und wie Softwareentwicklung und Live-Entertainment bei mir zusammenkommen."
+        description="Marcel alias Goalkeeper91: Twitch-Streamer und Gamer. Hintergrund, Setup und die eigene Bot-Plattform hinter meiner Community."
         path="/about"
       />
       <div className="relative z-10 max-w-5xl mx-auto space-y-16">
@@ -15,8 +15,8 @@ const About = () => {
         <div className="text-center">
           <h1 className="text-5xl font-bold mb-4 text-white">Über Goalkeeper91</h1>
           <p className="text-lg text-gray-300">
-            Willkommen in meiner Welt aus Gaming, Livestreaming und Softwareentwicklung!
-            Ich kombiniere kreative Projekte mit technischem Know-how – für einzigartige Lösungen.
+            Willkommen in meiner Welt aus Gaming und Livestreaming! Wenn ich nicht gerade live bin,
+            baue ich an den Tools, die meine Community jeden Tag benutzt.
           </p>
         </div>
 
@@ -33,9 +33,10 @@ const About = () => {
           <div>
             <h2 className="text-2xl font-semibold mb-2 text-goalyBlue">Wer bin ich?</h2>
             <p className="text-gray-300 leading-relaxed">
-              Hey! Ich bin Goalkeeper91 – leidenschaftlicher Gamer, Livestreamer und Softwareentwickler.
-              Seit 2018 streame ich regelmäßig auf Twitch, entwickle Tools für meine Community und realisiere individuelle Softwareprojekte.
-              Dabei kombiniere ich Kreativität und Technik, um sowohl interaktive Erlebnisse als auch effiziente Lösungen für echte Probleme zu schaffen.
+              Hey! Ich bin Goalkeeper91 – leidenschaftlicher Gamer und Livestreamer.
+              Seit 2018 streame ich regelmäßig auf Twitch und habe mit meiner eigenen Bot-Plattform
+              (Automod, Loyalty-Punkte, Giveaways, automatische Clip-Erstellung) das technische Herzstück
+              meiner Community selbst gebaut.
             </p>
           </div>
         </div>
