@@ -251,6 +251,7 @@ services:
       - ./nginx/htpasswd/zeiterfassung:/etc/nginx/htpasswd/zeiterfassung:ro
       - ./nginx/sanitaetsleitstelle.goalkeeper91.de.conf:/etc/nginx/conf.d/sanitaetsleitstelle.conf:ro
       - ./nginx/fuchs.goalkeeper91.de.conf:/etc/nginx/conf.d/fuchs.conf:ro
+      - ./nginx/fuchshilft.de.conf:/etc/nginx/conf.d/fuchshilft.conf:ro
       - ./nginx/office.goalkeeper91.de.conf:/etc/nginx/conf.d/office.conf:ro
       - ./nginx/partner.goalkeeper91.de.conf:/etc/nginx/conf.d/partner.conf:ro
       - ./nginx/htpasswd/fuchs:/etc/nginx/htpasswd/fuchs:ro
