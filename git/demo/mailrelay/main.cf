@@ -11,7 +11,12 @@ myorigin = $mydomain
 # und sofort weitergeleitet. Das ist der Unterschied zu einem "echten"
 # Mailserver mit Postfaechern.
 mydestination =
-virtual_alias_domains = fuchs.goalkeeper91.de
+# fuchshilft.de zusaetzlich zur alten Domain - beide sollen synchron
+# funktionieren (dieselben Adressen, dieselben Gmail-Ziele, siehe
+# virtual-Datei). MX-Eintrag "fuchshilft.de MX 10 mail.goalkeeper91.de"
+# muss dafuer bei INWX ergaenzt werden (kein neuer A-Record noetig,
+# mail.goalkeeper91.de existiert und zeigt bereits auf diesen Server).
+virtual_alias_domains = fuchs.goalkeeper91.de fuchshilft.de
 virtual_alias_maps = hash:/etc/postfix/virtual
 
 inet_interfaces = all
