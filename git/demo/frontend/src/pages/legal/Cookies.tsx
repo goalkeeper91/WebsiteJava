@@ -48,9 +48,7 @@ const Cookies: React.FC = () => {
           <li>
             <strong>Notwendig:</strong> technisch erforderliche Cookies, u. a. zur Aufrechterhaltung Ihres
             Login-Status im Dashboard und zur Speicherung Ihrer Cookie-Einwilligung selbst. Ohne diese Cookies
-            funktioniert die Plattform nicht. Dazu zählt auch das Cookie <code>tiktok_demo_uid</code>, das nur
-            beim freiwilligen Verbinden eines TikTok-Kontos auf der Seite „/tiktok“ gesetzt wird: eine zufällige
-            Kennung ohne Personenbezug, nicht per Skript lesbar (HttpOnly), 24 Stunden gültig.
+            funktioniert die Plattform nicht.
           </li>
           <li>
             <strong>Präferenzen:</strong> speichern Einstellungen wie z. B. Ihr bevorzugtes Layout im Dashboard.

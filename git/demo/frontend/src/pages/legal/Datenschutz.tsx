@@ -6,7 +6,7 @@ const Datenschutz: React.FC = () => {
     <section className="w-full min-h-screen bg-slate-950 flex items-center justify-center py-10 px-4">
       <Seo
         title="Datenschutzerklärung"
-        description="Datenschutzerklärung von Goalkeeper91: welche Daten bei Twitch-/Discord-Login, der optionalen TikTok-Verknüpfung, Nutzung des Dashboards und der Bezahlung über Paddle verarbeitet werden."
+        description="Datenschutzerklärung von Goalkeeper91: welche Daten bei Twitch-/Discord-Login, Nutzung des Dashboards und der Bezahlung über Paddle verarbeitet werden."
         path="/legal/datenschutz"
       />
       <div className="max-w-4xl bg-slate-900 text-white p-8 rounded-lg shadow-lg overflow-auto">
@@ -83,17 +83,6 @@ const Datenschutz: React.FC = () => {
           Daten werden nur an externe Stellen weitergegeben, wenn dies gesetzlich erlaubt oder zur Vertragserfüllung erforderlich ist. Auftragsverarbeiter erhalten Daten nur nach AVV.
         </p>
 
-        <h3 className="text-xl font-semibold mt-4 mb-2">Übermittlung in Drittländer</h3>
-        <p>
-          Einige der unten genannten Dienstleister (u. a. Twitch, Discord, Paddle, TikTok und Composio) haben ihren
-          Sitz oder betreiben Server ganz oder teilweise außerhalb der EU bzw. des EWR, insbesondere in den USA und
-          im Vereinigten Königreich. Eine Übermittlung personenbezogener Daten dorthin erfolgt nur, wenn hierfür
-          eine Grundlage nach Art. 44 ff. DSGVO besteht, etwa ein Angemessenheitsbeschluss der EU-Kommission (z. B.
-          das EU-US Data Privacy Framework) oder EU-Standardvertragsklauseln des jeweiligen Anbieters, oder wenn Sie
-          ausdrücklich eingewilligt haben (Art. 49 Abs. 1 lit. a DSGVO), etwa indem Sie freiwillig ein Konto eines
-          solchen Anbieters mit uns verknüpfen.
-        </p>
-
         <h3 className="text-xl font-semibold mt-4 mb-2">Widerruf & Widerspruch</h3>
         <p>
           Bereits erteilte Einwilligungen können jederzeit widerrufen werden. Sie haben das Recht auf Widerspruch gegen Verarbeitung zu besonderen Fällen oder Direktwerbung.
@@ -124,13 +113,6 @@ const Datenschutz: React.FC = () => {
         <h3 className="text-xl font-semibold mt-4 mb-2">Cookies und Local Storage</h3>
         <p>
           Wir nutzen technisch notwendige Cookies und den Local Storage Ihres Browsers, um Ihren Login-Status sicherzustellen. Ohne diese Speicherung kann die Dashboard-Funktionalität nicht bereitgestellt werden.
-        </p>
-        <p className="mt-2">
-          Wenn Sie auf der Seite „/tiktok“ freiwillig ein TikTok-Konto verbinden (siehe Abschnitt 9), setzen wir
-          zusätzlich ein technisch notwendiges Cookie mit dem Namen <code>tiktok_demo_uid</code>. Es enthält eine
-          zufällig erzeugte Kennung (keine Angaben zu Ihrer Person), ist für Skripte nicht lesbar (HttpOnly), läuft
-          nach 24 Stunden ab und dient allein dazu, Ihren Browser der von Ihnen gestarteten Verbindung zuzuordnen.
-          Rechtsgrundlage: § 25 Abs. 2 Nr. 2 TDDDG sowie Art. 6 Abs. 1 lit. f DSGVO.
         </p>
 
         <h3 className="text-xl font-semibold mt-4 mb-2">Anfragen per E-Mail, Telefon oder Fax</h3>
@@ -204,60 +186,7 @@ const Datenschutz: React.FC = () => {
           Abs. 1 lit. b DSGVO). Zur Löschung Ihrer Daten senden Sie bitte eine E-Mail an info@goalkeeper91.de.
         </p>
 
-        <h2 className="text-2xl font-semibold mb-4 mt-6">9. TikTok-Verknüpfung (Login Kit / Content Posting API) über Composio</h2>
-        <p className="mb-2">
-          Auf der Seite „/tiktok“ können Sie optional ein TikTok-Konto mit uns verbinden. Die Verbindung erfolgt
-          ausschließlich auf Ihre Veranlassung über das „Login Kit“ von TikTok (OAuth 2.0); Ihr TikTok-Passwort
-          erhalten wir zu keinem Zeitpunkt. Für Nutzer im EWR ist TikTok Technology Limited (Irland) der Anbieter von
-          TikTok, deren Umgang mit Ihren Daten in der{" "}
-          <a href="https://www.tiktok.com/legal/page/eea/privacy-policy/en" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">
-            Datenschutzerklärung von TikTok
-          </a>{" "}
-          beschrieben ist.
-        </p>
-        <p className="mb-2">
-          <strong>Angeforderte Berechtigungen:</strong> <code>user.info.basic</code> (Anzeigename und Profilbild
-          Ihres TikTok-Kontos) sowie <code>video.upload</code> (Übermittlung eines Videos als Entwurf in den
-          TikTok-Posteingang des verbundenen Kontos). Über diese Berechtigung wird nichts veröffentlicht; ein Entwurf
-          wird erst durch Sie selbst in der TikTok-App bearbeitet und gepostet.
-        </p>
-        <p className="mb-2">
-          <strong>Datenkategorien & Speicherung:</strong> Anzeigename und Profilbild-URL werden beim Aufruf der Seite
-          von TikTok abgefragt und nur zur Anzeige verwendet; wir speichern sie nicht in unserer eigenen Datenbank.
-          Ebenso speichern wir keine Inhalte Ihres TikTok-Kontos. Die Autorisierung selbst (verschlüsselte
-          Zugriffs- und Aktualisierungs-Token, die TikTok-Kennung „open_id“, Verbindungsstatus) wird bei unserem
-          technischen Dienstleister Composio (composio.dev) gespeichert, bis Sie die Verbindung trennen. Bei einem
-          Video-Upload werden das Video und die zugehörigen Angaben (z. B. Beschreibungstext) an TikTok übermittelt.
-          Zusätzlich fallen kurzzeitig technische Server-Zugriffsdaten (u. a. IP-Adresse, Zeitpunkt) beim Hoster an
-          (siehe Abschnitt 2) sowie das in Abschnitt 4 beschriebene Cookie.
-        </p>
-        <p className="mb-2">
-          <strong>Composio als Dienstleister:</strong> Composio vermittelt die Anmeldung bei TikTok und die
-          API-Aufrufe in unserem Auftrag; der Zugriffsschlüssel für Composio liegt ausschließlich auf unserem Server
-          und nie in Ihrem Browser. Hierzu gelten die Auftragsverarbeitungsbedingungen von Composio. Weitere
-          Informationen finden Sie in der{" "}
-          <a href="https://composio.dev/privacy" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">
-            Datenschutzerklärung von Composio
-          </a>
-          . Zur möglichen Übermittlung in Drittländer siehe Abschnitt 3.
-        </p>
-        <p className="mb-2">
-          <strong>Zweck:</strong> Anzeige des verbundenen Kontos und Bereitstellung der Möglichkeit, Videos als
-          Entwurf an das verbundene TikTok-Konto zu übermitteln.
-        </p>
-        <p className="mb-2">
-          <strong>Rechtsgrundlage:</strong> Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die Sie durch Klick auf
-          „Connect with TikTok“ und die Zustimmung auf dem TikTok-Bildschirm erteilen. Sie können sie jederzeit mit
-          Wirkung für die Zukunft widerrufen.
-        </p>
-        <p>
-          <strong>Widerruf und Löschung:</strong> Über die Schaltfläche „Disconnect“ auf der Seite „/tiktok“ trennen
-          Sie die Verbindung; dabei wird die Autorisierung bei Composio gelöscht und der Zugriff bei TikTok
-          widerrufen. Alternativ können Sie den Zugriff in den Einstellungen Ihres TikTok-Kontos entziehen oder uns
-          per E-Mail an info@goalkeeper91.de um Löschung bitten.
-        </p>
-
-        <h2 className="text-2xl font-semibold mb-4 mt-6">10. Google Tag Manager & Cookiebot</h2>
+        <h2 className="text-2xl font-semibold mb-4 mt-6">9. Google Tag Manager & Cookiebot</h2>
         <p className="mb-2">
           Wir nutzen den Google Tag Manager (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland),
           um in die Website eingebundene Dienste zentral zu verwalten. Der Tag Manager selbst setzt keine Cookies
@@ -270,9 +199,8 @@ const Datenschutz: React.FC = () => {
         </p>
 
       <p className="text-sm mt-10 text-gray-400">
-        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a> & Ergänzungen für Twitch/Discord/TikTok API.
+        Quelle: <a href="https://www.e-recht24.de" className="underline text-goalyBlue" target="_blank" rel="noopener noreferrer">eRecht24</a> & Ergänzungen für Twitch/Discord API.
       </p>
-      <p className="text-sm mt-2 text-gray-400">Stand: 24.09.2026</p>
      </div>
     </section>
   );
