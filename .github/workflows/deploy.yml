@@ -147,7 +147,14 @@ jobs:
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "mkdir -p /home/${{ secrets.SERVER_USER }}/app/nginx"
 
+          # fuchshilft.de.conf und partner.fuchshilft.de.conf gehoeren zu einem
+          # anderen Projekt (fuchshilft.de) und werden dort direkt auf dem
+          # Server gepflegt - dieser Deploy darf sie weder ueberschreiben
+          # noch veraendern, auch wenn die Repo-Kopien inhaltlich (fast)
+          # identisch sind. Deshalb ausdruecklich ausgenommen.
           rsync -av \
+            --exclude 'fuchshilft.de.conf' \
+            --exclude 'partner.fuchshilft.de.conf' \
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./git/demo/nginx/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/nginx/
