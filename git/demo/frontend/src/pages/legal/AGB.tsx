@@ -49,21 +49,37 @@ const AGB: React.FC = () => {
             <a href="/legal/widerruf" className="underline text-goalyBlue">Widerrufsbelehrung</a>.
           </p>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">4. Haftung</h2>
+          <h2 className="text-2xl font-semibold mt-6 mb-2">4. Verknüpfte Drittanbieter-Dienste</h2>
+          <p className="mb-4">
+            Zur Nutzung einzelner Funktionen können Sie Konten externer Dienste mit unserer Plattform verknüpfen
+            (z. B. Twitch, Discord oder TikTok). Für diese Dienste gelten zusätzlich die Nutzungsbedingungen und
+            Richtlinien des jeweiligen Anbieters, die Sie selbst einzuhalten haben. Wir stehen in keiner
+            Verbindung zu diesen Anbietern und werden von ihnen weder unterstützt noch gebilligt; Marken und
+            Logos gehören den jeweiligen Inhabern. Für Inhalte, die Sie über eine Verknüpfung hochladen oder
+            veröffentlichen, sind Sie selbst verantwortlich und müssen über die dafür nötigen Rechte verfügen
+            (z. B. an Videos, Musik oder Bildmaterial). Jede Verknüpfung können Sie jederzeit selbst beenden,
+            entweder in unserem Dashboard bzw. auf der jeweiligen Verbindungsseite oder in den Einstellungen des
+            externen Kontos. Wir übernehmen keine Gewähr für die Verfügbarkeit und den Funktionsumfang externer
+            Schnittstellen; Änderungen oder Einschränkungen durch den jeweiligen Anbieter können dazu führen, dass
+            einzelne Funktionen vorübergehend oder dauerhaft nicht zur Verfügung stehen.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-6 mb-2">5. Haftung</h2>
           <p className="mb-4">
             Die Nutzung unserer Dienste erfolgt auf eigene Verantwortung. Wir übernehmen keine Haftung für
             Schäden, Ausfälle oder Datenverlust, die direkt oder indirekt durch die Nutzung der Dienste entstehen.
           </p>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">5. Datenschutz</h2>
+          <h2 className="text-2xl font-semibold mt-6 mb-2">6. Datenschutz</h2>
           <p className="mb-4">
             Die Verarbeitung Ihrer Daten erfolgt ausschließlich gemäß unserer{" "}
             <a href="/legal/datenschutz" className="underline text-goalyBlue">Datenschutzerklärung</a>. Dies
-            umfasst insbesondere Twitch-ID, Login-Zeitpunkt, Account-Informationen sowie bei kostenpflichtigen
-            Tarifen die zur Abrechnung über Paddle notwendigen Daten.
+            umfasst insbesondere Twitch-ID, Login-Zeitpunkt, Account-Informationen, bei kostenpflichtigen
+            Tarifen die zur Abrechnung über Paddle notwendigen Daten sowie, falls Sie ein weiteres Konto (z. B.
+            Discord oder TikTok) verknüpfen, die dort beschriebenen Daten.
           </p>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">6. Änderungen der Nutzungsbedingungen</h2>
+          <h2 className="text-2xl font-semibold mt-6 mb-2">7. Änderungen der Nutzungsbedingungen</h2>
           <p className="mb-4">
             Wir behalten uns das Recht vor, diese Nutzungsbedingungen jederzeit zu ändern. Änderungen werden
             auf der Website veröffentlicht, und die weitere Nutzung der Dienste gilt als Zustimmung zu den neuen Bedingungen.

@@ -17,6 +17,7 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 
+	"demo/backend-go/internal/composio"
 	"demo/backend-go/internal/domain"
 	"demo/backend-go/internal/handler"
 	"demo/backend-go/internal/infrastructure/redis"
@@ -362,6 +363,13 @@ func main() {
 	activityHandler := handler.NewActivityHandler(activityService, sessionStore, cfg.Session.Name, teamService)
 	streamDashboardHandler := handler.NewStreamDashboardHandler(streamDashboardService, sessionStore, cfg.Session.Name, teamService)
 	contactHandler := handler.NewContactHandler(contactRepo, cfg.Discord.BotToken, cfg.Discord.AdminContactChannel)
+	// Public TikTok connect page (/tiktok) - Composio API key stays server-side.
+	tiktokHandler := handler.NewTikTokHandler(
+		composio.NewClient(cfg.Composio.APIBaseURL, cfg.Composio.APIKey),
+		cfg.Composio.TikTokAuthConfigID,
+		cfg.Frontend.URL,
+		cfg.Session.Secure,
+	)
 	botStatusHandler := handler.NewBotStatusHandler(userRepo, tokenRepo, sessionStore, redisService, cfg.Session.Name)
 	botStatsHandler := handler.NewBotStatsHandler(redisService, sessionStore, cfg.Session.Name)
 
@@ -411,6 +419,7 @@ func main() {
 	commandHandler.RegisterRoutes(router)
 	activityHandler.RegisterRoutes(router)
 	contactHandler.RegisterRoutes(router)
+	tiktokHandler.RegisterRoutes(router)
 	botStatusHandler.RegisterRoutes(router)
 	botStatsHandler.RegisterRoutes(router)
 

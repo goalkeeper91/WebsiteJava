@@ -18,6 +18,16 @@ type Config struct {
 	Discord  DiscordConfig
 	Frontend FrontendConfig
 	Paddle   PaddleConfig
+	Composio ComposioConfig
+}
+
+// ComposioConfig is intentionally not required at startup (like Paddle and
+// Discord): the public /tiktok connect page's endpoints answer 503 until
+// the key + auth config id are set, everything else boots normally.
+type ComposioConfig struct {
+	APIBaseURL         string
+	APIKey             string
+	TikTokAuthConfigID string // the "ac_..." id of the TikTok auth config created in the Composio dashboard
 }
 
 type ServerConfig struct {
@@ -164,6 +174,11 @@ func Load() (*Config, error) {
 			ProPriceIDYearly:      getEnv("PADDLE_PRICE_PRO_YEARLY", ""),
 			PremiumPriceIDMonthly: getEnv("PADDLE_PRICE_PREMIUM_MONTHLY", ""),
 			PremiumPriceIDYearly:  getEnv("PADDLE_PRICE_PREMIUM_YEARLY", ""),
+		},
+		Composio: ComposioConfig{
+			APIBaseURL:         getEnv("COMPOSIO_API_BASE_URL", "https://backend.composio.dev/api/v3.1"),
+			APIKey:             getEnv("COMPOSIO_API_KEY", ""),
+			TikTokAuthConfigID: getEnv("COMPOSIO_TIKTOK_AUTH_CONFIG_ID", ""),
 		},
 	}
 

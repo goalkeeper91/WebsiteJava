@@ -4,6 +4,7 @@ Disallow: /dashboard
 Disallow: /admin
 Disallow: /discord/callback
 Disallow: /welcome
+Disallow: /tiktok
 Disallow: /overlay/
 Disallow: /cs2/match-notes-popup
 
