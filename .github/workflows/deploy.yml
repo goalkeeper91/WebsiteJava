@@ -183,6 +183,25 @@ jobs:
           echo "✅ Mail Relay (Postfix) deployed zu ~/app/mailrelay/"
 
       #########################################
+      # DEPLOY UPTIME WATCHDOG
+      #########################################
+      - name: 🐕 Deploy Uptime Watchdog
+        run: |
+          # Wie beim Mail Relay: der watchdog-Service in
+          # docker-compose.prod.yml braucht seinen Build-Kontext
+          # (./watchdog) auf dem Server, sonst scheitert "Apply Docker
+          # Compose" mit "path .../watchdog not found".
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app/watchdog"
+
+          rsync -av \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./git/demo/watchdog/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/app/watchdog/
+
+          echo "✅ Uptime Watchdog deployed zu ~/app/watchdog/"
+
+      #########################################
       # DEPLOY DOCKER COMPOSE
       #########################################
       - name: 🐳 Deploy Docker Compose

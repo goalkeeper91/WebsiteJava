@@ -296,6 +296,26 @@ services:
       - app-network
 
   # =========================
+  # Uptime-Watchdog (E-Mail bei nginx-/Domain-Ausfall)
+  # =========================
+  # Prueft jede Minute, ob nginx antwortet und die WATCH_HOSTS oeffentlich
+  # erreichbar sind, und mailt bei Ausfall/Wiederkehr ueber den mailrelay-
+  # Container (siehe watchdog/watchdog.sh). Bewusst OHNE depends_on auf
+  # nginx/mailrelay: er muss auch dann laufen, wenn genau die ausgefallen
+  # sind. Kann einen Totalausfall des Servers NICHT melden (laeuft selbst
+  # darauf) - dafuer zusaetzlich einen externen Uptime-Dienst nutzen.
+  watchdog:
+    build:
+      context: ./watchdog
+    container_name: goalkeeper_watchdog_prod
+    restart: unless-stopped
+    environment:
+      WATCH_HOSTS: ${WATCH_HOSTS:-fuchshilft.de}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-goalkeeper91cast@gmail.com}
+    networks:
+      - app-network
+
+  # =========================
   # Adminer (Datenbank UI)
   # =========================
   adminer:
