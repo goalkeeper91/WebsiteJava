@@ -316,21 +316,6 @@ services:
       - app-network
 
   # =========================
-  # Adminer (Datenbank UI)
-  # =========================
-  adminer:
-    image: adminer:latest
-    container_name: goalkeeper_adminer_prod
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    expose:
-      - "8080"
-    networks:
-      - app-network
-
-  # =========================
   # n8n Workflow Automation
   # =========================
   n8n:
