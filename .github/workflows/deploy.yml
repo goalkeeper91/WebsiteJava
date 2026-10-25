@@ -243,9 +243,9 @@ jobs:
           # selbst (jetzt mit eigenem Dockerfile für den periodischen
           # Cert-Reload, siehe nginx/Dockerfile) neu.
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "cd /home/${{ secrets.SERVER_USER }}/app && docker compose -f docker-compose.prod.yml up -d --build"
+            "cd /home/${{ secrets.SERVER_USER }}/app && docker compose -f docker-compose.prod.yml build --pull && docker compose -f docker-compose.prod.yml up -d"
 
-          echo "✅ Container gebaut und neu gestartet"
+          echo "✅ Container gebaut (Basis-Images frisch gezogen) und neu gestartet"
 
           # nginx explizit erzwungen neu erstellen (siehe Incident
           # 2026-08-18, fuchs.goalkeeper91.de): "docker compose up -d"

@@ -6,7 +6,11 @@
 # renewal happens on disk - this is what caused goalkeeper91.de and
 # timer.goalkeeper91.de to serve an expired certificate despite valid files
 # already sitting under ./certs.
-FROM nginx:1.25-alpine
+# 1.25 ist eine abgelaufene Mainline-Linie ohne Sicherheitskorrekturen; 1.30 ist die aktuelle stabile Linie (Stand 25.10.2026).
+FROM nginx:1.30-alpine
+
+# Version nicht im Server-Header und in Fehlerseiten nennen (conf.d wird im http-Kontext eingelesen).
+COPY 00-security.conf /etc/nginx/conf.d/00-security.conf
 
 # Reload twice a day (matches the certbot renewer's 12h `certbot renew`
 # loop) - cheap/idempotent when nothing actually changed, bounds staleness
