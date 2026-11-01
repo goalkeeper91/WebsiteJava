@@ -462,12 +462,12 @@ func main() {
 
 	// Subathon EventSub manager - keeps webhook subscriptions active per user
 	// and retries any events that failed to persist (see subathon_eventsub_manager.go)
-	subathonEventSubManager := service.NewSubathonEventSubManager(subathonService, tokenRepo, cfg.Twitch.ClientID, subathonWebhookSecret, subathonCallbackURL)
+	subathonEventSubManager := service.NewSubathonEventSubManager(subathonService, scheduledMessageAppToken, cfg.Twitch.ClientID, subathonWebhookSecret, subathonCallbackURL)
 	go subathonEventSubManager.Start(context.Background())
 
 	// Live-Dashboard Activity EventSub manager - keeps follow/sub/gift-sub/
 	// cheer/raid webhook subscriptions active per user (see activity_eventsub_manager.go)
-	activityEventSubManager := service.NewActivityEventSubManager(userRepo, tokenRepo, cfg.Twitch.ClientID, activityWebhookSecret, activityCallbackURL)
+	activityEventSubManager := service.NewActivityEventSubManager(userRepo, scheduledMessageAppToken, cfg.Twitch.ClientID, activityWebhookSecret, activityCallbackURL)
 	go activityEventSubManager.Start(context.Background())
 
 	// Clip trigger listener (Phase C)

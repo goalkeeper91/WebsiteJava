@@ -35,6 +35,13 @@ func NewTwitchAppTokenClient(clientID, clientSecret string) *TwitchAppTokenClien
 	}
 }
 
+// AppToken returns a valid app access token (cached, renewed shortly before
+// it expires) - needed by Twitch for EventSub subscriptions with webhook
+// transport, which do not accept a broadcaster's user token.
+func (c *TwitchAppTokenClient) AppToken(ctx context.Context) (string, error) {
+	return c.getToken(ctx)
+}
+
 func (c *TwitchAppTokenClient) getToken(ctx context.Context) (string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

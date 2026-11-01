@@ -2,15 +2,8 @@ package service
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
-	"net/url"
-	"strings"
 	"time"
-
-	"demo/backend-go/internal/repository"
 )
 
 const (
@@ -29,25 +22,20 @@ const (
 // session, and Twitch's own retry logic covers momentary delivery failures.
 type SubathonEventSubManager struct {
 	subathonService *SubathonService
-	tokenRepo       repository.AuthTokenRepository
-	clientID        string
-	webhookSecret   string
-	callbackURL     string
-	httpClient      *http.Client
+	client          *eventSubWebhookClient
 }
 
+// NewSubathonEventSubManager registers the webhook subscriptions with Twitch's
+// APP access token (appToken) - webhook transport does not accept the
+// broadcaster's user token, see eventSubWebhookClient.
 func NewSubathonEventSubManager(
 	subathonService *SubathonService,
-	tokenRepo repository.AuthTokenRepository,
+	appToken AppTokenProvider,
 	clientID, webhookSecret, callbackURL string,
 ) *SubathonEventSubManager {
 	return &SubathonEventSubManager{
 		subathonService: subathonService,
-		tokenRepo:       tokenRepo,
-		clientID:        clientID,
-		webhookSecret:   webhookSecret,
-		callbackURL:     callbackURL,
-		httpClient:      &http.Client{Timeout: 10 * time.Second},
+		client:          newEventSubWebhookClient(appToken, clientID, webhookSecret, callbackURL),
 	}
 }
 
@@ -90,113 +78,13 @@ func (m *SubathonEventSubManager) ensureAllSubscriptions(ctx context.Context) {
 	}
 }
 
-type eventSubSubscription struct {
-	ID        string `json:"id"`
-	Status    string `json:"status"`
-	Type      string `json:"type"`
-	Transport struct {
-		Method   string `json:"method"`
-		Callback string `json:"callback"`
-	} `json:"transport"`
+// All 3 Subathon event types share the same version and condition shape.
+var subathonSubscriptionSpecs = []eventSubSpec{
+	{Type: "channel.subscribe", Version: "1", Condition: broadcasterCondition},
+	{Type: "channel.subscription.gift", Version: "1", Condition: broadcasterCondition},
+	{Type: "channel.cheer", Version: "1", Condition: broadcasterCondition},
 }
-
-type getSubscriptionsResponse struct {
-	Data []eventSubSubscription `json:"data"`
-}
-
-var subathonSubscriptionTypes = []string{"channel.subscribe", "channel.subscription.gift", "channel.cheer"}
 
 func (m *SubathonEventSubManager) ensureUserSubscriptions(ctx context.Context, userID string) error {
-	token, err := m.tokenRepo.GetByTwitchUserID(ctx, userID)
-	if err != nil || token == nil {
-		return fmt.Errorf("no Twitch token available: %w", err)
-	}
-
-	existing, err := m.listSubscriptions(ctx, token.AccessToken, userID)
-	if err != nil {
-		return fmt.Errorf("failed to list existing subscriptions: %w", err)
-	}
-
-	haveEnabled := make(map[string]bool)
-	for _, sub := range existing {
-		if sub.Transport.Method == "webhook" && sub.Transport.Callback == m.callbackURL && sub.Status == "enabled" {
-			haveEnabled[sub.Type] = true
-		}
-	}
-
-	for _, subType := range subathonSubscriptionTypes {
-		if haveEnabled[subType] {
-			continue
-		}
-		if err := m.createSubscription(ctx, token.AccessToken, userID, subType); err != nil {
-			log.Printf("Subathon: failed to create %s subscription for user %s: %v", subType, userID, err)
-		} else {
-			log.Printf("✅ Subathon: registered %s webhook subscription for user %s", subType, userID)
-		}
-	}
-
-	return nil
-}
-
-func (m *SubathonEventSubManager) listSubscriptions(ctx context.Context, accessToken, userID string) ([]eventSubSubscription, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		"https://api.twitch.tv/helix/eventsub/subscriptions?user_id="+url.QueryEscape(userID), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Client-Id", m.clientID)
-
-	resp, err := m.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-
-	var result getSubscriptionsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-	return result.Data, nil
-}
-
-func (m *SubathonEventSubManager) createSubscription(ctx context.Context, accessToken, userID, subType string) error {
-	body := map[string]interface{}{
-		"type":      subType,
-		"version":   "1",
-		"condition": map[string]string{"broadcaster_user_id": userID},
-		"transport": map[string]string{
-			"method":   "webhook",
-			"callback": m.callbackURL,
-			"secret":   m.webhookSecret,
-		},
-	}
-	data, err := json.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		"https://api.twitch.tv/helix/eventsub/subscriptions", strings.NewReader(string(data)))
-	if err != nil {
-		return fmt.Errorf("failed to build request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Client-Id", m.clientID)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := m.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-	return nil
+	return m.client.ensureUser(ctx, userID, subathonSubscriptionSpecs, "Subathon")
 }
