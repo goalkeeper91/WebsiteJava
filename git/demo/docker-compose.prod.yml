@@ -127,6 +127,14 @@ services:
       SUBATHON_EVENTSUB_SECRET: ${SUBATHON_EVENTSUB_SECRET}
       SUBATHON_CALLBACK_URL: ${SUBATHON_CALLBACK_URL:-https://goalkeeper91.de/api/subathon/eventsub/callback}
 
+      # Live-Dashboard Activity-Feed EventSub webhook (follow/sub/gift/cheer/
+      # raid). Without these two lines the backend never saw the variables at
+      # all - the secret arrived empty and every subscription was rejected by
+      # Twitch ("secret must be between 10 and 100 characters"). Optional: if
+      # ACTIVITY_EVENTSUB_SECRET is unset the backend reuses the Subathon one.
+      ACTIVITY_EVENTSUB_SECRET: ${ACTIVITY_EVENTSUB_SECRET:-}
+      ACTIVITY_CALLBACK_URL: ${ACTIVITY_CALLBACK_URL:-https://goalkeeper91.de/api/activity/eventsub/callback}
+
       # Paddle Billing (SaaS Phase 1)
       PADDLE_API_BASE_URL: ${PADDLE_API_BASE_URL:-https://api.paddle.com}
       PADDLE_API_KEY: ${PADDLE_API_KEY}

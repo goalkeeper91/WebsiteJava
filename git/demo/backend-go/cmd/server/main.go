@@ -225,10 +225,13 @@ func main() {
 	}
 
 	// Live-Dashboard - Activity-Feed EventSub webhook transport (follow/sub/gift-sub/cheer/raid)
-	activityWebhookSecret := getEnv("ACTIVITY_EVENTSUB_SECRET", "")
+	activityWebhookSecret, activitySecretFromSubathon := resolveActivityWebhookSecret(getEnv("ACTIVITY_EVENTSUB_SECRET", ""), subathonWebhookSecret)
 	activityCallbackURL := getEnv("ACTIVITY_CALLBACK_URL", "https://goalkeeper91.de/api/activity/eventsub/callback")
+	if activitySecretFromSubathon {
+		log.Printf("ℹ️ ACTIVITY_EVENTSUB_SECRET nicht gesetzt - verwende SUBATHON_EVENTSUB_SECRET auch fuer den Activity-Feed")
+	}
 	if activityWebhookSecret == "" {
-		log.Printf("⚠️ Warnung: ACTIVITY_EVENTSUB_SECRET nicht gesetzt - Activity-Webhook-Signaturen koennen nicht verifiziert werden")
+		log.Printf("⚠️ Warnung: weder ACTIVITY_EVENTSUB_SECRET noch SUBATHON_EVENTSUB_SECRET gesetzt - Activity-Webhooks koennen nicht registriert/verifiziert werden")
 	}
 
 	discordAuthService := service.NewDiscordAuthService(
@@ -540,6 +543,21 @@ func main() {
 	}
 
 	log.Println("✅ Server erfolgreich heruntergefahren")
+}
+
+// resolveActivityWebhookSecret returns the secret the Activity-Feed EventSub
+// webhooks sign with. A dedicated ACTIVITY_EVENTSUB_SECRET wins; if it is
+// unset the Subathon secret is reused (same process, same trust domain), so
+// the feed works without a second secret to provision. Twitch itself rejects
+// secrets outside 10-100 characters, so an empty result means "not configured".
+func resolveActivityWebhookSecret(activitySecret, subathonSecret string) (secret string, fellBackToSubathon bool) {
+	if activitySecret != "" {
+		return activitySecret, false
+	}
+	if subathonSecret != "" {
+		return subathonSecret, true
+	}
+	return "", false
 }
 
 // ============================================================
